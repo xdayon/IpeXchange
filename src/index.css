@@ -760,10 +760,9 @@ input, textarea {
 
 /* ─── CHAT FAB ───────────────────────────────────────── */
 .chat-fab {
-  position: absolute;
+  position: fixed;
   bottom: 36px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 36px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -773,7 +772,7 @@ input, textarea {
   color: #000;
   font-weight: 700;
   font-size: 16px;
-  z-index: 20;
+  z-index: 100;
   box-shadow: 0 8px 32px rgba(180, 244, 74, 0.4);
   animation: fab-float 3s ease-in-out infinite, subtle-pulse 2s infinite;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -781,7 +780,7 @@ input, textarea {
 }
 
 .chat-fab:hover {
-  transform: translateX(-50%) scale(1.05);
+  transform: scale(1.05);
   box-shadow: 0 12px 40px rgba(180, 244, 74, 0.6);
 }
 
@@ -795,8 +794,8 @@ input, textarea {
 }
 
 @keyframes fab-float {
-  0%, 100% { bottom: 36px; }
-  50%       { bottom: 42px; }
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
 }
 
 /* ─── ACTIVITY FEED ──────────────────────────────────── */

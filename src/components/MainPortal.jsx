@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Compass, User, Wallet, Bot, Settings, Bell, Store, TrendingUp, ChevronRight } from 'lucide-react';
+import { Home, Compass, User, Wallet, Bot, Settings, Bell, Store, TrendingUp, ChevronRight, MessageCircle } from 'lucide-react';
 import HomePage from './HomePage';
 import DiscoverPage from './DiscoverPage';
 import ProfilePage from './ProfilePage';
@@ -7,6 +7,9 @@ import WalletPage from './WalletPage';
 import AgentPage from './AgentPage';
 import StoresPage from './StoresPage';
 import InvestmentsPage from './InvestmentsPage';
+import NotificationsPage from './NotificationsPage';
+import ConfigPage from './ConfigPage';
+import ChatDrawer from './ChatDrawer';
 
 const NAV_TABS = [
   { id: 'home',        icon: <Home size={16} />,       label: 'Home' },
@@ -16,16 +19,17 @@ const NAV_TABS = [
 ];
 
 const NAV_ICONS = [
-  { id: 'profile', icon: <User size={20} />,     label: 'Profile' },
-  { id: 'wallet',  icon: <Wallet size={20} />,   label: 'Wallet' },
-  { id: 'agent',   icon: <Bot size={20} />,      label: 'Agent' },
-  { id: 'config',  icon: <Settings size={20} />, label: 'Config' },
+  { id: 'profile',       icon: <User size={20} />,     label: 'Profile' },
+  { id: 'wallet',        icon: <Wallet size={20} />,   label: 'Wallet' },
+  { id: 'agent',         icon: <Bot size={20} />,      label: 'Agent' },
+  { id: 'config',        icon: <Settings size={20} />, label: 'Config' },
 ];
 
-const PAGES = ['profile', 'wallet', 'agent', 'config'];
+const PAGES = ['profile', 'wallet', 'agent', 'config', 'notifications'];
 
 const MainPortal = () => {
   const [tab, setTab] = useState('home');
+  const [chatOpen, setChatOpen] = useState(false);
   const isPage = PAGES.includes(tab);
   const currentPage = [...NAV_TABS, ...NAV_ICONS].find(n => n.id === tab);
 
@@ -53,7 +57,14 @@ const MainPortal = () => {
           </div>
 
           <div className="nav-actions flex-center">
-            <button className="btn-icon"><Bell size={20} /></button>
+            <button 
+              className={`btn-icon nav-icon-btn ${tab === 'notifications' ? 'active-icon' : ''}`}
+              onClick={() => setTab('notifications')}
+              style={{ position: 'relative' }}
+            >
+              <Bell size={20} />
+              <span style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, background: '#B4F44A', borderRadius: '50%', border: '2px solid var(--bg-card)' }} />
+            </button>
             {NAV_ICONS.map(n => (
               <button
                 key={n.id}
@@ -86,14 +97,23 @@ const MainPortal = () => {
         {tab === 'profile'    && <ProfilePage />}
         {tab === 'wallet'     && <WalletPage />}
         {tab === 'agent'      && <AgentPage />}
-        {tab === 'config'     && (
-          <div className="inner-page container text-center">
-            <Settings size={48} style={{ color: 'var(--text-secondary)', margin: '0 auto 16px' }} />
-            <h2>Configurations</h2>
-            <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>Settings panel coming soon.</p>
-          </div>
-        )}
+        {tab === 'config'     && <ConfigPage />}
+        {tab === 'notifications' && <NotificationsPage />}
       </main>
+
+      {/* Global Chat FAB */}
+      <button
+        id="global-chat-fab"
+        className="chat-fab"
+        onClick={() => setChatOpen(true)}
+      >
+        <div className="fab-glow-ring" />
+        <MessageCircle size={28} />
+        <span>Chat com o Core</span>
+      </button>
+
+      {/* Global Chat Drawer */}
+      <ChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 };
