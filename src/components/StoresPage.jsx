@@ -1,0 +1,108 @@
+import React, { useState } from 'react';
+import { Store, Coffee, Wrench, Film, ShoppingBag, Heart, Leaf, ShieldCheck, Star, MapPin, ExternalLink, Fingerprint } from 'lucide-react';
+
+const CATEGORIES = ['All', 'Food & Drink', 'Services', 'Health', 'Commerce', 'Entertainment'];
+
+const STORES = [
+  { id: 's1', name: 'Padaria do Ipê', category: 'Food & Drink', icon: Coffee, iconColor: '#F59E0B', iconBg: 'rgba(245,158,11,0.12)', owner: 'marina.ipecity.eth', address: 'Av. dos Búzios, 210 – Jurerê Internacional', rating: 4.9, reviews: 142, tags: ['Pão Artesanal', 'Orgânico', 'Café Especial'], reputationScore: 98, onChain: true, description: 'Padaria artesanal com ingredientes 100% orgânicos. Aceita crypto e troca.' },
+  { id: 's2', name: 'Jurerê Motors', category: 'Services', icon: Wrench, iconColor: '#38BDF8', iconBg: 'rgba(56,189,248,0.12)', owner: 'carlostech.ipecity.eth', address: 'Rua das Gaivotas, 48 – Jurerê', rating: 4.7, reviews: 89, tags: ['Mecânica Geral', 'Carros Elétricos', 'Customização'], reputationScore: 94, onChain: true, description: 'Oficina especializada em veículos elétricos e customização. Relatório de diagnóstico on-chain.' },
+  { id: 's3', name: 'Cinema Ipê', category: 'Entertainment', icon: Film, iconColor: '#818CF8', iconBg: 'rgba(129,140,248,0.12)', owner: 'ipehub.ipecity.eth', address: 'Av. das Rendeiras, 1500 – Jurerê Internacional', rating: 4.8, reviews: 317, tags: ['4K Dolby', 'Eventos', 'Arte & Cultura'], reputationScore: 99, onChain: true, description: 'Cinema comunitário com 4K Dolby Atmos. Ingressos em NFT.' },
+  { id: 's4', name: 'Mercado Orgânico', category: 'Commerce', icon: Leaf, iconColor: '#B4F44A', iconBg: 'rgba(180,244,74,0.10)', owner: 'sitioipe.ipecity.eth', address: 'Rua das Ostras, 32 – Jurerê', rating: 4.9, reviews: 205, tags: ['Hortifruti', 'A Granel', 'Delivery'], reputationScore: 97, onChain: true, description: 'Produtos orgânicos locais com rastreabilidade blockchain.' },
+  { id: 's5', name: 'Clínica Saúde Ipê', category: 'Health', icon: Heart, iconColor: '#F43F5E', iconBg: 'rgba(244,63,94,0.10)', owner: 'drsarah.ipecity.eth', address: 'Av. dos Dourados, 78 – Jurerê Internacional', rating: 5.0, reviews: 61, tags: ['Clínica Geral', 'Fisioterapia', 'Nutrição'], reputationScore: 100, onChain: true, description: 'Prontuário digital com registros de saúde on-chain.' },
+  { id: 's6', name: 'Studio Creative', category: 'Services', icon: ShoppingBag, iconColor: '#F472B6', iconBg: 'rgba(244,114,182,0.10)', owner: 'designhaus.ipecity.eth', address: 'Av. dos Búzios, 840 – Jurerê Internacional', rating: 4.6, reviews: 43, tags: ['Design Gráfico', 'Branding', 'Web3 Assets'], reputationScore: 89, onChain: false, description: 'Design especializado em identidade visual Web3, NFTs e branding.' },
+];
+
+const repColor = (s) => s >= 95 ? '#B4F44A' : s >= 85 ? '#38BDF8' : '#F59E0B';
+const repLabel = (s) => s >= 95 ? 'Elite' : s >= 85 ? 'Trusted' : 'Verified';
+
+const StoreCard = ({ store }) => {
+  const Icon = store.icon;
+  const c = repColor(store.reputationScore);
+  return (
+    <div className="glass-panel store-card">
+      <div className="store-card-header">
+        <div className="store-icon-wrap" style={{ background: store.iconBg }}>
+          <Icon size={28} style={{ color: store.iconColor }} />
+        </div>
+        <div className="store-card-meta">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+            <h3 className="store-name">{store.name}</h3>
+            <ShieldCheck size={14} style={{ color: '#B4F44A' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Star size={12} style={{ color: '#F59E0B', fill: '#F59E0B' }} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>{store.rating}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>({store.reviews})</span>
+          </div>
+        </div>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px', borderRadius: 100, fontSize: 11, fontWeight: 700, border: `1px solid ${c}40`, background: `${c}10`, color: c, whiteSpace: 'nowrap' }}>
+          <ShieldCheck size={10} /> {repLabel(store.reputationScore)} {store.reputationScore}
+        </span>
+      </div>
+
+      <p className="store-description">{store.description}</p>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+        <MapPin size={11} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{store.address}</span>
+      </div>
+
+      <div className="store-tags">
+        {store.tags.map(tag => <span key={tag} className="store-tag">{tag}</span>)}
+        {store.onChain && <span className="store-tag onchain-tag">⬡ On-Chain</span>}
+      </div>
+
+      <div className="store-card-footer">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <Fingerprint size={12} style={{ color: 'var(--text-secondary)' }} />
+          <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{store.owner}</span>
+        </div>
+        <button style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--accent-cyan)', background: 'none', border: 'none', cursor: 'pointer' }}>
+          <ExternalLink size={13} /> Ver loja
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const StoresPage = () => {
+  const [cat, setCat] = useState('All');
+  const filtered = cat === 'All' ? STORES : STORES.filter(s => s.category === cat);
+
+  return (
+    <div className="inner-page container">
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 18 }}>
+          <div>
+            <h2 style={{ fontSize: 28, marginBottom: 6 }}>Lojas da <span className="text-gradient-lime">Ipê City</span></h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Estabelecimentos físicos verificados — todos linkados ao Ipê Passport do proprietário.</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <span className="badge" style={{ background: 'rgba(180,244,74,0.08)', borderColor: 'rgba(180,244,74,0.25)', color: '#B4F44A', display: 'flex', alignItems: 'center', gap: 5 }}><ShieldCheck size={12} /> Reputation Score</span>
+            <span className="badge" style={{ background: 'rgba(56,189,248,0.08)', borderColor: 'rgba(56,189,248,0.25)', color: '#38BDF8', display: 'flex', alignItems: 'center', gap: 5 }}>⬡ On-Chain</span>
+          </div>
+        </div>
+        <div className="filter-chips">
+          {CATEGORIES.map(c => (
+            <button key={c} className={`filter-chip ${cat === c ? 'active' : ''}`} onClick={() => setCat(c)}>{c}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="stores-grid">
+        {filtered.map(store => <StoreCard key={store.id} store={store} />)}
+      </div>
+
+      <div className="glass-panel" style={{ marginTop: 28, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <Store size={26} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 3 }}>Quer cadastrar seu negócio?</p>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Estabelecimentos com Ipê Passport listam produtos automaticamente no City Graph e ficam disponíveis para o Xchange Core.</p>
+        </div>
+        <button className="btn-primary" style={{ flexShrink: 0 }}>Cadastrar loja</button>
+      </div>
+    </div>
+  );
+};
+
+export default StoresPage;
