@@ -4,6 +4,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // gemini-flash-latest — alias sempre disponível, sem problemas de cota
 const MODEL = 'gemini-flash-latest';
+// Embedding model — free tier, 768 dimensions, matches pgvector schema
+const EMBEDDING_MODEL = 'text-embedding-004';
 
 const SYSTEM_PROMPT = `You are Xchange Core, the AI agent of IpeXchange — a decentralized local economy platform built on IpeDAO, operating in Jurerê International, Florianópolis, Brazil.
 
@@ -15,32 +17,17 @@ Your role is to help community members:
 - Connect with local talent, workshops, and knowledge sharing
 - Understand the Ipê ecosystem: Ipê Passport (identity), Ipê Rep (reputation), IpeDAO (governance), Rootstock/RBTC (payments)
 
-Current available listings in the network:
-- MacBook Pro M1 14" — $1,200 (Alex M.)
-- Website Development — from $500 (Bia Tech)
-- Bracatinga Honey 500g — $12 (Ipê Farm)
-- Yoga at the Park — $15/hour (FitJurerê)
-- Artisan Coffee Beans — $9/pack (CoffeeLab)
-- Smart Home Setup — $50 (AI Haus)
-- Climate Data Analysis — $30 (Jurerê Climate)
-- Legal Advice: DAO Gov — from 100 USDC (Ipê Law)
-- Projector Rental — $30/day (CineRent)
-- Oggi E-Bike — $850 (Marina G.)
-- Artisan Sourdough — $5/loaf (Bread & Co)
-- Cello Lessons — $15/hour (Music & Co)
-- Beehive Construction — 20 USDC or trade (João, Ipê Farm)
-- Woodworking Workshop — $15/lesson (WoodCraft)
-
-Network demands (high need):
-- Solar panel technicians (HIGH urgency)
-- Local eggs / fresh produce (HIGH urgency)
-- Carpenters (MEDIUM urgency)
+When a user wants to sell or offer something, extract the details and confirm the listing before publishing.
+When a user wants to buy or find something, match against available listings and suggest the best options.
 
 Personality: You are intelligent, concise, warm, and community-focused. You speak like a knowledgeable local guide who also understands Web3 and decentralized finance. You always protect user privacy (ZKP, Ipê Passport).
 
 Response format: Keep responses under 120 words. Be direct and actionable. Use **bold** for key items. Suggest specific next steps. When relevant, end with a CTA action type in this format on a new line:
 CTA_ACTION: [discover|checkout|investments|circular|home|none]
 CTA_LABEL: [Short button label]
+
+When you detect a sell intent and have enough info, end with:
+LISTING_READY: true
 
 Language rule: ALWAYS respond in the SAME language the user is using — detect it from their text or from the audio content. If the user speaks Portuguese, reply in Portuguese. If English, reply in English. If Spanish, reply in Spanish.`;
 
@@ -52,14 +39,41 @@ const INTENT_EXTRACTION_PROMPT = `Analyze this user message and extract the trad
   "confidence": 0.0-1.0
 }`;
 
-export async function chat(history, userMessage, audioBase64 = null, mimeType = null) {
+const LISTING_EXTRACTION_PROMPT = `You are a structured data extractor for a marketplace. Extract listing details from the user's message.
+Return ONLY valid JSON, no markdown, no explanation:
+{
+  "title": "concise listing title (max 60 chars)",
+  "description": "full description with key details mentioned",
+  "category": "Products|Services|Knowledge|Donations",
+  "condition": "new|like_new|good|fair|for_parts|null (null for services)",
+  "price_fiat": number or null,
+  "price_crypto": number or null,
+  "accepts_trade": boolean,
+  "trade_wants": "what they want in trade, or null",
+  "provider_name": "seller/provider name if mentioned, or null",
+  "confidence": 0.0-1.0
+}
+If information is missing or unclear, set confidence below 0.8 and use null for missing fields.`;
+
+// ─── Main Chat ────────────────────────────────────────────────────────────────
+
+export async function chat(history, userMessage, audioBase64 = null, mimeType = null, contextListings = null) {
   try {
+    // Build system prompt, optionally injecting live listings context
+    let systemPrompt = SYSTEM_PROMPT;
+    if (contextListings && contextListings.length > 0) {
+      const listingsSummary = contextListings
+        .slice(0, 10)
+        .map(l => `- ${l.title} — ${l.price_fiat ? `$${l.price_fiat}` : 'trade only'} (${l.provider_name || 'Community'})`)
+        .join('\n');
+      systemPrompt += `\n\nCurrent available listings in the network:\n${listingsSummary}`;
+    }
+
     const model = genAI.getGenerativeModel({
       model: MODEL,
-      systemInstruction: SYSTEM_PROMPT,
+      systemInstruction: systemPrompt,
     });
 
-    // Build conversation history for Gemini
     const geminiHistory = history.map(msg => ({
       role: msg.role === 'agent' ? 'model' : 'user',
       parts: [{ text: msg.content }],
@@ -88,22 +102,30 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
     // Parse CTA from response
     let text = rawText;
     let cta = null;
+    let listingReady = false;
 
     const ctaActionMatch = rawText.match(/CTA_ACTION:\s*(\w+)/i);
     const ctaLabelMatch  = rawText.match(/CTA_LABEL:\s*(.+)/i);
+    const listingReadyMatch = rawText.match(/LISTING_READY:\s*true/i);
+
+    if (listingReadyMatch) {
+      listingReady = true;
+    }
 
     if (ctaActionMatch && ctaActionMatch[1] !== 'none') {
       cta = {
         tab:   ctaActionMatch[1].toLowerCase(),
         label: ctaLabelMatch ? ctaLabelMatch[1].trim() : 'View more',
       };
-      text = rawText
-        .replace(/CTA_ACTION:.*$/im, '')
-        .replace(/CTA_LABEL:.*$/im, '')
-        .trim();
     }
 
-    return { text, cta, rateLimited: false };
+    text = rawText
+      .replace(/CTA_ACTION:.*$/im, '')
+      .replace(/CTA_LABEL:.*$/im, '')
+      .replace(/LISTING_READY:.*$/im, '')
+      .trim();
+
+    return { text, cta, rateLimited: false, listingReady };
   } catch (err) {
     const msg = err.message || 'Unknown error';
     console.error('Gemini error:', msg, '| Audio:', !!audioBase64, '| MimeType:', mimeType);
@@ -113,6 +135,7 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
         text: '⚡ Too many requests. Please wait a moment and try again!',
         cta: null,
         rateLimited: true,
+        listingReady: false,
       };
     }
     if (msg.includes('invalid') || msg.toLowerCase().includes('audio')) {
@@ -120,18 +143,21 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
         text: "I had trouble processing that audio. Could you try recording again or type your message?",
         cta: null,
         rateLimited: false,
+        listingReady: false,
       };
     }
     return {
       text: `Error: ${msg.slice(0, 120)}`,
       cta: null,
       rateLimited: false,
+      listingReady: false,
     };
   }
 }
 
+// ─── Intent Extraction ────────────────────────────────────────────────────────
+
 export async function extractIntent(userMessage) {
-  // Only run intent extraction on text messages to save quota
   if (!userMessage || !userMessage.trim()) return null;
 
   try {
@@ -143,8 +169,79 @@ export async function extractIntent(userMessage) {
     const json = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
     return JSON.parse(json);
   } catch (err) {
-    // Non-critical: just log and move on
     console.error('Intent extraction error:', err.message);
+    return null;
+  }
+}
+
+// ─── Listing Extraction ───────────────────────────────────────────────────────
+// Converts natural language sell description → structured listing object
+
+export async function extractListing(conversationText) {
+  if (!conversationText || !conversationText.trim()) return null;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: MODEL });
+    const result = await model.generateContent(
+      `${LISTING_EXTRACTION_PROMPT}\n\nUser message: "${conversationText}"`
+    );
+    const raw  = result.response.text().trim();
+    const json = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(json);
+
+    // Only return if we have enough info to make a valid listing
+    if (!parsed.title || parsed.confidence < 0.7) return null;
+    return parsed;
+  } catch (err) {
+    console.error('Listing extraction error:', err.message);
+    return null;
+  }
+}
+
+// ─── Semantic Embeddings ──────────────────────────────────────────────────────
+// Generates a 768-dim embedding vector for pgvector similarity search
+
+export async function generateEmbedding(text) {
+  if (!text || !text.trim()) return null;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: EMBEDDING_MODEL });
+    const result = await model.embedContent(text);
+    return result.embedding.values; // Float32Array with 768 dimensions
+  } catch (err) {
+    console.error('Embedding error:', err.message);
+    return null;
+  }
+}
+
+// ─── Price Suggestion ─────────────────────────────────────────────────────────
+// Given a listing title + similar listings from the DB, suggest a fair price
+
+export async function suggestPrice(newListingTitle, similarListings) {
+  if (!similarListings || similarListings.length === 0) return null;
+
+  const comparables = similarListings
+    .filter(l => l.price_fiat)
+    .map(l => `- ${l.title}: $${l.price_fiat}`)
+    .join('\n');
+
+  if (!comparables) return null;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: MODEL });
+    const prompt = `Based on these comparable listings in our local marketplace:
+${comparables}
+
+What is a fair price range for: "${newListingTitle}"?
+Reply with ONLY a JSON object, no markdown:
+{"min": number, "max": number, "suggested": number, "reasoning": "1 sentence"}`;
+
+    const result = await model.generateContent(prompt);
+    const raw  = result.response.text().trim();
+    const json = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+    return JSON.parse(json);
+  } catch (err) {
+    console.error('Price suggestion error:', err.message);
     return null;
   }
 }

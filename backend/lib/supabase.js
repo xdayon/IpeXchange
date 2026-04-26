@@ -8,6 +8,8 @@ const inMemory = {
   sessions: {},
   messages: {},   // sessionId -> []
   intents: [],
+  listings: [],
+  demands: [],
 };
 
 try {
@@ -29,7 +31,7 @@ async function checkDb() {
       dbAvailable = true;
       console.log('✅ Supabase DB tables found — persistence enabled');
     } else {
-      console.warn('⚠️  Supabase tables not found — using in-memory fallback. Run supabase_schema.sql in your Supabase dashboard to enable persistence.');
+      console.warn('⚠️  Supabase tables not found — using in-memory fallback. Run supabase_schema.sql in your Supabase dashboard.');
     }
   } catch (e) {
     console.warn('⚠️  Supabase connection failed — in-memory fallback active');
@@ -107,7 +109,6 @@ export async function saveIntent({ sessionId, intentType, item, category, confid
 
 export async function getHotIntents() {
   if (!dbAvailable) {
-    // Count from in-memory
     const since = Date.now() - 24 * 60 * 60 * 1000;
     const recent = inMemory.intents.filter(i =>
       new Date(i.created_at).getTime() > since &&
@@ -140,9 +141,140 @@ export async function getHotIntents() {
   for (const row of data || []) {
     const key = row.item.toLowerCase();
     if (!counts[key]) counts[key] = { item: row.item, category: row.category, count: 0 };
-    counts[key].count++;
+    counts[key].count++; 
   }
   return Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 5);
+}
+
+// ─── Listings ─────────────────────────────────────────────────────────────────
+
+export async function getListings({ category = null, limit = 50 } = {}) {
+  if (!dbAvailable) {
+    // Return in-memory listings if any, otherwise return empty
+    return inMemory.listings;
+  }
+
+  let query = supabase
+    .from('listings')
+    .select('id, title, description, category, condition, price_fiat, price_crypto, accepts_trade, trade_wants, provider_name, image_url, active, created_at')
+    .eq('active', true)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (category) query = query.eq('category', category);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('getListings error:', error.message);
+    return [];
+  }
+  return data || [];
+}
+
+export async function createListing({ sessionId, listing, embedding = null }) {
+  const {
+    title, description, category, condition,
+    price_fiat, price_crypto, accepts_trade,
+    trade_wants, provider_name, image_url,
+  } = listing;
+
+  if (!dbAvailable) {
+    const newListing = {
+      id: crypto.randomUUID(),
+      session_id: sessionId,
+      title, description, category, condition,
+      price_fiat, price_crypto, accepts_trade,
+      trade_wants, provider_name, image_url,
+      active: true,
+      ai_generated: true,
+      created_at: new Date().toISOString(),
+    };
+    inMemory.listings.push(newListing);
+    return newListing;
+  }
+
+  const { data, error } = await supabase
+    .from('listings')
+    .insert({
+      session_id: sessionId,
+      title,
+      description,
+      category,
+      condition,
+      price_fiat: price_fiat || null,
+      price_crypto: price_crypto || null,
+      accepts_trade: accepts_trade || false,
+      trade_wants: trade_wants || null,
+      provider_name: provider_name || null,
+      image_url: image_url || null,
+      active: true,
+      ai_generated: true,
+      embedding: embedding ? JSON.stringify(embedding) : null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('createListing error:', error.message);
+    return null;
+  }
+  return data;
+}
+
+// Semantic search: find listings similar to a query embedding
+export async function searchListingsBySimilarity(embedding, limit = 5) {
+  if (!dbAvailable || !embedding) return [];
+
+  const { data, error } = await supabase.rpc('match_listings', {
+    query_embedding: embedding,
+    match_threshold: 0.70,
+    match_count: limit,
+  });
+
+  if (error) {
+    console.error('searchListingsBySimilarity error:', error.message);
+    return [];
+  }
+  return data || [];
+}
+
+// ─── Demands ──────────────────────────────────────────────────────────────────
+
+export async function createDemand({ sessionId, description, category, maxBudgetFiat, acceptsTrade, embedding = null }) {
+  if (!dbAvailable) {
+    const demand = {
+      id: crypto.randomUUID(),
+      session_id: sessionId,
+      description,
+      category,
+      max_budget_fiat: maxBudgetFiat || null,
+      accepts_trade: acceptsTrade !== false,
+      resolved: false,
+      created_at: new Date().toISOString(),
+    };
+    inMemory.demands.push(demand);
+    return demand;
+  }
+
+  const { data, error } = await supabase
+    .from('demands')
+    .insert({
+      session_id: sessionId,
+      description,
+      category,
+      max_budget_fiat: maxBudgetFiat || null,
+      accepts_trade: acceptsTrade !== false,
+      resolved: false,
+      embedding: embedding ? JSON.stringify(embedding) : null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('createDemand error:', error.message);
+    return null;
+  }
+  return data;
 }
 
 export default supabase;
