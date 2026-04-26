@@ -1,4 +1,5 @@
 import React from 'react';
+import DataBadge from './DataBadge';
 
 const ListingCard = ({ listing, onXchange }) => {
   const handleAction = () => {
@@ -43,6 +44,9 @@ const ListingCard = ({ listing, onXchange }) => {
         <div className="listing-tags">
           <span className="tag glass-panel">{listing.category}</span>
           {!listing.isPublic && <span className="tag glass-panel private-tag">Private</span>}
+        </div>
+        <div style={{ position: 'absolute', top: 12, right: 12 }}>
+          <DataBadge isMock={listing.is_mock} style={{ background: 'rgba(0,0,0,0.6)' }} />
         </div>
       </div>
       <div className="listing-content">
