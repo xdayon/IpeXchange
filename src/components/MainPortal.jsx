@@ -4,6 +4,7 @@ import {
   User, Wallet, Bot, Settings, Bell, Repeat,
   MessageCircle, ChevronRight,
 } from 'lucide-react';
+import { pingHealth } from '../lib/api';
 
 // ─── Lazy load all page components ────────────────────────────────────────────
 // Pages loaded immediately (above-the-fold default view)
@@ -71,6 +72,15 @@ const MainPortal = () => {
   const [navParams, setNavParams] = useState(null);
   const [prevTab, setPrevTab]   = useState('home');
   const [chatOpen, setChatOpen] = useState(false);
+
+  // Keep backend awake (Render spins down after 15m)
+  useEffect(() => {
+    // Initial ping
+    pingHealth();
+    // Ping every 8 minutes
+    const interval = setInterval(pingHealth, 8 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const isPage    = PAGES.includes(tab);
   const isOverlay = OVERLAY_PAGES.includes(tab);

@@ -8,7 +8,7 @@ const steps = [
   { icon: <Check size={18} />, label: 'Connected to City Graph!' },
 ];
 
-const ConnectAgentScreen = ({ onConnect }) => {
+const ConnectAgentScreen = ({ onConnect, inline }) => {
   const [phase, setPhase] = useState('idle'); // idle | connecting | done
   const [stepIndex, setStepIndex] = useState(0);
 
@@ -30,8 +30,8 @@ const ConnectAgentScreen = ({ onConnect }) => {
   };
 
   return (
-    <div className="onboarding-screen">
-      <div className="agent-connect-card glass-panel">
+    <div className={inline ? '' : 'onboarding-screen'}>
+      <div className="agent-connect-card glass-panel" style={{ margin: inline ? '0 auto' : undefined }}>
         {/* Avatar */}
         <div className={`agent-avatar-container ${phase !== 'idle' ? 'floating-animation' : ''}`} style={{ width: 180, height: 180, margin: '0 auto 28px' }}>
           <img src={personalAgentImg} alt="Personal Agent" className="agent-image" />

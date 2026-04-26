@@ -1,88 +1,179 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Mic, MicOff, Send, X, ShieldCheck, Activity, ArrowRight, Zap } from 'lucide-react';
 import xchangeCoreImg from '../assets/xchange_core.png';
-import { mockListings } from '../data/mockData';
-
-const DEMO_RESPONSES = {
-  'macbook':    { text: 'Processing intent: **"buy a Macbook"**. Using your **Ipê Passport** to preserve your identity while searching for matches in the city graph. Found 1 active offer at **AI Haus** — I will connect you securely.', cta: { label: '⚡ Start Xchange', tab: 'checkout', params: { listing: { id: 'mock-mac', title: 'MacBook Pro M3 (2024)', provider: 'lucas.ipecity.eth', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$1,500', description: 'MacBook Pro M3 in excellent condition. Bought 6 months ago at Founder Haus. Box and all original accessories included. I accept USDC or RBTC.', category: 'Products', image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=400&h=300' } } } },
-  'bicycle':    { text: '🚲 Analyzing bicycle market in Jurerê... Found 3 references on the **Skill Exchange Board**:\n- Caloi E-Vibe (used): $700\n- Trek FX+ (new): $1,500\n- Oggi B.W 8.0 (similar condition to yours): **$750 – $850** is a fair price. I can publish your offer on the City Graph now.', cta: null },
-  'bike':       { text: '🚲 Analyzing bicycle market in Jurerê... Found 3 references on the **Skill Exchange Board**:\n- Caloi E-Vibe (used): $700\n- Trek FX+ (new): $1,500\n- Oggi B.W 8.0 (similar condition to yours): **$750 – $850** is a fair price. I can publish your offer on the City Graph now.', cta: null },
-  'price':      { text: '💰 **Pricing Assistant.** Tell me what you want to sell or trade — send a description, photo, or audio. I will cross-reference with similar transactions in the Ipê Hub history and give you a fair price range based on real city data.', cta: null },
-  'trade':      { text: '🔄 **Fair Trades.** Analyzing your profile and active intents... Found 2 interesting matches:\n1. Your graphic design ↔ Organic Honey (Sítio Ipê) — 4h design = 6 jars\n2. Your design ↔ Physical Therapy session at **Founder Haus** (Dr. Sarah) — balanced estimate according to both reputations\nWant me to propose the trade?', cta: { label: '🔄 View Trade Opportunity', tab: 'checkout', params: { listing: mockListings.find(l => l.id === 'l7') || mockListings[0] } } },
-  'investment': { text: '📈 **Xchange Capital.** Your **Ipê Rep (95)** qualifies for credit up to **$2,500** with rates starting at 4.2% p.a. — much lower than the traditional market. Security guaranteed by smart contracts on **Rootstock**. Want to start the process?', cta: { label: '📈 View Investment Opportunities', tab: 'investments', params: null } },
-  'buy':        { text: 'Found active offers in Discover that match what you are looking for. Which product or service do you want to acquire? I can search the City Graph with your privacy protected by ZKP and Ipê Passport.', cta: { label: '🧭 Explore on Discover', tab: 'discover', params: null } },
-  'job':        { text: '👨‍💻 **Talent Search.** There are 2 active opportunities in Jurerê compatible with your profile:\n1. Web Developer – Ipê Hub (4,000 USDC/month)\n2. Web3 Designer – AI Haus (negotiable)\nI can also register your profile as available in the Core database.', cta: { label: '💼 View Opportunities', tab: 'investments', params: null } },
-  'circular':   { text: '🔄 **Multi-hop Trade Match!** I analyzed the city network and found a perfect cycle for you in the **IpêXchange**. You give your Electric Bike to Carlos, who gives Web Consulting to Bia, who gives you the Macbook Pro M1 you wanted. Perfect 3-way cycle!', cta: { label: '⚡ Sign Circular Contract', tab: 'circular', params: null } },
-  'learn':      { text: '📚 **Knowledge Hub.** I see you want to learn something new. In Jurerê we have the **Founder Haus** offering woodworking workshops and João from Sítio Ipê offering **Sustainable Beekeeping Mentorship**. I can connect you with them on the Skill Exchange Board.', cta: { label: '🧠 View Learning Opportunities', tab: 'discover', params: null } },
-  'teach':      { text: '🎓 **Share your Knowledge.** Excellent initiative! What would you like to teach? I can create a "Skill Offer" in your Ipê Passport and notify citizens with compatible interests.', cta: null },
-  'need':       { text: '🚨 **Village Demands.** Currently, the network detects high scarcity of **Solar Panel Technicians** and **Artisan Bakers** in Jurerê. If you have these skills, your work will be highly valued in the ecosystem now. Want to see the full list of demands on the Home page?', cta: { label: '⚠️ View City Gaps', tab: 'home', params: null } },
-  'health':     { text: '💡 **Proactive Insight.** You mentioned "health". Analyzing the City Graph, I noticed that Marina is selling an **E-Bike (City Cruiser)** near you and the **Runners Club** meets tomorrow at 6 AM. Want me to bridge the connection with them?', cta: { label: '🚴 View E-Bike Details', tab: 'discover', params: null } },
-  'insight':    { text: '✨ **Proactive Insight.** Analyzing the City Graph, I noticed that Marina is selling an **E-Bike (City Cruiser)** near you and the **Runners Club** meets tomorrow at 6 AM. This aligns perfectly with your recent health goals. Want me to bridge the connection with them?', cta: { label: '🚴 View E-Bike Details', tab: 'discover', params: null } },
-  'default':    { text: 'I received your message. I will process and cross-reference with available data in the Ipê ecosystem. Your privacy is protected with Zero-Knowledge Proofs and Ipê Passport. Any updates, I will return immediately.', cta: null },
-};
+import { sendChatMessage, fetchSessionHistory } from '../lib/api';
 
 const QUICK_ACTIONS = [
-  { label: '✨ Proactive Insight', prompt: 'Show me my proactive insight' },
-  { label: '💰 Price item',        prompt: 'I want to know the fair price of something I have to sell' },
-  { label: '🔄 Suggest trades',    prompt: 'I want to make a fair trade with someone in the city' },
-  { label: '🌐 Circular Trade',   prompt: 'look for circular trade opportunities for my items' },
-  { label: '📈 P2P Credit',       prompt: 'I want to know about investment and credit available for me' },
+  { label: '✨ Proactive Insight', prompt: 'Me mostre um insight proativo para mim hoje' },
+  { label: '💰 Price item',        prompt: 'Preciso de ajuda para precificar um item que quero vender' },
+  { label: '🔄 Suggest trades',    prompt: 'Sugira opções de trocas justas para mim' },
+  { label: '🌐 Circular Trade',   prompt: 'Busque oportunidades de trocas multi-hop circulares no ecossistema' },
+  { label: '📈 P2P Credit',       prompt: 'Quero saber sobre opções de crédito e investimento P2P' },
 ];
 
 const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
+  const [sessionId, setSessionId] = useState('');
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [waveActive, setWaveActive] = useState(false);
+  
+  // Speech Recognition state
+  const [recognition, setRecognition] = useState(null);
+  const [interimTranscript, setInterimTranscript] = useState('');
+
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+  }, [messages, isTyping, interimTranscript]);
 
-  // Reset on open
+  // Init Session
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      setTimeout(() => {
-        setMessages([{ role: 'agent', content: 'Hello! I am **Xchange Core**. Tell me what you need or what you are offering — you can send an audio!', cta: null }]);
-      }, 400);
+    let sid = localStorage.getItem('ipeCoreSessionId');
+    if (!sid) {
+      sid = crypto.randomUUID();
+      localStorage.setItem('ipeCoreSessionId', sid);
     }
-  }, [isOpen]);
+    setSessionId(sid);
+  }, []);
 
-  const sendMessage = (text) => {
-    if (!text.trim()) return;
-    setMessages(prev => [...prev, { role: 'user', content: text, cta: null }]);
+  // Init Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'pt-BR'; // Default to Portuguese
+
+      rec.onresult = (event) => {
+        let finalStr = '';
+        let interimStr = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalStr += event.results[i][0].transcript;
+          } else {
+            interimStr += event.results[i][0].transcript;
+          }
+        }
+        setInterimTranscript(interimStr);
+        if (finalStr) {
+          // Update input text with final results as they come in
+          setInputText(prev => (prev + ' ' + finalStr).trim());
+        }
+      };
+
+      rec.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        setIsRecording(false);
+        setWaveActive(false);
+      };
+
+      rec.onend = () => {
+        setIsRecording(false);
+        setWaveActive(false);
+        setInterimTranscript('');
+      };
+
+      setRecognition(rec);
+    }
+  }, []);
+
+  // Reset/Load on open
+  useEffect(() => {
+    if (isOpen && sessionId) {
+      loadHistory();
+    }
+  }, [isOpen, sessionId]);
+
+  const loadHistory = async () => {
     setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      const key = Object.keys(DEMO_RESPONSES).find(k => text.toLowerCase().includes(k)) || 'default';
-      const response = DEMO_RESPONSES[key];
-      setMessages(prev => [...prev, { role: 'agent', content: response.text, cta: response.cta }]);
-    }, 2200);
+    const history = await fetchSessionHistory(sessionId);
+    setIsTyping(false);
+    
+    if (history.length === 0) {
+      setMessages([{ 
+        role: 'agent', 
+        content: 'Olá! Eu sou o **Xchange Core**. Me diga o que você precisa ou o que está oferecendo — você pode me enviar um áudio!', 
+        cta: null 
+      }]);
+    } else {
+      setMessages(history);
+    }
   };
 
-  const handleMic = () => {
-    if (isRecording) return;
-    setIsRecording(true);
-    setWaveActive(true);
-    setTimeout(() => {
+  const handleSendMessage = async (text, isAudio = false) => {
+    if (!text.trim()) return;
+    
+    // Add user message to UI immediately
+    setMessages(prev => [...prev, { role: 'user', content: text, cta: null }]);
+    setInputText('');
+    setInterimTranscript('');
+    setIsTyping(true);
+
+    try {
+      const response = await sendChatMessage(sessionId, text, isAudio);
+      setMessages(prev => [...prev, { 
+        role: 'agent', 
+        content: response.text, 
+        cta: response.cta 
+      }]);
+    } catch (err) {
+      setMessages(prev => [...prev, { 
+        role: 'agent', 
+        content: 'Desculpe, ocorreu um erro de conexão com o Core. Tente novamente.', 
+        cta: null 
+      }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const toggleMic = () => {
+    if (!recognition) {
+      alert('Seu navegador não suporta reconhecimento de voz (tente no Google Chrome).');
+      return;
+    }
+
+    if (isRecording) {
+      recognition.stop();
       setIsRecording(false);
       setWaveActive(false);
-      sendMessage('I want to buy a macbook');
-    }, 2500);
+      // Let onend event handle the rest, but if there's text, we can send it
+      if (inputText.trim() || interimTranscript.trim()) {
+        const finalMessage = (inputText + ' ' + interimTranscript).trim();
+        if (finalMessage) {
+          handleSendMessage(finalMessage, true);
+        }
+      }
+    } else {
+      setInputText('');
+      setInterimTranscript('');
+      try {
+        recognition.start();
+        setIsRecording(true);
+        setWaveActive(true);
+      } catch (e) {
+        console.error('Failed to start recognition:', e);
+      }
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    sendMessage(inputText);
-    setInputText('');
+    if (isRecording && recognition) {
+      recognition.stop();
+    }
+    handleSendMessage(inputText, false);
   };
 
   const handleCTA = (cta) => {
     if (!cta) return;
     if (onNavigate) {
-      onNavigate(cta.tab, cta.params);
+      // Pass null params for now, routing logic will handle the tab switch
+      onNavigate(cta.tab, null);
     }
   };
 
@@ -91,12 +182,9 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
 
   return (
     <>
-      {/* Backdrop */}
       <div className={`drawer-backdrop ${isOpen ? 'visible' : ''}`} onClick={onClose} />
 
-      {/* Drawer */}
       <div className={`chat-drawer ${isOpen ? 'open' : ''}`}>
-        {/* Header */}
         <div className="drawer-header">
           <div className="drawer-agent-info">
             <div className="drawer-agent-avatar">
@@ -113,7 +201,6 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
           <button className="btn-icon" onClick={onClose}><X size={22} /></button>
         </div>
 
-        {/* Messages */}
         <div className="drawer-messages">
           {messages.map((msg, i) => (
             <div key={i} className={`message-wrapper ${msg.role}`}>
@@ -122,7 +209,6 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
                   className={`message-bubble ${msg.role}`}
                   dangerouslySetInnerHTML={{ __html: formatText(msg.content) }}
                 />
-                {/* Inline CTA button */}
                 {msg.role === 'agent' && msg.cta && (
                   <button
                     className="chat-cta-btn"
@@ -136,47 +222,55 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
               </div>
             </div>
           ))}
+          
+          {/* Show interim transcript when recording */}
+          {interimTranscript && (
+            <div className="message-wrapper user">
+              <div className="message-bubble-wrap">
+                <div className="message-bubble user" style={{ opacity: 0.7, fontStyle: 'italic' }}>
+                  {inputText} {interimTranscript}
+                </div>
+              </div>
+            </div>
+          )}
+
           {isTyping && (
             <div className="message-wrapper agent">
               <div className="message-bubble agent typing-indicator">
-                <Activity size={14} className="pulse-anim" /> processing intent...
+                <Activity size={14} className="pulse-anim" /> Core está processando...
               </div>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Mic + Input */}
         <div className="drawer-input-area">
-          {/* Sound wave animation */}
           {waveActive && (
             <div className="sound-wave">
               {[...Array(7)].map((_, i) => (
-                <div key={i} className="wave-bar" style={{ animationDelay: `${i * 0.1}s` }} />
+               <div key={i} className="wave-bar" style={{ animationDelay: `${i * 0.1}s` }} />
               ))}
             </div>
           )}
 
-          {/* Big mic button */}
           <button
             id="mic-btn-main"
             className={`fab-mic ${isRecording ? 'recording' : ''}`}
-            onClick={handleMic}
+            onClick={toggleMic}
           >
             {isRecording ? <MicOff size={32} /> : <Mic size={32} />}
           </button>
 
           <p className="mic-hint">
-            {isRecording ? 'Listening...' : 'Press to talk to Core'}
+            {isRecording ? 'Ouvindo... toque para enviar' : 'Pressione para falar com o Core'}
           </p>
 
-          {/* Quick action chips */}
           {!isRecording && messages.length <= 1 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 12 }}>
               {QUICK_ACTIONS.map(action => (
                 <button
                   key={action.label}
-                  onClick={() => sendMessage(action.prompt)}
+                  onClick={() => handleSendMessage(action.prompt)}
                   style={{ fontSize: 12, padding: '7px 14px', borderRadius: 100, border: '1px solid var(--border-color)', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.04)', cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-cyan)'; e.currentTarget.style.color = 'var(--accent-cyan)'; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
@@ -187,16 +281,18 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
             </div>
           )}
 
-          {/* Text fallback */}
           <form onSubmit={handleSubmit} className="input-form" style={{ marginTop: '16px' }}>
             <input
               type="text"
-              placeholder="Or write your message..."
+              placeholder="Ou digite sua mensagem..."
               value={inputText}
               onChange={e => setInputText(e.target.value)}
               className="text-input"
+              disabled={isRecording}
             />
-            <button type="submit" className="send-btn"><Send size={20} /></button>
+            <button type="submit" className="send-btn" disabled={!inputText.trim() && !interimTranscript.trim()}>
+              <Send size={20} />
+            </button>
           </form>
         </div>
       </div>

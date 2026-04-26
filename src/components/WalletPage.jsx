@@ -10,7 +10,7 @@ const METHODS = [
   { id: 'metamask',      group: 'crypto', label: 'MetaMask',        desc: 'Browser wallet',               color: '#F6851B', emoji: '🦊' },
   { id: 'walletconnect', group: 'crypto', label: 'WalletConnect',   desc: 'Any mobile wallet',            color: '#3B99FC', emoji: '📱' },
   { id: 'coinbase',      group: 'crypto', label: 'Coinbase Wallet', desc: 'Coinbase ecosystem',            color: '#0052FF', emoji: '🔵' },
-  { id: 'tangem',        group: 'crypto', label: 'Tangem',          desc: 'Hardware Wallet NFC',          color: '#1E293B', emoji: '🪪' },
+  { id: 'tangem',        group: 'crypto', label: 'Tangem',          desc: 'Hardware Wallet NFC',          color: '#94A3B8', emoji: '🪪' },
   { id: 'yodl',          group: 'crypto', label: 'Yodl',            desc: 'Crypto Payments Gateway',      color: '#818CF8', emoji: '🪙' },
 ];
 
@@ -87,9 +87,6 @@ const WalletPage = ({ onNavigate }) => {
         <div style={{ flex: 1 }}>
           <h4 style={{ fontSize: 13, color: 'var(--text-secondary)' }}>$IPE Balance</h4>
           <p style={{ color: '#F59E0B', fontSize: 18, fontWeight: 800, fontFamily: 'monospace' }}>2,040,000</p>
-        </div>
-        <div style={{ padding: '4px 8px', borderRadius: 100, background: 'rgba(56,189,248,0.15)', color: '#38BDF8', fontSize: 11, fontWeight: 700, border: '1px solid rgba(56,189,248,0.3)' }}>
-          Rank #2
         </div>
       </div>
 

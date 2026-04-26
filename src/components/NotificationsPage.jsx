@@ -13,7 +13,14 @@ const NOTIFICATIONS = [
 ];
 
 const NotificationsPage = () => {
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('ipeXchange_notifications');
+    return saved ? JSON.parse(saved) : NOTIFICATIONS;
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('ipeXchange_notifications', JSON.stringify(notifications));
+  }, [notifications]);
 
   const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
   const dismiss = (id) => setNotifications(prev => prev.filter(n => n.id !== id));

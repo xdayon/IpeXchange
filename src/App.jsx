@@ -46,14 +46,7 @@ function App() {
       {appState === 'login' && (
         <div className="app-layout">
           <main className="main-content">
-            <LoginScreen onLogin={() => handleSetAppState('connect')} />
-          </main>
-        </div>
-      )}
-      {appState === 'connect' && (
-        <div className="app-layout">
-          <main className="main-content">
-            <ConnectAgentScreen onConnect={() => handleSetAppState('sync')} />
+            <LoginScreen onLogin={() => handleSetAppState('sync')} />
           </main>
         </div>
       )}

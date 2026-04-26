@@ -23,14 +23,14 @@ export const mockListings = [
   },
   {
     id: 'l3',
-    title: 'Organic Honey (500g)',
+    title: 'Bracatinga Honey (500g)',
     category: 'Products',
     provider: 'Ipe Farm', type: 'Product', acceptedPayments: ['fiat', 'crypto', 'trade'], price: '$12',
-    description: '100% pure wildflower honey from our local sanctuary.',
+    description: '100% pure Bracatinga honeydew from our local sanctuary.',
     isPublic: true,
     coordinates: { lat: -27.4428, lng: -48.5068 },
     nodeName: 'ipe-farm-node',
-    image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&q=80&w=400&h=300'
+    image: 'https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
     id: 'l4',
@@ -100,14 +100,14 @@ export const mockListings = [
   },
   {
     id: 'l23',
-    title: 'Book: Regenerative Design',
+    title: 'Used iPhone 11',
     category: 'Donations',
-    provider: 'Ipe Library', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
-    description: 'Physical book by Bill Reed. Free for residents.',
+    provider: 'Tech Donation Hub', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
+    description: 'Working iPhone 11 with 82% battery health. Donating to someone in need.',
     isPublic: true,
     coordinates: { lat: -27.4405, lng: -48.5050 },
-    nodeName: 'community-shelf',
-    image: 'https://images.unsplash.com/photo-1544640808-32ca72ac7f37?auto=format&fit=crop&q=80&w=400&h=300'
+    nodeName: 'tech-hub',
+    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
     id: 'l25',
@@ -122,14 +122,14 @@ export const mockListings = [
   },
   {
     id: 'l27',
-    title: 'Jurere Running Group',
+    title: 'Winter Clothes Bundle',
     category: 'Donations',
-    provider: 'Private Citizen', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
-    description: 'Meet at 6am on the beach. All levels.',
+    provider: 'Community Wardrobe', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
+    description: 'Jackets, sweaters, and scarves in good condition. Size M/L.',
     isPublic: true,
     coordinates: { lat: -27.4400, lng: -48.5100 },
-    nodeName: 'social-node',
-    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&q=80&w=400&h=300'
+    nodeName: 'wardrobe-node',
+    image: 'https://images.unsplash.com/photo-1520006403909-838d6b92c22e?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
     id: 'l28',
@@ -140,7 +140,7 @@ export const mockListings = [
     isPublic: true,
     coordinates: { lat: -27.4430, lng: -48.5080 },
     nodeName: 'art-node',
-    image: 'https://images.unsplash.com/photo-1620921447048-2ce10332f1ea?auto=format&fit=crop&q=80&w=400&h=300'
+    image: 'https://images.unsplash.com/photo-1598910839951-bdfc9d2f2d93?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
     id: 'l29',
@@ -152,7 +152,7 @@ export const mockListings = [
     isPublic: true,
     coordinates: { lat: -27.4442, lng: -48.5015 },
     nodeName: 'Apiary',
-    image: 'https://images.unsplash.com/photo-1587049352851-8d4e89134a41?auto=format&fit=crop&q=80&w=400&h=300'
+    image: 'https://images.unsplash.com/photo-1552528172-e1bc14eb581e?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
     id: 'l30',
@@ -164,7 +164,7 @@ export const mockListings = [
     isPublic: true,
     coordinates: { lat: -27.4450, lng: -48.5080 },
     nodeName: 'workshop-node',
-    image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=400&h=300'
+    image: 'https://images.unsplash.com/photo-1540314227222-2daee298072c?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
     id: 'l31',

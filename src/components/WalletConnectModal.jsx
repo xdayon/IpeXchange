@@ -306,7 +306,7 @@ const TangemFlow = ({ onSuccess }) => {
             <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: 2, color: '#fff' }}>TANGEM</span>
           </div>
           <button className="wc-confirm-btn" style={{ background: '#1E293B', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }} onClick={handleTap}>
-            Simular Aproximação NFC
+            Aproximar Cartão NFC
           </button>
         </div>
       )}
