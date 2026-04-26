@@ -44,7 +44,9 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
     return () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
-        mediaRecorderRef.current.stream?.getTracks().forEach(track => track.stop());
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
@@ -107,6 +109,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       
       let options = {};
       if (typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported('audio/webm')) {
@@ -115,8 +118,6 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
 
       const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
-      // Store stream to stop tracks later
-      mediaRecorder.stream = stream;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
@@ -141,7 +142,9 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
         };
         
         // Stop all audio tracks to turn off the microphone light
-        stream.getTracks().forEach(track => track.stop());
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+        }
       };
 
       mediaRecorder.start();
@@ -149,7 +152,11 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
       setWaveActive(true);
     } catch (err) {
       console.error('Failed to start recording:', err);
-      alert(`Erro: ${err.message || 'Falha ao acessar o microfone'}`);
+      if (err.name === 'NotFoundError' || err.message.includes('Requested device not found')) {
+        alert('Erro: Nenhum microfone encontrado. Conecte um microfone ao seu dispositivo e tente novamente.');
+      } else {
+        alert(`Erro: ${err.message || 'Falha ao acessar o microfone'}`);
+      }
     }
   };
 
