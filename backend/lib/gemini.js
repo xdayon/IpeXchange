@@ -2,8 +2,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Use gemini-1.5-flash-8b — separate free tier quota from 2.0-flash, fast and capable
-const MODEL = 'gemini-1.5-flash-8b';
+// gemini-2.0-flash-lite — lightweight, free tier, reliably available
+const MODEL = 'gemini-2.0-flash-lite';
 
 const SYSTEM_PROMPT = `You are Xchange Core, the AI agent of IpeXchange — a decentralized local economy platform built on IpeDAO, operating in Jurerê International, Florianópolis, Brazil.
 
@@ -105,16 +105,17 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
 
     return { text, cta, rateLimited: false };
   } catch (err) {
-    console.error('Gemini error:', err.message, '| Audio:', !!audioBase64, '| MimeType:', mimeType);
+    const msg = err.message || 'Unknown error';
+    console.error('Gemini error:', msg, '| Audio:', !!audioBase64, '| MimeType:', mimeType);
 
-    if (err.message?.includes('429') || err.message?.includes('quota') || err.message?.includes('RESOURCE_EXHAUSTED')) {
+    if (msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
       return {
         text: '⚡ Too many requests. Please wait a moment and try again!',
         cta: null,
         rateLimited: true,
       };
     }
-    if (err.message?.includes('invalid') || err.message?.toLowerCase().includes('audio')) {
+    if (msg.includes('invalid') || msg.toLowerCase().includes('audio')) {
       return {
         text: "I had trouble processing that audio. Could you try recording again or type your message?",
         cta: null,
@@ -122,7 +123,7 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
       };
     }
     return {
-      text: 'An error occurred. Please try again.',
+      text: `Error: ${msg.slice(0, 120)}`,
       cta: null,
       rateLimited: false,
     };
