@@ -65,7 +65,7 @@ app.post('/api/chat', async (req, res) => {
     const history = await getSessionHistory(sessionId, 20);
 
     // Save user message
-    const displayMessage = isAudio && !message?.trim() ? '🎤 Áudio Enviado' : message;
+    const displayMessage = isAudio && !message?.trim() ? '🎤 Audio Sent' : message;
     await saveMessage({ sessionId, role: 'user', content: displayMessage, isAudio });
 
     // Call Gemini
@@ -94,7 +94,7 @@ app.post('/api/chat', async (req, res) => {
     });
   } catch (err) {
     console.error('Chat error:', err);
-    return res.status(500).json({ error: 'Internal error', text: 'Erro interno. Tente novamente.' });
+    return res.status(500).json({ error: 'Internal error', text: 'Internal error. Please try again.' });
   }
 });
 

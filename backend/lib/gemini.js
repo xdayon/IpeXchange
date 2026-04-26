@@ -59,7 +59,7 @@ Response format: Keep responses under 120 words. Be direct and actionable. Use *
 CTA_ACTION: [discover|checkout|investments|circular|home|none]
 CTA_LABEL: [Short button label]
 
-If the user is speaking Portuguese, respond in Portuguese. If English, respond in English.`;
+Always respond in English, regardless of the language the user speaks or writes in.`;
 
 const INTENT_EXTRACTION_PROMPT = `Analyze this user message and extract the trading intent. Return ONLY valid JSON, no markdown:
 {
@@ -72,7 +72,7 @@ const INTENT_EXTRACTION_PROMPT = `Analyze this user message and extract the trad
 export async function chat(history, userMessage, audioBase64 = null, mimeType = null) {
   if (isRateLimited()) {
     return {
-      text: '⚡ O Core está processando muitos dados do ecossistema agora. Aguarde alguns instantes e tente novamente — a rede está ativa!',
+      text: '⚡ Core is processing too much data from the ecosystem right now. Please wait a moment and try again — the network is active!',
       cta: null,
       rateLimited: true,
     };
@@ -101,7 +101,7 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
           data: audioBase64
         }
       });
-      parts.push({ text: userMessage || 'Por favor, ouça este áudio e responda naturalmente como o Xchange Core, no mesmo idioma do áudio.' });
+      parts.push({ text: userMessage || 'Please listen to this audio and respond naturally as Xchange Core, in English.' });
     } else {
       parts.push({ text: userMessage });
     }
@@ -119,7 +119,7 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
     if (ctaActionMatch && ctaActionMatch[1] !== 'none') {
       cta = {
         tab: ctaActionMatch[1].toLowerCase(),
-        label: ctaLabelMatch ? ctaLabelMatch[1].trim() : 'Ver mais',
+        label: ctaLabelMatch ? ctaLabelMatch[1].trim() : 'View more',
       };
       // Remove CTA lines from the displayed text
       text = rawText
@@ -133,13 +133,13 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
     console.error('Gemini error:', err.message);
     if (err.message?.includes('429') || err.message?.includes('quota')) {
       return {
-        text: '⚡ O Core está processando muitos dados agora. Aguarde um momento!',
+        text: '⚡ Core is processing a lot of data right now. Please wait a moment!',
         cta: null,
         rateLimited: true,
       };
     }
     return {
-      text: 'Ocorreu um erro na análise. Tente novamente.',
+      text: 'An error occurred during analysis. Please try again.',
       cta: null,
       rateLimited: false,
     };

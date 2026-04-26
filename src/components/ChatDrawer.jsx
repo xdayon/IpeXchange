@@ -4,11 +4,11 @@ import xchangeCoreImg from '../assets/xchange_core.png';
 import { sendChatMessage, fetchSessionHistory } from '../lib/api';
 
 const QUICK_ACTIONS = [
-  { label: '✨ Proactive Insight', prompt: 'Me mostre um insight proativo para mim hoje' },
-  { label: '💰 Price item',        prompt: 'Preciso de ajuda para precificar um item que quero vender' },
-  { label: '🔄 Suggest trades',    prompt: 'Sugira opções de trocas justas para mim' },
-  { label: '🌐 Circular Trade',   prompt: 'Busque oportunidades de trocas multi-hop circulares no ecossistema' },
-  { label: '📈 P2P Credit',       prompt: 'Quero saber sobre opções de crédito e investimento P2P' },
+  { label: '✨ Proactive Insight', prompt: 'Show me a proactive insight for today' },
+  { label: '💰 Price item',        prompt: 'I need help pricing an item I want to sell' },
+  { label: '🔄 Suggest trades',    prompt: 'Suggest fair trade options for me' },
+  { label: '🌐 Circular Trade',   prompt: 'Search for circular multi-hop trade opportunities in the ecosystem' },
+  { label: '📈 P2P Credit',       prompt: 'I want to know about P2P credit and investment options' },
 ];
 
 const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
@@ -67,7 +67,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
     if (history.length === 0) {
       setMessages([{ 
         role: 'agent', 
-        content: 'Olá! Eu sou o **Xchange Core**. Me diga o que você precisa ou o que está oferecendo — você pode me enviar um áudio!', 
+        content: "Hello! I am the **Xchange Core**. Tell me what you need or what you're offering — you can even send me an audio!", 
         cta: null 
       }]);
     } else {
@@ -79,7 +79,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
     if (!text.trim() && !audioBase64) return;
     
     // Add user message to UI immediately
-    const displayContent = isAudio && !text.trim() ? '🎤 Áudio Enviado' : text;
+    const displayContent = isAudio && !text.trim() ? '🎤 Audio Sent' : text;
     setMessages(prev => [...prev, { role: 'user', content: displayContent, cta: null }]);
     setInputText('');
     setIsTyping(true);
@@ -94,7 +94,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
     } catch (err) {
       setMessages(prev => [...prev, { 
         role: 'agent', 
-        content: 'Desculpe, ocorreu um erro de conexão com o Core. Tente novamente.', 
+        content: 'Sorry, a connection error occurred with the Core. Please try again.', 
         cta: null 
       }]);
     } finally {
@@ -105,7 +105,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
   const startRecording = async () => {
     try {
       if (!window.MediaRecorder) {
-        alert('Seu navegador não suporta gravação de áudio nativa. Por favor, atualize seu navegador.');
+        alert('Your browser does not support native audio recording. Please update your browser.');
         return;
       }
 
@@ -154,9 +154,9 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
     } catch (err) {
       console.error('Failed to start recording:', err);
       if (err.name === 'NotFoundError' || err.message.includes('Requested device not found')) {
-        alert('Erro: Nenhum microfone encontrado. Conecte um microfone ao seu dispositivo e tente novamente.');
+        alert('Error: No microphone found. Please connect a microphone to your device and try again.');
       } else {
-        alert(`Erro: ${err.message || 'Falha ao acessar o microfone'}`);
+        alert(`Error: ${err.message || 'Failed to access microphone'}`);
       }
     }
   };
@@ -244,7 +244,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
           {isTyping && (
             <div className="message-wrapper agent">
               <div className="message-bubble agent typing-indicator">
-                <Activity size={14} className="pulse-anim" /> Core está processando...
+                <Activity size={14} className="pulse-anim" /> Core is processing...
               </div>
             </div>
           )}
@@ -291,7 +291,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
           <form onSubmit={handleSubmit} className="input-form" style={{ marginTop: '16px' }}>
             <input
               type="text"
-              placeholder="Ou digite sua mensagem..."
+              placeholder="Type your message..."
               value={inputText}
               onChange={e => setInputText(e.target.value)}
               className="text-input"
