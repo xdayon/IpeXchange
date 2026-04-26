@@ -21,7 +21,7 @@ services:
         value: https://ipexchange.onrender.com
     autoDeploy: true
 
-  - type: web
+  - type: static
     name: ipexchange
     env: static
     buildCommand: npm install && npm run build
