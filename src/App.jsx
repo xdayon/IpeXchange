@@ -1,5 +1,4 @@
 import { useState, lazy, Suspense } from 'react';
-import { PrivyProvider } from '@privy-io/react-auth';
 import './App.css';
 
 // Lazy-load all onboarding screens — they are large and only used once on first visit
@@ -43,42 +42,30 @@ function App() {
   };
 
   return (
-    <PrivyProvider
-      appId="cml4ac6iq01s6js0cebe4xl34"
-      config={{
-        loginMethods: ['email', 'wallet'],
-        appearance: {
-          theme: 'dark',
-          accentColor: '#B4F44A',
-          logo: 'https://ipecity.xyz/ipe-logo.png', // Fallback, could be removed or adjusted
-        },
-      }}
-    >
-      <Suspense fallback={<FullScreenLoader />}>
-        {appState === 'login' && (
-          <div className="app-layout">
-            <main className="main-content">
-              <LoginScreen onLogin={() => handleSetAppState('agent')} />
-            </main>
-          </div>
-        )}
-        {appState === 'agent' && (
-          <div className="app-layout">
-            <main className="main-content">
-              <ConnectAgentScreen onConnect={() => handleSetAppState('sync')} />
-            </main>
-          </div>
-        )}
-        {appState === 'sync' && (
-          <div className="app-layout">
-            <main className="main-content">
-              <SyncScreen onComplete={() => handleSetAppState('portal')} />
-            </main>
-          </div>
-        )}
-        {appState === 'portal' && <MainPortal />}
-      </Suspense>
-    </PrivyProvider>
+    <Suspense fallback={<FullScreenLoader />}>
+      {appState === 'login' && (
+        <div className="app-layout">
+          <main className="main-content">
+            <LoginScreen onLogin={() => handleSetAppState('agent')} />
+          </main>
+        </div>
+      )}
+      {appState === 'agent' && (
+        <div className="app-layout">
+          <main className="main-content">
+            <ConnectAgentScreen onConnect={() => handleSetAppState('sync')} />
+          </main>
+        </div>
+      )}
+      {appState === 'sync' && (
+        <div className="app-layout">
+          <main className="main-content">
+            <SyncScreen onComplete={() => handleSetAppState('portal')} />
+          </main>
+        </div>
+      )}
+      {appState === 'portal' && <MainPortal />}
+    </Suspense>
   );
 }
 
