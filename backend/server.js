@@ -19,7 +19,7 @@ app.set('trust proxy', 1);
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -51,10 +51,10 @@ app.get('/api/health', (req, res) => {
 
 // ── Chat endpoint ─────────────────────────────────────────────────────────────
 app.post('/api/chat', async (req, res) => {
-  const { sessionId, message, isAudio = false } = req.body;
+  const { sessionId, message, isAudio = false, audioBase64 = null, mimeType = null } = req.body;
 
-  if (!sessionId || !message?.trim()) {
-    return res.status(400).json({ error: 'sessionId and message are required' });
+  if (!sessionId || (!message?.trim() && !audioBase64)) {
+    return res.status(400).json({ error: 'sessionId and either message or audio are required' });
   }
 
   try {
@@ -65,10 +65,11 @@ app.post('/api/chat', async (req, res) => {
     const history = await getSessionHistory(sessionId, 20);
 
     // Save user message
-    await saveMessage({ sessionId, role: 'user', content: message, isAudio });
+    const displayMessage = isAudio && !message?.trim() ? '🎤 Áudio Enviado' : message;
+    await saveMessage({ sessionId, role: 'user', content: displayMessage, isAudio });
 
     // Call Gemini
-    const response = await chat(history, message);
+    const response = await chat(history, message, audioBase64, mimeType);
 
     // Save agent response
     await saveMessage({ sessionId, role: 'agent', content: response.text });

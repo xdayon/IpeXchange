@@ -69,7 +69,7 @@ const INTENT_EXTRACTION_PROMPT = `Analyze this user message and extract the trad
   "confidence": 0.0-1.0
 }`;
 
-export async function chat(history, userMessage) {
+export async function chat(history, userMessage, audioBase64 = null, mimeType = null) {
   if (isRateLimited()) {
     return {
       text: '⚡ O Core está processando muitos dados do ecossistema agora. Aguarde alguns instantes e tente novamente — a rede está ativa!',
@@ -91,8 +91,22 @@ export async function chat(history, userMessage) {
       parts: [{ text: msg.content }],
     }));
 
-    const chat = model.startChat({ history: geminiHistory });
-    const result = await chat.sendMessage(userMessage);
+    const chatSession = model.startChat({ history: geminiHistory });
+    
+    const parts = [];
+    if (audioBase64) {
+      parts.push({
+        inlineData: {
+          mimeType: mimeType || 'audio/webm',
+          data: audioBase64
+        }
+      });
+      parts.push({ text: userMessage || 'Por favor, ouça este áudio e responda naturalmente como o Xchange Core, no mesmo idioma do áudio.' });
+    } else {
+      parts.push({ text: userMessage });
+    }
+
+    const result = await chatSession.sendMessage(parts);
     const rawText = result.response.text();
 
     // Parse CTA from response

@@ -19,15 +19,15 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [waveActive, setWaveActive] = useState(false);
   
-  // Speech Recognition state
-  const [recognition, setRecognition] = useState(null);
-  const [interimTranscript, setInterimTranscript] = useState('');
+  // Speech Recognition state replaced by MediaRecorder refs
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping, interimTranscript]);
+  }, [messages, isTyping]);
 
   // Init Session
   useEffect(() => {
@@ -39,46 +39,14 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
     setSessionId(sid);
   }, []);
 
-  // Init Speech Recognition
+  // Clean up media tracks on unmount
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const rec = new SpeechRecognition();
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.lang = 'pt-BR'; // Default to Portuguese
-
-      rec.onresult = (event) => {
-        let finalStr = '';
-        let interimStr = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalStr += event.results[i][0].transcript;
-          } else {
-            interimStr += event.results[i][0].transcript;
-          }
-        }
-        setInterimTranscript(interimStr);
-        if (finalStr) {
-          // Update input text with final results as they come in
-          setInputText(prev => (prev + ' ' + finalStr).trim());
-        }
-      };
-
-      rec.onerror = (event) => {
-        console.error('Speech recognition error', event.error);
-        setIsRecording(false);
-        setWaveActive(false);
-      };
-
-      rec.onend = () => {
-        setIsRecording(false);
-        setWaveActive(false);
-        setInterimTranscript('');
-      };
-
-      setRecognition(rec);
-    }
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current.stream?.getTracks().forEach(track => track.stop());
+      }
+    };
   }, []);
 
   // Reset/Load on open
@@ -104,17 +72,17 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
     }
   };
 
-  const handleSendMessage = async (text, isAudio = false) => {
-    if (!text.trim()) return;
+  const handleSendMessage = async (text, isAudio = false, audioBase64 = null, mimeType = null) => {
+    if (!text.trim() && !audioBase64) return;
     
     // Add user message to UI immediately
-    setMessages(prev => [...prev, { role: 'user', content: text, cta: null }]);
+    const displayContent = isAudio && !text.trim() ? '🎤 Áudio Enviado' : text;
+    setMessages(prev => [...prev, { role: 'user', content: displayContent, cta: null }]);
     setInputText('');
-    setInterimTranscript('');
     setIsTyping(true);
 
     try {
-      const response = await sendChatMessage(sessionId, text, isAudio);
+      const response = await sendChatMessage(sessionId, text, isAudio, audioBase64, mimeType);
       setMessages(prev => [...prev, { 
         role: 'agent', 
         content: response.text, 
@@ -131,40 +99,66 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
     }
   };
 
-  const toggleMic = () => {
-    if (!recognition) {
-      alert('Seu navegador não suporta reconhecimento de voz (tente no Google Chrome).');
-      return;
-    }
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      // Store stream to stop tracks later
+      mediaRecorder.stream = stream;
+      audioChunksRef.current = [];
 
-    if (isRecording) {
-      recognition.stop();
-      setIsRecording(false);
-      setWaveActive(false);
-      // Let onend event handle the rest, but if there's text, we can send it
-      if (inputText.trim() || interimTranscript.trim()) {
-        const finalMessage = (inputText + ' ' + interimTranscript).trim();
-        if (finalMessage) {
-          handleSendMessage(finalMessage, true);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
         }
-      }
+      };
+
+      mediaRecorder.onstop = () => {
+        const mimeType = mediaRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        
+        // Convert Blob to Base64
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const base64Data = reader.result.split(',')[1];
+          handleSendMessage('', true, base64Data, mimeType);
+        };
+        
+        // Stop all audio tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setWaveActive(true);
+    } catch (err) {
+      console.error('Failed to start recording:', err);
+      alert('Não foi possível acessar o microfone. Verifique as permissões.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+    setWaveActive(false);
+  };
+
+  const toggleMic = () => {
+    if (isRecording) {
+      stopRecording();
     } else {
-      setInputText('');
-      setInterimTranscript('');
-      try {
-        recognition.start();
-        setIsRecording(true);
-        setWaveActive(true);
-      } catch (e) {
-        console.error('Failed to start recognition:', e);
-      }
+      startRecording();
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isRecording && recognition) {
-      recognition.stop();
+    if (isRecording) {
+      stopRecording();
     }
     handleSendMessage(inputText, false);
   };
@@ -223,16 +217,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
             </div>
           ))}
           
-          {/* Show interim transcript when recording */}
-          {interimTranscript && (
-            <div className="message-wrapper user">
-              <div className="message-bubble-wrap">
-                <div className="message-bubble user" style={{ opacity: 0.7, fontStyle: 'italic' }}>
-                  {inputText} {interimTranscript}
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {isTyping && (
             <div className="message-wrapper agent">
@@ -290,7 +275,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
               className="text-input"
               disabled={isRecording}
             />
-            <button type="submit" className="send-btn" disabled={!inputText.trim() && !interimTranscript.trim()}>
+            <button type="submit" className="send-btn" disabled={!inputText.trim()}>
               <Send size={20} />
             </button>
           </form>
