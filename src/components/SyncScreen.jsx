@@ -33,7 +33,8 @@ const SyncScreen = ({ onComplete }) => {
     // Transition after 4s
     const done = setTimeout(onComplete, 4200);
     return () => { clearInterval(interval); clearTimeout(done); };
-  }, [onComplete]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="onboarding-screen">
