@@ -101,41 +101,62 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
 
   const startRecording = async () => {
     try {
+      if (!window.MediaRecorder) {
+        alert('Seu navegador não suporta gravação de áudio nativa. Por favor, atualize seu navegador.');
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      // Detect supported mime type for cross-browser compatibility (Safari uses mp4, Chrome uses webm)
+      let options = {};
+      const types = ['audio/webm', 'audio/mp4', 'audio/ogg', 'audio/aac'];
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+          options.mimeType = type;
+          break;
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
       // Store stream to stop tracks later
       mediaRecorder.stream = stream;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = () => {
-        const mimeType = mediaRecorder.mimeType || 'audio/webm';
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        // Fallback to the detected mimeType if mediaRecorder doesn't provide it
+        const finalMimeType = mediaRecorder.mimeType || options.mimeType || 'audio/mp4';
+        const audioBlob = new Blob(audioChunksRef.current, { type: finalMimeType });
         
         // Convert Blob to Base64
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = () => {
           const base64Data = reader.result.split(',')[1];
-          handleSendMessage('', true, base64Data, mimeType);
+          if (base64Data) {
+            handleSendMessage('', true, base64Data, finalMimeType);
+          }
         };
         
-        // Stop all audio tracks
+        // Stop all audio tracks to turn off the microphone light
         stream.getTracks().forEach(track => track.stop());
       };
 
-      mediaRecorder.start();
+      // Start recording with timeslice (generates dataavailable events every 1s)
+      // This helps Safari which sometimes fails to fire ondataavailable if left empty
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setWaveActive(true);
     } catch (err) {
       console.error('Failed to start recording:', err);
-      alert('Não foi possível acessar o microfone. Verifique as permissões.');
+      alert('Não foi possível acessar o microfone ou ocorreu um erro na gravação. Tente em outro navegador.');
     }
   };
 
