@@ -14,6 +14,9 @@ import {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust Render's reverse proxy (required for express-rate-limit and HTTPS)
+app.set('trust proxy', 1);
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
 app.use(express.json());
@@ -21,6 +24,8 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:4173',
+    'https://ipexchange.onrender.com',
+    'https://ipexchange-front.onrender.com',
     process.env.FRONTEND_URL,
   ].filter(Boolean),
   credentials: true,
