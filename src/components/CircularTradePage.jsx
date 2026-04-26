@@ -1,38 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Activity, RefreshCw, Layers } from 'lucide-react';
 import MultiHopTradeCard from './MultiHopTradeCard';
 
-const MOCK_CYCLES = [
-  {
-    id: 'cycle-1',
-    matchScore: 98,
-    nodes: [
-      { user: 'You', avatar: null, item: 'Electric Bike', rep: 85 },
-      { user: 'Carlos M.', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100&h=100', item: 'Web Consulting (10h)', rep: 92 },
-      { user: 'Bia T.', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100&h=100', item: 'Macbook Pro M1', rep: 98 }
-    ]
-  },
-  {
-    id: 'cycle-2',
-    matchScore: 94,
-    nodes: [
-      { user: 'You', avatar: null, item: 'English Lessons (4h)', rep: 85 },
-      { user: 'Sofia L.', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100&h=100', item: 'Graphic Design (Logo)', rep: 89 },
-      { user: 'Rafa G.', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100&h=100', item: 'Physiotherapy Sessions (2x)', rep: 95 },
-      { user: 'João P.', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100&h=100', item: 'Noise Cancelling Headphones', rep: 91 }
-    ]
-  }
-];
+
 
 const CircularTradePage = () => {
-  const [cycles, setCycles] = useState(MOCK_CYCLES);
+  const [cycles, setCycles] = useState([]);
   const [isScanning, setIsScanning] = useState(false);
 
-  const handleScan = () => {
+  const fetchCycles = async () => {
     setIsScanning(true);
-    setTimeout(() => {
+    try {
+      // Hardcoded test-session-id until real auth is implemented
+      const res = await fetch('https://ipexchange.onrender.com/api/cycles/test-session-id');
+      if (res.ok) {
+        const data = await res.json();
+        setCycles(data.cycles || []);
+      }
+    } catch (err) {
+      console.error('Error fetching cycles:', err);
+    } finally {
       setIsScanning(false);
-    }, 2000);
+    }
+  };
+
+  useEffect(() => {
+    fetchCycles();
+  }, []);
+
+  const handleScan = () => {
+    fetchCycles();
   };
 
   return (
@@ -84,6 +81,12 @@ const CircularTradePage = () => {
 
       {/* Cycle List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {cycles.length === 0 && !isScanning && (
+          <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            <p>No circular trade cycles found matching your current demands and listings.</p>
+            <p style={{ fontSize: 13, marginTop: 8 }}>Try adding more listings or exploring other categories.</p>
+          </div>
+        )}
         {cycles.map(cycle => (
           <MultiHopTradeCard key={cycle.id} cycle={cycle} />
         ))}

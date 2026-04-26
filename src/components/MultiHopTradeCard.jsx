@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowRight, ArrowDown, Repeat, CheckCircle2, Zap, User, Lock, Activity } from 'lucide-react';
+import DataBadge from './DataBadge';
 
 const MultiHopTradeCard = ({ cycle }) => {
   const [status, setStatus] = useState('pending'); // pending, signing, executed
@@ -61,6 +62,8 @@ const MultiHopTradeCard = ({ cycle }) => {
                     <span style={{ fontSize: 11, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 100, border: '1px solid rgba(255,255,255,0.05)' }}>
                       {node.tier || 'Resident'} · {node.rep} Ipê Rep
                     </span>
+                    {!isYou && <DataBadge isMock={node.is_mock} />}
+                    {isYou && <DataBadge isMock={false} />}
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)', padding: '8px 12px', borderRadius: 8, marginTop: 8 }}>
