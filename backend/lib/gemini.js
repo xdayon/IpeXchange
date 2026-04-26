@@ -2,8 +2,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// gemini-2.0-flash-lite — lightweight, free tier, reliably available
-const MODEL = 'gemini-2.0-flash-lite';
+// gemini-flash-latest — alias sempre disponível, sem problemas de cota
+const MODEL = 'gemini-flash-latest';
 
 const SYSTEM_PROMPT = `You are Xchange Core, the AI agent of IpeXchange — a decentralized local economy platform built on IpeDAO, operating in Jurerê International, Florianópolis, Brazil.
 
