@@ -1,3 +1,5 @@
+import honeyImg from '../assets/honey.png';
+
 export const mockListings = [
   // Original
   {
@@ -19,7 +21,7 @@ export const mockListings = [
     provider: 'Sítio do Ipê', type: 'Product', acceptedPayments: ['fiat', 'crypto', 'trade'], price: '$12',
     description: '100% natural honey produced in our local farm, and homemade guava jam. Fresh batch!',
     isPublic: true, coordinates: { lat: -27.4445, lng: -48.5040 }, nodeName: 'Organic Farm',
-    image: 'https://images.unsplash.com/photo-1587049352851-8d4e891347ad?auto=format&fit=crop&q=80&w=400&h=300'
+    image: honeyImg
   },
   {
     id: 'l4', title: '50" Smart TV (Used, Great Condition)', category: 'Products',
@@ -125,5 +127,66 @@ export const mockListings = [
     provider: 'Dev Network', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
     description: 'Ofereço 2h semanais de mentoria gratuita em Solidity e smart contracts.',
     isPublic: true, coordinates: { lat: -27.4400, lng: -48.5030 }, nodeName: 'Dev Mentor'
+  },
+  // Even more POIs for density
+  {
+    id: 'l21', title: 'Aluguel de Equipamentos Audiovisuais', category: 'Products',
+    provider: 'CineRent Jurerê', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 150/dia',
+    description: 'Luzes, microfones e tripés para criadores de conteúdo.',
+    isPublic: true, coordinates: { lat: -27.4450, lng: -48.4970 }, nodeName: 'AV Rental'
+  },
+  {
+    id: 'l22', title: 'Aula de Yoga ao Pôr do Sol', category: 'Services',
+    provider: 'Yoga com Ana', type: 'Service', acceptedPayments: ['fiat', 'crypto', 'trade'], price: 'R$ 40/aula',
+    description: 'Aulas em grupo na praia do Forte. Aceito trocas.',
+    isPublic: true, coordinates: { lat: -27.4360, lng: -48.5180 }, nodeName: 'Yoga Class'
+  },
+  {
+    id: 'l23', title: 'Livros de Negócios e Web3', category: 'Donations',
+    provider: 'Biblioteca Ipê', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
+    description: 'Ponto de troca de livros. Deixe um, leve outro.',
+    isPublic: true, coordinates: { lat: -27.4428, lng: -48.5050 }, nodeName: 'Book Swap'
+  },
+  {
+    id: 'l24', title: 'Massoterapia', category: 'Services',
+    provider: 'Zen Studio', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 120/sessão',
+    description: 'Massagem relaxante e desportiva.',
+    isPublic: true, coordinates: { lat: -27.4380, lng: -48.4940 }, nodeName: 'Massagem'
+  },
+  {
+    id: 'l25', title: 'Mudas de Plantas Nativas', category: 'Products',
+    provider: 'Verde Jurerê', type: 'Product', acceptedPayments: ['trade', 'crypto'], price: 'R$ 15',
+    description: 'Mudas de ipê, pitanga e araçá. Cultivo próprio.',
+    isPublic: true, coordinates: { lat: -27.4470, lng: -48.5000 }, nodeName: 'Viveiro'
+  },
+  {
+    id: 'l26', title: 'Assistência Técnica de Smartphones', category: 'Services',
+    provider: 'FixTech', type: 'Service', acceptedPayments: ['fiat'], price: 'Sob Consulta',
+    description: 'Troca de tela e bateria de iPhones e Androids.',
+    isPublic: true, coordinates: { lat: -27.4408, lng: -48.4910 }, nodeName: 'Phone Fix'
+  },
+  {
+    id: 'l27', title: 'Grupo de Corrida Jurerê', category: 'Donations',
+    provider: 'Runners Club', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
+    description: 'Grupo aberto que se reúne terças e quintas às 6h.',
+    isPublic: true, coordinates: { lat: -27.4365, lng: -48.5120 }, nodeName: 'Runners'
+  },
+  {
+    id: 'l28', title: 'Aulas de Violão e Guitarra', category: 'Services',
+    provider: 'Música & Cia', type: 'Service', acceptedPayments: ['fiat', 'trade'], price: 'R$ 80/hora',
+    description: 'Aulas para iniciantes e intermediários. Empréstimo de instrumento.',
+    isPublic: true, coordinates: { lat: -27.4435, lng: -48.5090 }, nodeName: 'Aulas Violão'
+  },
+  {
+    id: 'l29', title: 'Kombucha Artesanal', category: 'Products',
+    provider: 'BioFermentos', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 15',
+    description: 'Kombucha de hibisco com gengibre, garrafas de 500ml.',
+    isPublic: true, coordinates: { lat: -27.4442, lng: -48.5015 }, nodeName: 'Kombucha'
+  },
+  {
+    id: 'l30', title: 'Limpeza e Higienização de Estofados', category: 'Services',
+    provider: 'CleanSofa', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 200',
+    description: 'Atendimento a domicílio. Limpeza profunda a seco.',
+    isPublic: true, coordinates: { lat: -27.4398, lng: -48.5160 }, nodeName: 'Clean Sofa'
   }
 ];

@@ -62,10 +62,10 @@ const HomePage = () => {
           </h4>
           <ul className="feed-list" style={{ overflowY: 'auto', flex: 1, padding: '16px 0' }}>
             {LIVE_FEED.map((item, i) => (
-              <li key={i} className="feed-item" style={{ padding: '12px 24px', borderBottom: i < LIVE_FEED.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
-                <span className="feed-icon" style={{ color: item.color, background: `${item.color}15`, padding: 8, borderRadius: 8 }}>{item.icon}</span>
-                <div style={{ flex: 1 }}>
-                  <span className="feed-text" style={{ fontSize: 13, lineHeight: 1.4, display: 'block' }}>{item.text}</span>
+              <li key={i} className="feed-item" style={{ padding: '12px 24px', borderBottom: i < LIVE_FEED.length - 1 ? '1px solid var(--border-color)' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span className="feed-icon" style={{ color: item.color, background: `${item.color}15`, padding: 8, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span className="feed-text" style={{ fontSize: 13, lineHeight: 1.4, display: 'block', whiteSpace: 'normal' }}>{item.text}</span>
                   <span className="feed-time" style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{item.time} atrás</span>
                 </div>
               </li>
