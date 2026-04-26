@@ -1,6 +1,9 @@
 // API Library for IpeXchange
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+let API_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+if (API_URL.startsWith('http') && !API_URL.endsWith('/api')) {
+  API_URL += '/api';
+}
 
 export async function sendChatMessage(sessionId, message, isAudio = false) {
   try {
