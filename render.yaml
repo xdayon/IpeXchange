@@ -1,8 +1,9 @@
 services:
   - type: web
-    name: ipexchange-api
-        plan: free
-    env: node
+      name: ipexchange-api
+          plan: free
+              env: node
+            
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
