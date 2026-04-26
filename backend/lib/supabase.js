@@ -10,6 +10,7 @@ const inMemory = {
   intents: [],
   listings: [],
   demands: [],
+  cycles: [],
 };
 
 try {
@@ -147,7 +148,26 @@ export async function getHotIntents() {
 }
 
 // ─── Listings ─────────────────────────────────────────────────────────────────
+// Helper to format DB rows to frontend format
+function mapListingToFrontend(row) {
+  const acceptedPayments = [];
+  if (row.price_fiat > 0) acceptedPayments.push('fiat');
+  if (row.price_crypto > 0) acceptedPayments.push('crypto');
+  if (row.accepts_trade) acceptedPayments.push('trade');
+  if (acceptedPayments.length === 0) acceptedPayments.push('free');
 
+  let priceStr = 'Free';
+  if (row.price_fiat > 0) priceStr = `R$${row.price_fiat}`;
+
+  return {
+    ...row,
+    provider: row.provider_name || 'Anonymous',
+    image: row.image_url || 'https://images.unsplash.com/photo-1555661530-68c8e98db4e6?auto=format&fit=crop&q=80&w=400&h=300',
+    price: priceStr,
+    acceptedPayments,
+    isPublic: true,
+  };
+}
 export async function getListings({ category = null, limit = 50 } = {}) {
   if (!dbAvailable) {
     // Return in-memory listings if any, otherwise return empty
@@ -156,7 +176,7 @@ export async function getListings({ category = null, limit = 50 } = {}) {
 
   let query = supabase
     .from('listings')
-    .select('id, title, description, category, condition, price_fiat, price_crypto, accepts_trade, trade_wants, provider_name, image_url, active, created_at')
+    .select('id, title, description, category, condition, price_fiat, price_crypto, accepts_trade, trade_wants, provider_name, image_url, active, is_mock, created_at')
     .eq('active', true)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -168,7 +188,7 @@ export async function getListings({ category = null, limit = 50 } = {}) {
     console.error('getListings error:', error.message);
     return [];
   }
-  return data || [];
+  return (data || []).map(mapListingToFrontend);
 }
 
 export async function createListing({ sessionId, listing, embedding = null }) {
@@ -187,6 +207,7 @@ export async function createListing({ sessionId, listing, embedding = null }) {
       trade_wants, provider_name, image_url,
       active: true,
       ai_generated: true,
+      is_mock: false,
       created_at: new Date().toISOString(),
     };
     inMemory.listings.push(newListing);
@@ -209,6 +230,7 @@ export async function createListing({ sessionId, listing, embedding = null }) {
       image_url: image_url || null,
       active: true,
       ai_generated: true,
+      is_mock: false,
       embedding: embedding ? JSON.stringify(embedding) : null,
     })
     .select()
@@ -226,7 +248,7 @@ export async function searchListingsBySimilarity(embedding, limit = 5) {
   if (!dbAvailable || !embedding) return [];
 
   const { data, error } = await supabase.rpc('match_listings', {
-    query_embedding: embedding,
+    query_embedding: JSON.stringify(embedding),
     match_threshold: 0.70,
     match_count: limit,
   });
@@ -235,7 +257,7 @@ export async function searchListingsBySimilarity(embedding, limit = 5) {
     console.error('searchListingsBySimilarity error:', error.message);
     return [];
   }
-  return data || [];
+  return (data || []).map(mapListingToFrontend);
 }
 
 // ─── Demands ──────────────────────────────────────────────────────────────────
@@ -250,6 +272,7 @@ export async function createDemand({ sessionId, description, category, maxBudget
       max_budget_fiat: maxBudgetFiat || null,
       accepts_trade: acceptsTrade !== false,
       resolved: false,
+      is_mock: false,
       created_at: new Date().toISOString(),
     };
     inMemory.demands.push(demand);
@@ -265,6 +288,7 @@ export async function createDemand({ sessionId, description, category, maxBudget
       max_budget_fiat: maxBudgetFiat || null,
       accepts_trade: acceptsTrade !== false,
       resolved: false,
+      is_mock: false,
       embedding: embedding ? JSON.stringify(embedding) : null,
     })
     .select()
@@ -275,6 +299,25 @@ export async function createDemand({ sessionId, description, category, maxBudget
     return null;
   }
   return data;
+}
+
+// ─── Multi-Hop Engine ─────────────────────────────────────────────────────────
+
+export async function getTradeCycles(sessionId) {
+  if (!dbAvailable || !sessionId) return [];
+
+  const { data, error } = await supabase.rpc('find_trade_cycles', {
+    target_session_id: sessionId,
+    match_threshold: 0.65,
+  });
+
+  if (error) {
+    console.error('getTradeCycles error:', error.message);
+    return [];
+  }
+  
+  // Pl/PgSQL JSONB returns either null or an array
+  return data || [];
 }
 
 export default supabase;
