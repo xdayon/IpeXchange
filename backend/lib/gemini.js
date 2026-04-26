@@ -59,7 +59,7 @@ Response format: Keep responses under 120 words. Be direct and actionable. Use *
 CTA_ACTION: [discover|checkout|investments|circular|home|none]
 CTA_LABEL: [Short button label]
 
-Always respond in English, regardless of the language the user speaks or writes in.`;
+Language rule: ALWAYS respond in the SAME language the user is using — detect it from their text or from the audio content. If the user speaks Portuguese, reply in Portuguese. If English, reply in English. If Spanish, reply in Spanish.`;
 
 const INTENT_EXTRACTION_PROMPT = `Analyze this user message and extract the trading intent. Return ONLY valid JSON, no markdown:
 {
@@ -101,7 +101,7 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
           data: audioBase64
         }
       });
-      parts.push({ text: userMessage || 'Please listen to this audio and respond naturally as Xchange Core, in English.' });
+      parts.push({ text: userMessage || 'Please listen to this audio message from the user and respond naturally as Xchange Core, in the same language as the audio.' });
     } else {
       parts.push({ text: userMessage });
     }
@@ -130,16 +130,23 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
 
     return { text, cta, rateLimited: false };
   } catch (err) {
-    console.error('Gemini error:', err.message);
+    console.error('Gemini error:', err.message, '| Audio:', !!audioBase64, '| MimeType:', mimeType);
     if (err.message?.includes('429') || err.message?.includes('quota')) {
       return {
-        text: '⚡ Core is processing a lot of data right now. Please wait a moment!',
+        text: '⚡ Core is handling a lot of requests right now. Wait a moment and try again!',
         cta: null,
         rateLimited: true,
       };
     }
+    if (err.message?.includes('invalid') || err.message?.includes('audio')) {
+      return {
+        text: 'I had trouble processing that audio. Could you try again or type your message?',
+        cta: null,
+        rateLimited: false,
+      };
+    }
     return {
-      text: 'An error occurred during analysis. Please try again.',
+      text: 'An error occurred. Please try again.',
       cta: null,
       rateLimited: false,
     };

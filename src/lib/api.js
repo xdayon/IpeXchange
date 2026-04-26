@@ -21,7 +21,7 @@ export async function sendChatMessage(sessionId, message, isAudio = false, audio
     console.error('sendChatMessage error:', error);
     // Fallback for demo if API is offline
     return {
-      text: '⚡ O Core está offline no momento. Tente novamente mais tarde.',
+      text: '⚡ Core is currently offline. Please try again later.',
       cta: null,
       rateLimited: false,
     };
