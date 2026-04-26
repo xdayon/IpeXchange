@@ -21,6 +21,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
   
   // Speech Recognition state replaced by MediaRecorder refs
   const mediaRecorderRef = useRef(null);
+  const streamRef = useRef(null);
   const audioChunksRef = useRef([]);
 
   const messagesEndRef = useRef(null);
