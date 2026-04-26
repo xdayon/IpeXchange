@@ -4,7 +4,7 @@ import personalAgentImg from '../assets/personal_agent.png';
 
 const steps = [
   { icon: <Wifi size={18} />, label: 'Discovering node at AI Haus...' },
-  { icon: <Shield size={18} />, label: 'Syncing Veritas Passport...' },
+  { icon: <Shield size={18} />, label: 'Syncing Ipê Passport...' },
   { icon: <Check size={18} />, label: 'Connected to City Graph!' },
 ];
 

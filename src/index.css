@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Colors - Aligned with Veritas OS */
+  /* Colors - Aligned with Ipê Hub */
   --bg-dark: #080C14;
   --bg-card: rgba(22, 28, 40, 0.4);
   --bg-card-hover: rgba(28, 36, 52, 0.6);
@@ -37,7 +37,7 @@ body {
   background-image: 
     radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 85% 30%, rgba(180, 244, 74, 0.05) 0%, transparent 50%);
-  background-attachment: fixed;
+  background-attachment: scroll;
 }
 
 /* Glassmorphism Classes */
@@ -54,17 +54,17 @@ body {
 .glass-panel:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-highlight);
-  transform: translateY(-2px);
   box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.3), 0 0 20px rgba(180, 244, 74, 0.1);
+  /* translateY removed: individual card components handle their own lift animations */
 }
 
-/* Veritas Passport Styles */
-.veritas-passport-card {
+/* Ipê Passport Styles */
+.ipe-passport-card {
   transition: all 0.5s ease;
   cursor: pointer;
 }
 
-.veritas-passport-card:hover {
+.ipe-passport-card:hover {
   border-color: rgba(180, 244, 74, 0.4) !important;
   box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(180, 244, 74, 0.1) !important;
 }
@@ -328,7 +328,7 @@ input, textarea {
   left: 50%;
   transform: translate(-50%, -50%);
   opacity: 0.2;
-  animation: pulse 2s infinite;
+  animation: node-pulse 2s infinite;
 }
 
 .node-pulse.products { background: var(--accent-lime); }
@@ -344,7 +344,7 @@ input, textarea {
   border-color: rgba(255,255,255,0.1);
 }
 
-@keyframes pulse {
+@keyframes node-pulse {
   0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
   100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
 }
@@ -573,10 +573,6 @@ input, textarea {
   border-radius: 50%;
   border: 2px dashed rgba(56, 189, 248, 0.5);
   animation: spin 20s linear infinite;
-}
-
-@keyframes spin {
-  100% { transform: rotate(360deg); }
 }
 
 .agent-status-text {
@@ -811,6 +807,10 @@ input, textarea {
   animation: fab-float 3s ease-in-out infinite, subtle-pulse 2s infinite;
   transition: transform 0.2s, box-shadow 0.2s;
   white-space: nowrap;
+}
+
+.chat-fab-label {
+  /* Hidden on mobile via media query */
 }
 
 .chat-fab:hover {
@@ -3316,4 +3316,255 @@ input, textarea {
 @keyframes spin-anim {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE BOTTOM NAVIGATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mobile-bottom-nav {
+  display: none; /* desktop: invisible */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(8, 12, 20, 0.97);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  z-index: 90;
+  padding: 8px 4px;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  justify-content: space-around;
+  align-items: center;
+}
+
+.mobile-bottom-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-bottom-tab.active {
+  color: var(--accent-lime);
+  background: rgba(180, 244, 74, 0.08);
+}
+
+.mobile-bottom-tab:active {
+  transform: scale(0.92);
+}
+
+.mobile-bottom-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.mobile-bottom-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mobile-bottom-label {
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — TABLET  (≤ 768px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* Show mobile bottom nav */
+  .mobile-bottom-nav { display: flex; }
+
+  /* Add bottom padding to main content so it clears the bottom nav */
+  .main-content { padding-bottom: 80px !important; }
+
+  /* ── Navbar ── */
+  .navbar { padding: 12px 0; }
+  .nav-content { gap: 8px; }
+  .logo { font-size: 17px; margin-left: 8px; }
+
+  /* Hide horizontal nav tabs — replaced by mobile bottom nav */
+  .nav-tabs { display: none; }
+
+  /* Compact icon buttons */
+  .btn-icon { width: 36px; height: 36px; }
+  .nav-actions { gap: 2px; }
+
+  /* Hide the text label on the Chat FAB — icon only on mobile */
+  .chat-fab-label { display: none; }
+  .chat-fab {
+    bottom: 80px; /* above bottom nav */
+    right: 16px;
+    padding: 14px;
+    border-radius: 50%;
+    gap: 0;
+    font-size: 0;
+    animation: fab-float 3s ease-in-out infinite;
+  }
+  .chat-fab svg { width: 24px; height: 24px; }
+
+  /* ── Store Detail sticky CTA ── */
+  .store-detail-cta-bar {
+    bottom: 72px; /* above bottom nav */
+    width: calc(100% - 32px);
+  }
+
+  /* ── Homepage layout ── */
+  .home-layout {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+  .home-map-area .city-map-container { height: 280px !important; }
+  .activity-feed {
+    border-left: none !important;
+    border-top: 1px solid var(--border-color) !important;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  /* ── Stats cards ── */
+  .hero-title { font-size: 36px; }
+  .hero-subtitle { font-size: 16px; }
+
+  /* ── Investment detail grid ── */
+  .invest-detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .invest-detail-sidebar {
+    position: static !important;
+  }
+
+  /* ── InvestmentsPage hero badges row ── */
+  .investments-hero-row {
+    flex-direction: column !important;
+  }
+
+  /* ── Checkout steps ── */
+  .checkout-steps-indicator { gap: 0; }
+  .step-line { width: 24px; }
+  .checkout-header { flex-wrap: wrap; gap: 12px; }
+
+  /* ── Filter chips — horizontal scroll ── */
+  .filter-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    gap: 6px;
+  }
+  .filter-chips::-webkit-scrollbar { display: none; }
+  .filter-chip { white-space: nowrap; flex-shrink: 0; }
+
+  /* ── Agent stats (3-col → 2-col) ── */
+  .agent-stats { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* ── Profile hero ── */
+  .profile-hero { flex-direction: column; align-items: flex-start; gap: 16px; }
+
+  /* ── Wallet quick access already has 600px breakpoint, this ensures 768 too ── */
+  .wallet-quick-access { grid-template-columns: 1fr 1fr; }
+
+  /* ── Breadcrumb ── */
+  .breadcrumb { padding: 10px 16px; }
+
+  /* ── Modal ── */
+  .modal-overlay { padding: 16px; }
+  .modal-box { padding: 20px; }
+
+  /* ── Purchases page ── */
+  .mp-card-main { gap: 12px; padding: 14px 16px; }
+  .mp-card-img { width: 56px; height: 56px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — MOBILE PORTRAIT  (≤ 480px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+
+  /* ── Layout ── */
+  .container { padding: 0 16px; }
+  .inner-page { padding: 20px 0 60px; }
+
+  /* ── Typography ── */
+  .hero-title { font-size: 28px; }
+  .hero-subtitle { font-size: 14px; }
+
+  /* ── Navbar: tighter ── */
+  .logo { font-size: 15px; }
+  .btn-icon { width: 32px; height: 32px; }
+
+  /* ── Grids collapse to single column ── */
+  .listings-grid     { grid-template-columns: 1fr !important; }
+  .stores-grid       { grid-template-columns: 1fr !important; }
+  .invest-grid       { grid-template-columns: 1fr !important; }
+  .category-grid     { grid-template-columns: repeat(2, 1fr) !important; }
+  .profile-grid      { grid-template-columns: 1fr !important; }
+  .my-listings-grid  { grid-template-columns: 1fr !important; }
+  .catalog-grid      { grid-template-columns: 1fr !important; }
+
+  /* ── Agent stats → single column ── */
+  .agent-stats       { grid-template-columns: 1fr !important; }
+
+  /* ── Wallet ── */
+  .wallet-quick-access { grid-template-columns: 1fr !important; }
+
+  /* ── Store detail stats ── */
+  .store-detail-stats { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* ── Homepage stats row ── */
+  .home-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* ── Chat drawer ── */
+  .chat-drawer { max-width: 100% !important; border-radius: 20px 20px 0 0; }
+  .drawer-messages { padding: 16px; }
+  .drawer-input-area { padding: 14px 16px; }
+
+  /* ── Checkout ── */
+  .checkout-layout { padding-top: 20px; }
+  .checkout-back-btn { padding: 6px 12px; font-size: 13px; }
+  .checkout-title { font-size: 18px; }
+  .checkout-price { font-size: 18px; }
+  .checkout-cta { padding: 14px 20px; font-size: 14px; }
+
+  /* ── Investment detail ── */
+  .invest-detail-hero { padding: 18px; }
+  .invest-security-grid { grid-template-columns: 1fr !important; }
+  .simulator-projections { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* ── Store detail tabs ── */
+  .store-detail-tab { padding: 8px 12px; font-size: 13px; }
+
+  /* ── Store hero ── */
+  .store-hero-banner { height: 140px; }
+  .store-hero-icon { width: 56px; height: 56px; border-radius: 14px; }
+  .store-hero-content h2 { font-size: 20px; }
+
+  /* ── Navigation bottom tab labels ── */
+  .mobile-bottom-label { font-size: 9px; }
+  .mobile-bottom-tab { padding: 5px 8px; }
+
+  /* ── Sections ── */
+  .section-header h3 { font-size: 18px; }
 }

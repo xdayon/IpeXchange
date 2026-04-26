@@ -12,7 +12,7 @@ const CitizenProfile = ({ user, tier, rep, address }) => {
   };
 
   return (
-    <div className="veritas-passport-card" style={{
+    <div className="ipe-passport-card" style={{
       background: 'linear-gradient(135deg, rgba(22, 28, 40, 0.8), rgba(8, 12, 20, 0.9))',
       border: '1px solid rgba(148, 163, 184, 0.1)',
       borderRadius: '20px',
@@ -32,7 +32,7 @@ const CitizenProfile = ({ user, tier, rep, address }) => {
             <ShieldCheck size={18} color="#B4F44A" />
           </div>
           <span style={{ fontSize: '12px', fontWeight: '700', letterSpacing: '1px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>
-            Veritas Passport
+            Ipê Passport
           </span>
         </div>
         <div style={{ fontSize: '10px', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.05)' }}>

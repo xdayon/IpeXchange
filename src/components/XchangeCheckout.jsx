@@ -210,7 +210,7 @@ const StepPayment = ({ listing, onNext }) => {
           </div>
           <div className="breakdown-row">
             <span style={{ color: 'var(--accent-lime)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Zap size={14} /> VeritasDuesRail (DAO Treasury - 1%)
+              <Zap size={14} /> IpêDAORail (DAO Treasury - 1%)
             </span>
             <span style={{ color: 'var(--accent-lime)' }}>
               {rawPrice > 0 ? `$ ${fee.toFixed(2)}` : '—'}

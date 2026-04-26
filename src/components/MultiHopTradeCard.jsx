@@ -23,7 +23,7 @@ const MultiHopTradeCard = ({ cycle }) => {
           <h4 style={{ fontSize: 18, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <Zap size={18} color="#B4F44A" /> AI Circular Trade Match
           </h4>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Opportunity found via Veritas OS (Match Score: {cycle.matchScore}%)</p>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Opportunity found via Ipê Hub (Match Score: {cycle.matchScore}%)</p>
         </div>
         <span className="badge" style={{ background: 'rgba(180,244,74,0.08)', color: '#B4F44A', borderColor: 'rgba(180,244,74,0.2)', padding: '4px 12px', fontSize: 12 }}>
           {cycle.nodes.length}-Step Skill Cycle
@@ -59,7 +59,7 @@ const MultiHopTradeCard = ({ cycle }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                     <span style={{ fontSize: 15, fontWeight: 700, color: isYou ? '#B4F44A' : '#fff' }}>{node.user}</span>
                     <span style={{ fontSize: 11, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 100, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      {node.tier || 'Resident'} · {node.rep} Veritas
+                      {node.tier || 'Resident'} · {node.rep} Ipê Rep
                     </span>
                   </div>
 
@@ -115,7 +115,7 @@ const MultiHopTradeCard = ({ cycle }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 100, color: '#22c55e', fontSize: 14, fontWeight: 700 }}>
               <CheckCircle2 size={16} />
-              Executed via VeritasDuesRail
+              Executed via IpêDAORail
             </div>
             <span style={{ fontSize: 11, color: 'var(--text-secondary)', textAlign: 'right', marginRight: 12 }}>
               Settled on Rootstock (RBTC)
