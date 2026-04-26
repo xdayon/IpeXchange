@@ -108,14 +108,9 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Detect supported mime type for cross-browser compatibility (Safari uses mp4, Chrome uses webm)
       let options = {};
-      const types = ['audio/webm', 'audio/mp4', 'audio/ogg', 'audio/aac'];
-      for (const type of types) {
-        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
-          options.mimeType = type;
-          break;
-        }
+      if (typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported('audio/webm')) {
+        options = { mimeType: 'audio/webm' };
       }
 
       const mediaRecorder = new MediaRecorder(stream, options);
@@ -131,7 +126,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
       };
 
       mediaRecorder.onstop = () => {
-        // Fallback to the detected mimeType if mediaRecorder doesn't provide it
+        // Fallback to mp4 if mediaRecorder doesn't provide it
         const finalMimeType = mediaRecorder.mimeType || options.mimeType || 'audio/mp4';
         const audioBlob = new Blob(audioChunksRef.current, { type: finalMimeType });
         
@@ -149,14 +144,12 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
         stream.getTracks().forEach(track => track.stop());
       };
 
-      // Start recording with timeslice (generates dataavailable events every 1s)
-      // This helps Safari which sometimes fails to fire ondataavailable if left empty
-      mediaRecorder.start(1000);
+      mediaRecorder.start();
       setIsRecording(true);
       setWaveActive(true);
     } catch (err) {
       console.error('Failed to start recording:', err);
-      alert('Não foi possível acessar o microfone ou ocorreu um erro na gravação. Tente em outro navegador.');
+      alert(`Erro: ${err.message || 'Falha ao acessar o microfone'}`);
     }
   };
 
