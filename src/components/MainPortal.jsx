@@ -1,4 +1,4 @@
-import React, { useState, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import {
   Home, Compass, Store, TrendingUp,
   User, Wallet, Bot, Settings, Bell, Repeat,
