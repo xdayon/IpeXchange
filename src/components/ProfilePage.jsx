@@ -22,48 +22,48 @@ const REPUTATION = {
 };
 
 const ACTIVE_INTENTS = [
-  { id: 'ai1', type: 'sell',   text: 'Vendendo bicicleta elétrica Oggi B.W 8.0 — R$ 4.200', status: 'active', matches: 3 },
-  { id: 'ai2', type: 'seek',   text: 'Buscando investidor para projeto de tech na cidade', status: 'active', matches: 1 },
-  { id: 'ai3', type: 'trade',  text: 'Troca: serviço de design por mel orgânico ou café especial', status: 'active', matches: 2 },
-  { id: 'ai4', type: 'seek',   text: 'Procurando serviço de encanamento — disponível essa semana', status: 'paused', matches: 0 },
+  { id: 'ai1', type: 'sell',   text: 'Selling Oggi B.W 8.0 electric bike — $800', status: 'active', matches: 3 },
+  { id: 'ai2', type: 'seek',   text: 'Seeking investor for tech project in the city', status: 'active', matches: 1 },
+  { id: 'ai3', type: 'trade',  text: 'Trade: design service for organic honey or specialty coffee', status: 'active', matches: 2 },
+  { id: 'ai4', type: 'seek',   text: 'Looking for plumbing service — available this week', status: 'paused', matches: 0 },
 ];
 
 const TRANSACTIONS = [
-  { id: 't1', type: 'out', label: 'Sessão de fisioterapia', counterparty: 'drsarah.ipecity.eth', amount: 'R$ 150', date: '24 Abr', isPublic: true,  status: 'completed', proof: '0xa1b2c3' },
-  { id: 't2', type: 'in',  label: 'Design de logo para cliente',  counterparty: 'padaria.ipecity.eth',  amount: 'R$ 800', date: '22 Abr', isPublic: false, status: 'completed', proof: '0xd4e5f6' },
-  { id: 't3', type: 'out', label: 'Mel orgânico × 3 potes', counterparty: 'sitioipe.ipecity.eth', amount: 'R$ 96',  date: '20 Abr', isPublic: true,  status: 'completed', proof: '0x7g8h9i' },
-  { id: 't4', type: 'in',  label: 'Troca: Bicicleta → Serviços', counterparty: 'roberto.ipecity.eth', amount: 'Trade',  date: '18 Abr', isPublic: false, status: 'completed', proof: '0xj1k2l3' },
-  { id: 't5', type: 'out', label: 'Ingresso Cinema Ipê (NFT)',  counterparty: 'cinema.ipecity.eth', amount: 'R$ 35',  date: '15 Abr', isPublic: true,  status: 'completed', proof: '0xm4n5o6' },
+  { id: 't1', type: 'out', label: 'Physiotherapy session', counterparty: 'drsarah.ipecity.eth', amount: '$30', date: 'Apr 24', isPublic: true,  status: 'completed', proof: '0xa1b2c3' },
+  { id: 't2', type: 'in',  label: 'Logo design for client',  counterparty: 'padaria.ipecity.eth',  amount: '$150', date: 'Apr 22', isPublic: false, status: 'completed', proof: '0xd4e5f6' },
+  { id: 't3', type: 'out', label: 'Organic honey × 3 jars', counterparty: 'sitioipe.ipecity.eth', amount: '$25',  date: 'Apr 20', isPublic: true,  status: 'completed', proof: '0x7g8h9i' },
+  { id: 't4', type: 'in',  label: 'Trade: Bicycle → Services', counterparty: 'roberto.ipecity.eth', amount: 'Trade',  date: 'Apr 18', isPublic: false, status: 'completed', proof: '0xj1k2l3' },
+  { id: 't5', type: 'out', label: 'Ipê Cinema Ticket (NFT)',  counterparty: 'cinema.ipecity.eth', amount: '$10',  date: 'Apr 15', isPublic: true,  status: 'completed', proof: '0xm4n5o6' },
 ];
 
 const TRUST_NETWORK = [
   {
     id: 'tn1', name: 'Carlos', ens: 'carlostech.ipecity.eth', rep: 94, mutual: true,
     txCount: 8, sharedWith: [],
-    note: 'Mecânico. 8 transações confirmadas. Alta confiança.',
+    note: 'Mechanic. 8 confirmed transactions. High trust.',
   },
   {
     id: 'tn2', name: 'Marina', ens: 'marina.ipecity.eth', rep: 98, mutual: true,
     txCount: 12, sharedWith: ['carlostech.ipecity.eth'],
-    note: 'Padaria do Ipê. 12 transações. Conexão de alto valor.',
+    note: 'Ipê Bakery. 12 transactions. High-value connection.',
   },
   {
     id: 'tn3', name: 'Roberto', ens: 'roberto.ipecity.eth', rep: 87, mutual: false,
     txCount: 0, sharedWith: ['carlostech.ipecity.eth'],
-    note: 'Desconhecido direto — mas Carlos já negociou com ele 3x.',
+    note: 'Unknown directly — but Carlos has traded with him 3x.',
   },
   {
     id: 'tn4', name: 'Dr. Sarah', ens: 'drsarah.ipecity.eth', rep: 100, mutual: true,
     txCount: 3, sharedWith: ['marina.ipecity.eth'],
-    note: 'Clínica Saúde Ipê. Reputação máxima.',
+    note: 'Ipê Health Clinic. Maximum reputation.',
   },
 ];
 
 const CORE_INSIGHTS = [
-  { icon: TrendingUp, color: '#B4F44A', title: 'Top 4% de traders em Jurerê', desc: 'Volume de trocas acima de 96% dos usuários ativos na cidade neste mês.' },
-  { icon: Award,      color: '#38BDF8', title: '47 on-chain attestations', desc: 'Cada transação gera uma attestation imutável no Ethereum via EAS — seu histórico é portável.' },
-  { icon: Network,    color: '#818CF8', title: 'Rede de 2º grau: 128 pessoas', desc: 'Você está conectado indiretamente a 128 cidadãos via Web of Trust.' },
-  { icon: Zap,        color: '#F59E0B', title: 'Crédito disponível: R$ 12.000', desc: 'Baseado no seu reputation score, você se qualifica para empréstimos P2P no Xchange Capital.' },
+  { icon: TrendingUp, color: '#B4F44A', title: 'Top 4% of traders in Jurerê', desc: 'Trading volume above 96% of active users in the city this month.' },
+  { icon: Award,      color: '#38BDF8', title: '47 on-chain attestations', desc: 'Each transaction generates an immutable attestation on Ethereum via EAS — your history is portable.' },
+  { icon: Network,    color: '#818CF8', title: '2nd degree network: 128 people', desc: 'You are indirectly connected to 128 citizens via the Web of Trust.' },
+  { icon: Zap,        color: '#F59E0B', title: 'Available credit: $2,500', desc: 'Based on your reputation score, you qualify for P2P loans on Xchange Capital.' },
 ];
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ const ProfilePage = () => {
             <div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10 }}>
                 <Globe size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} />
-                Reputação portável entre cidades:
+                Portable reputation across cities:
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {REPUTATION.portableCities.map(city => (
@@ -173,7 +173,7 @@ const ProfilePage = () => {
                 ))}
               </div>
               <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5 }}>
-                Suas attestations EAS são armazenadas no Ethereum L1 e reconhecidas por qualquer cidade compatível com o protocolo Ipê.
+                Your EAS attestations are stored on Ethereum L1 and recognized by any city compatible with the Ipê protocol.
               </p>
             </div>
           </div>
@@ -200,11 +200,11 @@ const ProfilePage = () => {
 
       {/* ── ACTIVE INTENTS ── */}
       <div className="glass-panel" style={{ padding: '28px 32px', marginBottom: 24 }}>
-        <SectionTitle icon={Search}>Buscas & Ofertas Ativas</SectionTitle>
+        <SectionTitle icon={Search}>Active Searches & Offers</SectionTitle>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {ACTIVE_INTENTS.map(intent => {
             const typeColors = { sell: '#B4F44A', seek: '#38BDF8', trade: '#818CF8' };
-            const typeLabels = { sell: 'Venda', seek: 'Busca', trade: 'Troca' };
+            const typeLabels = { sell: 'Sell', seek: 'Seek', trade: 'Trade' };
             const c = typeColors[intent.type];
             return (
               <div key={intent.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 12, background: intent.status === 'paused' ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)', border: `1px solid ${intent.status === 'paused' ? 'var(--border-color)' : `${c}25`}`, opacity: intent.status === 'paused' ? 0.5 : 1 }}>
@@ -218,7 +218,7 @@ const ProfilePage = () => {
                   </span>
                 )}
                 <span style={{ fontSize: 11, color: intent.status === 'active' ? '#22c55e' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                  ● {intent.status === 'active' ? 'Ativo' : 'Pausado'}
+                  ● {intent.status === 'active' ? 'Active' : 'Paused'}
                 </span>
               </div>
             );
@@ -229,11 +229,11 @@ const ProfilePage = () => {
       {/* ── TRANSACTIONS ── */}
       <div className="glass-panel" style={{ padding: '28px 32px', marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <SectionTitle icon={TrendingUp}>Últimas Transações</SectionTitle>
+          <SectionTitle icon={TrendingUp}>Latest Transactions</SectionTitle>
           <button onClick={() => setTxShowPrivate(!txShowPrivate)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)', background: 'none', border: '1px solid var(--border-color)', borderRadius: 100, padding: '5px 12px', cursor: 'pointer' }}>
             {txShowPrivate ? <Eye size={13} /> : <EyeOff size={13} />}
-            {txShowPrivate ? 'Ocultar privadas' : 'Mostrar privadas'}
+            {txShowPrivate ? 'Hide private' : 'Show private'}
           </button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -266,7 +266,7 @@ const ProfilePage = () => {
         {!txShowPrivate && (
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 14, textAlign: 'center' }}>
             <Lock size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
-            {TRANSACTIONS.filter(t => !t.isPublic).length} transações privadas protegidas por ZKP — apenas você pode revelá-las.
+            {TRANSACTIONS.filter(t => !t.isPublic).length} private transactions secured by ZKP — only you can reveal them.
           </p>
         )}
       </div>
@@ -275,8 +275,8 @@ const ProfilePage = () => {
       <div className="glass-panel" style={{ padding: '28px 32px', marginBottom: 24 }}>
         <SectionTitle icon={Network}>Web of Trust</SectionTitle>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
-          Conexões diretas e indiretas verificadas on-chain via Ethereum Attestation Service (EAS).
-          Transações marcadas como <Lock size={11} style={{ display: 'inline', verticalAlign: 'middle' }} /> ZKP revelam apenas que a transação existiu, sem detalhes.
+          Direct and indirect connections verified on-chain via Ethereum Attestation Service (EAS).
+          Transactions marked as <Lock size={11} style={{ display: 'inline', verticalAlign: 'middle' }} /> ZKP only reveal that the transaction existed, without details.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {TRUST_NETWORK.map(person => {
@@ -291,8 +291,8 @@ const ProfilePage = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                       <span style={{ fontSize: 15, fontWeight: 700 }}>{person.name}</span>
                       {person.mutual
-                        ? <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 100, background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.3)', color: '#38BDF8' }}>Direto</span>
-                        : <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 100, background: 'rgba(129,140,248,0.1)', border: '1px solid rgba(129,140,248,0.3)', color: '#818CF8' }}>2º grau</span>}
+                        ? <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 100, background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.3)', color: '#38BDF8' }}>Direct</span>
+                        : <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 100, background: 'rgba(129,140,248,0.1)', border: '1px solid rgba(129,140,248,0.3)', color: '#818CF8' }}>2nd degree</span>}
                       <span style={{ fontSize: 12, fontWeight: 700, color: repColor, marginLeft: 'auto' }}>Rep {person.rep}</span>
                     </div>
                     <p style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{person.ens}</p>
@@ -303,14 +303,14 @@ const ProfilePage = () => {
                   <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <ChevronRight size={12} style={{ color: '#818CF8' }} />
                     <span style={{ fontSize: 12, color: '#818CF8' }}>
-                      Via: {person.sharedWith.join(', ')} — {person.txCount === 0 ? 'conexão indireta' : `${person.txCount} tx confirmadas`}
+                      Via: {person.sharedWith.join(', ')} — {person.txCount === 0 ? 'indirect connection' : `${person.txCount} tx confirmed`}
                     </span>
                   </div>
                 )}
                 {person.mutual && person.txCount > 0 && (
                   <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-secondary)', display: 'flex', gap: 4, alignItems: 'center' }}>
                     <ShieldCheck size={12} style={{ color: '#B4F44A' }} />
-                    {person.txCount} transações com attestation on-chain
+                    {person.txCount} transactions with on-chain attestation
                   </div>
                 )}
               </div>
@@ -320,7 +320,7 @@ const ProfilePage = () => {
         <div className="glass-panel" style={{ marginTop: 20, padding: '14px 18px', background: 'rgba(129,140,248,0.04)', borderColor: 'rgba(129,140,248,0.2)' }}>
           <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
             <Lock size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5, color: '#818CF8' }} />
-            <strong style={{ color: 'var(--text-primary)' }}>Privacidade no Web of Trust:</strong> Transações públicas aparecem com detalhes completos no grafo. Transações privadas usam ZKP — provam que a transação ocorreu e foi honrada, mas os valores e detalhes permanecem criptografados. Você controla o que é visível.
+            <strong style={{ color: 'var(--text-primary)' }}>Privacy in the Web of Trust:</strong> Public transactions appear with full details on the graph. Private transactions use ZKP — they prove the transaction occurred and was honored, but amounts and details remain encrypted. You control what is visible.
           </p>
         </div>
       </div>
@@ -331,20 +331,20 @@ const ProfilePage = () => {
           <Globe size={22} style={{ color: '#38BDF8', marginBottom: 8 }} />
           <h4>Ipê Passport</h4>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4, lineHeight: 1.6 }}>
-            Identidade descentralizada emitida pelo Ipê Hub. Vincula seu ENS à sua reputação on-chain e é portável para qualquer cidade do protocolo.
+            Decentralized identity issued by the Ipê Hub. Links your ENS to your on-chain reputation and is portable to any city in the protocol.
           </p>
           <a href="https://app.ipe.city/profile" target="_blank" rel="noreferrer" className="btn-primary" style={{ marginTop: 16, textDecoration: 'none' }}>
-            Ver no Ipê Hub
+            View in Ipê Hub
           </a>
         </div>
         <div className="glass-panel profile-card">
           <ShieldCheck size={22} style={{ color: '#B4F44A', marginBottom: 8 }} />
           <h4>ZKP Privacy</h4>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4, lineHeight: 1.6 }}>
-            Todas as transações privadas são protegidas por Zero-Knowledge Proofs. Seu agente pessoal nunca expõe seus dados ao Core sem seu consentimento.
+            All private transactions are secured by Zero-Knowledge Proofs. Your personal agent never exposes your data to Core without your consent.
           </p>
           <span style={{ marginTop: 16, display: 'inline-flex', alignItems: 'center', gap: 6, color: '#B4F44A', border: '1px solid rgba(180,244,74,0.3)', background: 'rgba(180,244,74,0.08)', padding: '5px 12px', borderRadius: 100, fontSize: 13 }}>
-            <ShieldCheck size={13} /> Ativo &amp; Saudável
+            <ShieldCheck size={13} /> Active &amp; Healthy
           </span>
         </div>
       </div>

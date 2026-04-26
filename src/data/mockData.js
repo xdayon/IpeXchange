@@ -1,215 +1,226 @@
-import honeyImg from '../assets/honey.png';
-
 export const mockListings = [
-  // Original
   {
-    id: 'l1', title: 'HDMI Setup & Screen Mirroring Help', category: 'Donations',
-    provider: 'Alex M.', type: 'Donation', acceptedPayments: ['free'],
-    description: 'Need help connecting your TV to your computer? I can pass by and set it up for free. Takes 5 mins.',
-    isPublic: true, coordinates: { lat: -27.4425, lng: -48.5085 }, nodeName: 'Tech Helper',
-    image: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&q=80&w=400&h=300'
+    id: 'l1',
+    title: 'Macbook Pro M1 14"',
+    category: 'Products',
+    provider: 'Alex M.', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$1,200',
+    description: '16GB RAM, 512GB SSD. Used for 1 year. Battery at 92%. Excellent condition.',
+    isPublic: true,
+    coordinates: { lat: -27.4420, lng: -48.5060 },
+    nodeName: 'alex-node-01',
+    image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
-    id: 'l2', title: 'Emergency Vet for Dogs', category: 'Services',
-    provider: 'Dr. Sarah Haus', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: '$50',
-    description: 'Experienced veterinarian available for home visits and emergency care for your dogs.',
-    isPublic: true, coordinates: { lat: -27.4410, lng: -48.5010 }, nodeName: 'Vet Clinic',
-    image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&q=80&w=400&h=300'
+    id: 'l2',
+    title: 'Website Development',
+    category: 'Services',
+    provider: 'Bia Tech', type: 'Service', acceptedPayments: ['crypto', 'trade'], price: 'From $500',
+    description: 'Landing pages, stores, and React apps. I accept RBTC and trade for electronics.',
+    isPublic: true,
+    coordinates: { lat: -27.4410, lng: -48.5050 },
+    nodeName: 'bia-dev-node',
+    image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
-    id: 'l3', title: 'Organic Bracatinga Honey & Guava Jam', category: 'Products',
-    provider: 'Sítio do Ipê', type: 'Product', acceptedPayments: ['fiat', 'crypto', 'trade'], price: '$12',
-    description: '100% natural honey produced in our local farm, and homemade guava jam. Fresh batch!',
-    isPublic: true, coordinates: { lat: -27.4445, lng: -48.5040 }, nodeName: 'Organic Farm',
-    image: honeyImg
+    id: 'l3',
+    title: 'Organic Honey (500g)',
+    category: 'Products',
+    provider: 'Ipe Farm', type: 'Product', acceptedPayments: ['fiat', 'crypto', 'trade'], price: '$12',
+    description: '100% pure wildflower honey from our local sanctuary.',
+    isPublic: true,
+    coordinates: { lat: -27.4428, lng: -48.5068 },
+    nodeName: 'ipe-farm-node',
+    image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
-    id: 'l4', title: '50" Smart TV (Used, Great Condition)', category: 'Products',
-    provider: 'John D.', type: 'Product', acceptedPayments: ['fiat'], price: '$200',
-    description: 'Selling my 50 inch TV. Works perfectly, just upgrading to a bigger one.',
-    isPublic: false, image: 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&q=80&w=400&h=300'
+    id: 'l4',
+    title: 'Yoga at the Park',
+    category: 'Services',
+    provider: 'FitJurere', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: '$15/hour',
+    description: 'Morning yoga sessions at Central Plaza. All levels welcome.',
+    isPublic: true,
+    coordinates: { lat: -27.4435, lng: -48.5055 },
+    nodeName: 'wellness-node',
+    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
-    id: 'l5', title: 'Electric Bike (City Cruiser)', category: 'Products',
-    provider: 'Marina G.', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$800',
-    description: 'Barely used E-bike. Battery lasts 40km. Great for moving around the city.',
-    isPublic: false, image: 'https://images.unsplash.com/photo-1571068316344-75bc76f77890?auto=format&fit=crop&q=80&w=400&h=300'
+    id: 'l5',
+    title: 'Artisan Coffee Beans',
+    category: 'Products',
+    provider: 'CoffeeLab Jurere', type: 'Product', acceptedPayments: ['fiat', 'crypto', 'trade'], price: '$9/pack',
+    description: 'Small-batch roasted coffee from local high-altitude cooperatives.',
+    isPublic: true,
+    coordinates: { lat: -27.4415, lng: -48.5075 },
+    nodeName: 'coffee-hub',
+    image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
-    id: 'l6', title: 'Physical Therapy for Elderly', category: 'Services',
-    provider: 'HealthCare Center', type: 'Service', acceptedPayments: ['fiat'], price: '$60/session',
-    description: 'Specialized physical therapy for seniors. We go to your location.',
-    isPublic: true, coordinates: { lat: -27.4438, lng: -48.5112 }, nodeName: 'PT Clinic',
-    image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=400&h=300'
+    id: 'l6',
+    title: 'Smart Home Setup',
+    category: 'Services',
+    provider: 'AI Haus', type: 'Service', acceptedPayments: ['crypto', 'trade'], price: '$50/setup',
+    description: 'Integration of IoT devices with local voice control via Core.',
+    isPublic: true,
+    coordinates: { lat: -27.4410, lng: -48.5060 },
+    nodeName: 'aihaus-main-node',
+    image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
-    id: 'l7', title: 'Graphic Design Services', category: 'Services',
-    provider: 'DesignHaus', type: 'Service', acceptedPayments: ['trade', 'crypto'], price: 'Trade / 50 USDC',
-    description: 'I can design your logo or flyer in exchange for homegrown food, coffee beans, or crypto.',
-    isPublic: true, coordinates: { lat: -27.4418, lng: -48.5060 }, nodeName: 'Creator Studio',
-    image: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  // Added points to enrich the map across Jurerê
-  {
-    id: 'l8', title: 'Personal Trainer & Beach Workout', category: 'Services',
-    provider: 'FitJurerê', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 80/hora',
-    description: 'Treinos funcionais na praia. Acompanhamento diário.',
-    isPublic: true, coordinates: { lat: -27.4375, lng: -48.5020 }, nodeName: 'Beach Workout',
-    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=400&h=300'
+    id: 'l7',
+    title: 'Climate Data Analysis',
+    category: 'Services',
+    provider: 'Jurere Climate', type: 'Service', acceptedPayments: ['fiat'], price: '$30',
+    description: 'Environmental impact reports for local constructions and gardens.',
+    isPublic: true,
+    coordinates: { lat: -27.4445, lng: -48.5085 },
+    nodeName: 'eco-sensor-node',
+    image: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
-    id: 'l9', title: 'Café Especial Torrado na Hora', category: 'Products',
-    provider: 'CoffeeLab Jurerê', type: 'Product', acceptedPayments: ['fiat', 'crypto', 'trade'], price: 'R$ 45/pacote',
-    description: 'Café 100% arábica. Aceitamos troca por serviços de design ou dev.',
-    isPublic: true, coordinates: { lat: -27.4390, lng: -48.4980 }, nodeName: 'Coffee Roaster',
-    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l10', title: 'Doação de Roupas Infantis', category: 'Donations',
-    provider: 'Carla Silva', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
-    description: 'Roupas de bebê (0-2 anos) em perfeito estado para doação.',
-    isPublic: true, coordinates: { lat: -27.4460, lng: -48.5130 }, nodeName: 'Doação Roupas',
-    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l11', title: 'Manutenção de Ar Condicionado', category: 'Services',
-    provider: 'Clima Jurerê', type: 'Service', acceptedPayments: ['fiat'], price: 'R$ 150',
-    description: 'Limpeza e manutenção preventiva de splits.',
-    isPublic: true, coordinates: { lat: -27.4422, lng: -48.4950 }, nodeName: 'Climatização',
-    image: 'https://images.unsplash.com/photo-1590432298190-25211993a469?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l12', title: 'Aluguel Prancha de Surf', category: 'Products',
-    provider: 'Surf Point', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 50/dia',
-    description: 'Pranchas funboard e longboard disponíveis para aluguel diário.',
-    isPublic: true, coordinates: { lat: -27.4385, lng: -48.5150 }, nodeName: 'Surf Rental',
-    image: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l13', title: 'Aulas de Inglês Conversação', category: 'Services',
-    provider: 'Teacher Mike', type: 'Service', acceptedPayments: ['fiat', 'crypto', 'trade'], price: 'R$ 70/hora',
-    description: 'Native speaker. Foco em conversação e negócios.',
-    isPublic: true, coordinates: { lat: -27.4440, lng: -48.4990 }, nodeName: 'English Tutor',
-    image: 'https://images.unsplash.com/photo-1543269664-76bc3997d9ea?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l14', title: 'Marcenaria Sustentável', category: 'Products',
-    provider: 'WoodCraft', type: 'Product', acceptedPayments: ['crypto', 'trade'], price: 'Sob Consulta',
-    description: 'Móveis feitos com madeira de demolição. Aceitamos pagamentos via crypto.',
-    isPublic: true, coordinates: { lat: -27.4455, lng: -48.5080 }, nodeName: 'Marcenaria',
-    image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l15', title: 'Apoio Jurídico para Startups', category: 'Services',
-    provider: 'Advocacia Ipê', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: 'A partir de 100 USDC',
-    description: 'Consultoria jurídica, formação de DAO e contratos smart.',
-    isPublic: true, coordinates: { lat: -27.4405, lng: -48.5075 }, nodeName: 'Consultoria Web3',
+    id: 'l20',
+    title: 'Legal Advice: DAO Gov',
+    category: 'Services',
+    provider: 'Ipe Law', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: 'From 100 USDC',
+    description: 'Consultation on bylaws and digital governance for local hubs.',
+    isPublic: true,
+    coordinates: { lat: -27.4425, lng: -48.5045 },
+    nodeName: 'legal-node',
     image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
-    id: 'l16', title: 'Oficina Comunitária de Bicicletas', category: 'Donations',
-    provider: 'Pedal Livre', type: 'Donation', acceptedPayments: ['free', 'trade'], price: 'Free',
-    description: 'Espaço aberto para manutenção de bikes. Temos ferramentas e algumas peças doadas.',
-    isPublic: true, coordinates: { lat: -27.4430, lng: -48.4920 }, nodeName: 'Oficina Colab',
-    image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&q=80&w=400&h=300'
+    id: 'l22',
+    title: 'Projector Rental',
+    category: 'Products',
+    provider: 'CineRent Jurere', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$30/day',
+    description: '4K laser projector for outdoor cinema nights. Screen included.',
+    isPublic: true,
+    coordinates: { lat: -27.4418, lng: -48.5092 },
+    nodeName: 'media-node',
+    image: 'https://images.unsplash.com/photo-1535016120720-40c646bebbfc?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
-    id: 'l17', title: 'Pães de Fermentação Natural', category: 'Products',
-    provider: 'Padaria Artesanal', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 25',
-    description: 'Fornadas às terças e sextas. Sourdough clássico.',
-    isPublic: true, coordinates: { lat: -27.4415, lng: -48.4965 }, nodeName: 'Padaria Artesanal',
+    id: 'l23',
+    title: 'Book: Regenerative Design',
+    category: 'Donations',
+    provider: 'Ipe Library', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
+    description: 'Physical book by Bill Reed. Free for residents.',
+    isPublic: true,
+    coordinates: { lat: -27.4405, lng: -48.5050 },
+    nodeName: 'community-shelf',
+    image: 'https://images.unsplash.com/photo-1544640808-32ca72ac7f37?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l25',
+    title: 'Native Tree Seedlings',
+    category: 'Products',
+    provider: 'Green Jurere', type: 'Product', acceptedPayments: ['trade', 'crypto'], price: '$3',
+    description: 'Ipe, pitanga, and araca seedlings. Homegrown.',
+    isPublic: true,
+    coordinates: { lat: -27.4452, lng: -48.5038 },
+    nodeName: 'garden-node',
+    image: 'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l27',
+    title: 'Jurere Running Group',
+    category: 'Donations',
+    provider: 'Private Citizen', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
+    description: 'Meet at 6am on the beach. All levels.',
+    isPublic: true,
+    coordinates: { lat: -27.4400, lng: -48.5100 },
+    nodeName: 'social-node',
+    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l28',
+    title: 'Cello Lessons',
+    category: 'Services',
+    provider: 'Music & Co', type: 'Service', acceptedPayments: ['fiat', 'trade'], price: '$15/hour',
+    description: 'Beginner and intermediate classes. I have an extra cello.',
+    isPublic: true,
+    coordinates: { lat: -27.4430, lng: -48.5080 },
+    nodeName: 'art-node',
+    image: 'https://images.unsplash.com/photo-1620921447048-2ce10332f1ea?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l29',
+    title: 'Beehive Construction',
+    category: 'Knowledge',
+    provider: 'Joao from Ipe Farm', type: 'Service', acceptedPayments: ['trade', 'crypto'], price: 'Trade / 20 USDC',
+    citizenTier: 'Steward', veritasRep: 92,
+    description: 'Learn how to keep bees and manage stingless native bees. In exchange, I need help building bee boxes.',
+    isPublic: true,
+    coordinates: { lat: -27.4442, lng: -48.5015 },
+    nodeName: 'Apiary',
+    image: 'https://images.unsplash.com/photo-1587049352851-8d4e89134a41?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l30',
+    title: 'Woodworking Workshop',
+    category: 'Knowledge',
+    provider: 'WoodCraft', type: 'Service', acceptedPayments: ['fiat', 'trade'], price: '$15/lesson',
+    citizenTier: 'Resident', veritasRep: 75,
+    description: 'Practical lessons on manual woodworking. Build your own furniture.',
+    isPublic: true,
+    coordinates: { lat: -27.4450, lng: -48.5080 },
+    nodeName: 'workshop-node',
+    image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l31',
+    title: 'Oggi B.W 8.0 E-Bike',
+    category: 'Products',
+    provider: 'Marina G.', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$850',
+    description: 'Used electric bike, very well maintained. Perfect for commuting around Jurere.',
+    isPublic: true,
+    coordinates: { lat: -27.4412, lng: -48.5042 },
+    nodeName: 'marina-garage',
+    image: 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l32',
+    title: 'Artisan Sourdough Bakery',
+    category: 'Products',
+    provider: 'Bread & Co', type: 'Product', acceptedPayments: ['fiat', 'trade'], price: '$5/loaf',
+    description: 'Freshly baked sourdough bread every morning. We accept trades for fresh produce.',
+    isPublic: true,
+    coordinates: { lat: -27.4433, lng: -48.5022 },
+    nodeName: 'bakery-hub',
     image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l18', title: 'Fotografia Profissional', category: 'Services',
-    provider: 'Luz & Sombra', type: 'Service', acceptedPayments: ['fiat', 'crypto', 'trade'], price: 'R$ 300/ensaio',
-    description: 'Ensaios, fotos de produtos e cobertura de eventos na cidade.',
-    isPublic: true, coordinates: { lat: -27.4395, lng: -48.5100 }, nodeName: 'Fotógrafo',
-    image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l19', title: 'Cerveja Artesanal Local (IPA)', category: 'Products',
-    provider: 'Cervejaria do Forte', type: 'Product', acceptedPayments: ['fiat', 'trade'], price: 'R$ 18/litro',
-    description: 'IPA fresca produzida localmente. Traga seu growler!',
-    isPublic: true, coordinates: { lat: -27.4435, lng: -48.5140 }, nodeName: 'Cervejaria',
-    image: 'https://images.unsplash.com/photo-1535958636474-b021ee887b13?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l20', title: 'Mentoria em Programação (Solidity)', category: 'Donations',
-    provider: 'Dev Network', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
-    description: 'Ofereço 2h semanais de mentoria gratuita em Solidity e smart contracts.',
-    isPublic: true, coordinates: { lat: -27.4400, lng: -48.5030 }, nodeName: 'Dev Mentor',
-    image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  // Even more POIs for density
-  {
-    id: 'l21', title: 'Aluguel de Equipamentos Audiovisuais', category: 'Products',
-    provider: 'CineRent Jurerê', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 150/dia',
-    description: 'Luzes, microfones e tripés para criadores de conteúdo.',
-    isPublic: true, coordinates: { lat: -27.4450, lng: -48.4970 }, nodeName: 'AV Rental',
-    image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l22', title: 'Aula de Yoga ao Pôr do Sol', category: 'Services',
-    provider: 'Yoga com Ana', type: 'Service', acceptedPayments: ['fiat', 'crypto', 'trade'], price: 'R$ 40/aula',
-    description: 'Aulas em grupo na praia do Forte. Aceito trocas.',
-    isPublic: true, coordinates: { lat: -27.4360, lng: -48.5180 }, nodeName: 'Yoga Class',
-    image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l23', title: 'Livros de Negócios e Web3', category: 'Donations',
-    provider: 'Biblioteca Ipê', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
-    description: 'Ponto de troca de livros. Deixe um, leve outro.',
-    isPublic: true, coordinates: { lat: -27.4428, lng: -48.5050 }, nodeName: 'Book Swap',
-    image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l24', title: 'Massoterapia', category: 'Services',
-    provider: 'Zen Studio', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 120/sessão',
-    description: 'Massagem relaxante e desportiva.',
-    isPublic: true, coordinates: { lat: -27.4380, lng: -48.4940 }, nodeName: 'Massagem',
-    image: 'https://images.unsplash.com/photo-1544161515-4af6b1d4640d?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l25', title: 'Mudas de Plantas Nativas', category: 'Products',
-    provider: 'Verde Jurerê', type: 'Product', acceptedPayments: ['trade', 'crypto'], price: 'R$ 15',
-    description: 'Mudas de ipê, pitanga e araçá. Cultivo próprio.',
-    isPublic: true, coordinates: { lat: -27.4470, lng: -48.5000 }, nodeName: 'Viveiro',
-    image: 'https://images.unsplash.com/photo-1416870230247-3b4a842247ba?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l26', title: 'Assistência Técnica de Smartphones', category: 'Services',
-    provider: 'FixTech', type: 'Service', acceptedPayments: ['fiat'], price: 'Sob Consulta',
-    description: 'Troca de tela e bateria de iPhones e Androids.',
-    isPublic: true, coordinates: { lat: -27.4408, lng: -48.4910 }, nodeName: 'Phone Fix',
-    image: 'https://images.unsplash.com/photo-1512054115533-2a67bb046524?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l27', title: 'Grupo de Corrida Jurerê', category: 'Donations',
-    provider: 'Runners Club', type: 'Donation', acceptedPayments: ['free'], price: 'Free',
-    description: 'Grupo aberto que se reúne terças e quintas às 6h.',
-    isPublic: true, coordinates: { lat: -27.4365, lng: -48.5120 }, nodeName: 'Runners',
-    image: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l28', title: 'Aulas de Violão e Guitarra', category: 'Services',
-    provider: 'Música & Cia', type: 'Service', acceptedPayments: ['fiat', 'trade'], price: 'R$ 80/hora',
-    description: 'Aulas para iniciantes e intermediários. Empréstimo de instrumento.',
-    isPublic: true, coordinates: { lat: -27.4435, lng: -48.5090 }, nodeName: 'Aulas Violão',
-    image: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l29', title: 'Kombucha Artesanal', category: 'Products',
-    provider: 'BioFermentos', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 15',
-    description: 'Kombucha de hibisco com gengibre, garrafas de 500ml.',
-    isPublic: true, coordinates: { lat: -27.4442, lng: -48.5015 }, nodeName: 'Kombucha',
-    image: 'https://images.unsplash.com/photo-1556760544-74068565f05c?auto=format&fit=crop&q=80&w=400&h=300'
-  },
-  {
-    id: 'l30', title: 'Limpeza e Higienização de Estofados', category: 'Services',
-    provider: 'CleanSofa', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: 'R$ 200',
-    description: 'Atendimento a domicílio. Limpeza profunda a seco.',
-    isPublic: true, coordinates: { lat: -27.4398, lng: -48.5160 }, nodeName: 'Clean Sofa',
-    image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=400&h=300'
   }
+];
+
+export const mockDemands = [
+  { 
+    id: 'd1', 
+    title: 'Local eggs', 
+    category: 'Products', 
+    urgency: 'High', 
+    tags: ['Food', 'Daily'],
+    description: 'Our community fridge is completely out of local eggs. We have several residents looking for daily fresh free-range eggs. Ideal for anyone running a small backyard coop! Guaranteed buyers in the neighborhood.'
+  },
+  { 
+    id: 'd2', 
+    title: 'Carpenter', 
+    category: 'Services', 
+    urgency: 'Medium', 
+    tags: ['Maintenance', 'Woodwork'],
+    description: 'We need skilled carpenters to help repair the community center roof and benches at the central square. Must have own tools. Payment can be negotiated in USDC or Ipê tokens via smart contract.'
+  },
+  { 
+    id: 'd3', 
+    title: 'Solar panel repair', 
+    category: 'Services', 
+    urgency: 'High', 
+    tags: ['Energy', 'Tech'],
+    description: 'Following the recent storm, three houses in the north sector reported issues with their solar inverters. We desperately need a certified technician to perform safety checks and repairs ASAP to restore the micro-grid.'
+  },
+  { 
+    id: 'd4', 
+    title: 'Organic compost', 
+    category: 'Products', 
+    urgency: 'Low', 
+    tags: ['Garden', 'Sustainable'],
+    description: 'The community garden is preparing for the spring planting season and needs bulk organic compost. Looking for up to 500kg. Willing to trade fresh produce for compost or pay in local tokens.'
+  },
 ];

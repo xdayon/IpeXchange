@@ -1,25 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, Send, X, ShieldCheck, Activity } from 'lucide-react';
+import { Mic, MicOff, Send, X, ShieldCheck, Activity, ArrowRight, Zap } from 'lucide-react';
 import xchangeCoreImg from '../assets/xchange_core.png';
+import { mockListings } from '../data/mockData';
 
 const DEMO_RESPONSES = {
-  'macbook':    'Processando intent: **"comprar um Macbook"**. Usando ZKP para preservar sua identidade enquanto busco correspondências no grafo da cidade. Encontrei 1 oferta ativa de outro cidadão — vou te conectar com segurança.',
-  'bicicleta':  '🚲 Analisando mercado de bicicletas em Jurerê... Encontrei 3 referências de preço:\n- Caloi E-Vibe (usada): R$ 3.800\n- Trek FX+ (nova): R$ 8.200\n- Oggi B.W 8.0 (estado similar ao seu): **R$ 3.900 – R$ 4.500** é um preço justo. Posso publicar sua oferta no City Graph agora.',
-  'preço':      '💰 **Assistente de Precificação.** Me diga o que deseja vender ou trocar — envie uma descrição, foto ou áudio. Vou cruzar com transações similares no histórico do Xchange e te dar uma faixa de preço justa baseada em dados reais da cidade.',
-  'troca':      '🔄 **Trocas Justas.** Analisando seu perfil e intents ativos... Encontrei 2 combinações interessantes:\n1. Seu design gráfico ↔ Mel Orgânico (Sítio Ipê) — 4h de design = 6 potes\n2. Seu design ↔ Sessão de fisioterapia (Dr. Sarah) — estimativa equilibrada segundo reputação de ambos\nQuer que eu proponha a troca?',
-  'investimento': '📈 **Xchange Capital.** Seu reputation score (95) qualifica para crédito de até **R$ 12.000** com taxa a partir de 4.2% a.a. — muito abaixo do mercado tradicional. Segurança garantida por smart contracts na Ethereum. Quer iniciar o processo?',
-  'emprego':    '👨‍💻 **Busca de Talentos.** Há 2 oportunidades ativas em Jurerê compatíveis com seu perfil:\n1. Web Developer – Ipê Hub (4.000 USDC/mês)\n2. Designer Web3 – Studio Creative (negociável)\nTambém posso cadastrar seu perfil como disponível na DB do Core.',
-  'default':    'Recebi sua mensagem. Vou processar e cruzar com os dados disponíveis na cidade de Jurerê. Sua privacidade está protegida com Zero-Knowledge Proofs. Qualquer novidade, retorno imediatamente.',
+  'macbook':    { text: 'Processing intent: **"buy a Macbook"**. Using your **Veritas Passport** to preserve your identity while searching for matches in the city graph. Found 1 active offer at **AI Haus** — I will connect you securely.', cta: { label: '⚡ Start Xchange', tab: 'checkout', params: { listing: { id: 'mock-mac', title: 'MacBook Pro M3 (2024)', provider: 'lucas.ipecity.eth', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$1,500', description: 'MacBook Pro M3 in excellent condition. Bought 6 months ago at Founder Haus. Box and all original accessories included. I accept USDC or RBTC.', category: 'Products', image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=400&h=300' } } } },
+  'bicycle':    { text: '🚲 Analyzing bicycle market in Jurerê... Found 3 references on the **Skill Exchange Board**:\n- Caloi E-Vibe (used): $700\n- Trek FX+ (new): $1,500\n- Oggi B.W 8.0 (similar condition to yours): **$750 – $850** is a fair price. I can publish your offer on the City Graph now.', cta: null },
+  'bike':       { text: '🚲 Analyzing bicycle market in Jurerê... Found 3 references on the **Skill Exchange Board**:\n- Caloi E-Vibe (used): $700\n- Trek FX+ (new): $1,500\n- Oggi B.W 8.0 (similar condition to yours): **$750 – $850** is a fair price. I can publish your offer on the City Graph now.', cta: null },
+  'price':      { text: '💰 **Pricing Assistant.** Tell me what you want to sell or trade — send a description, photo, or audio. I will cross-reference with similar transactions in the Veritas OS history and give you a fair price range based on real city data.', cta: null },
+  'trade':      { text: '🔄 **Fair Trades.** Analyzing your profile and active intents... Found 2 interesting matches:\n1. Your graphic design ↔ Organic Honey (Sítio Ipê) — 4h design = 6 jars\n2. Your design ↔ Physical Therapy session at **Founder Haus** (Dr. Sarah) — balanced estimate according to both reputations\nWant me to propose the trade?', cta: { label: '🔄 View Trade Opportunity', tab: 'checkout', params: { listing: mockListings.find(l => l.id === 'l7') || mockListings[0] } } },
+  'investment': { text: '📈 **Xchange Capital.** Your **Veritas Rep (95)** qualifies for credit up to **$2,500** with rates starting at 4.2% p.a. — much lower than the traditional market. Security guaranteed by smart contracts on **Rootstock**. Want to start the process?', cta: { label: '📈 View Investment Opportunities', tab: 'investments', params: null } },
+  'buy':        { text: 'Found active offers in Discover that match what you are looking for. Which product or service do you want to acquire? I can search the City Graph with your privacy protected by ZKP and Veritas Passport.', cta: { label: '🧭 Explore on Discover', tab: 'discover', params: null } },
+  'job':        { text: '👨‍💻 **Talent Search.** There are 2 active opportunities in Jurerê compatible with your profile:\n1. Web Developer – Ipê Hub (4,000 USDC/month)\n2. Web3 Designer – AI Haus (negotiable)\nI can also register your profile as available in the Core database.', cta: { label: '💼 View Opportunities', tab: 'investments', params: null } },
+  'circular':   { text: '🔄 **Multi-hop Trade Match!** I analyzed the city network and found a perfect cycle for you in the **Veritas Marketplace**. You give your Electric Bike to Carlos, who gives Web Consulting to Bia, who gives you the Macbook Pro M1 you wanted. Perfect 3-way cycle!', cta: { label: '⚡ Sign Circular Contract', tab: 'circular', params: null } },
+  'learn':      { text: '📚 **Knowledge Hub.** I see you want to learn something new. In Jurerê we have the **Founder Haus** offering woodworking workshops and João from Sítio Ipê offering **Sustainable Beekeeping Mentorship**. I can connect you with them on the Skill Exchange Board.', cta: { label: '🧠 View Learning Opportunities', tab: 'discover', params: null } },
+  'teach':      { text: '🎓 **Share your Knowledge.** Excellent initiative! What would you like to teach? I can create a "Skill Offer" in your Veritas Passport and notify citizens with compatible interests.', cta: null },
+  'need':       { text: '🚨 **Village Demands.** Currently, the network detects high scarcity of **Solar Panel Technicians** and **Artisan Bakers** in Jurerê. If you have these skills, your work will be highly valued in the ecosystem now. Want to see the full list of demands on the Home page?', cta: { label: '⚠️ View City Gaps', tab: 'home', params: null } },
+  'health':     { text: '💡 **Proactive Insight.** You mentioned "health". Analyzing the City Graph, I noticed that Marina is selling an **E-Bike (City Cruiser)** near you and the **Runners Club** meets tomorrow at 6 AM. Want me to bridge the connection with them?', cta: { label: '🚴 View E-Bike Details', tab: 'discover', params: null } },
+  'insight':    { text: '✨ **Proactive Insight.** Analyzing the City Graph, I noticed that Marina is selling an **E-Bike (City Cruiser)** near you and the **Runners Club** meets tomorrow at 6 AM. This aligns perfectly with your recent health goals. Want me to bridge the connection with them?', cta: { label: '🚴 View E-Bike Details', tab: 'discover', params: null } },
+  'default':    { text: 'I received your message. I will process and cross-reference with available data in the Ipê ecosystem. Your privacy is protected with Zero-Knowledge Proofs and Veritas Passport. Any updates, I will return immediately.', cta: null },
 };
 
 const QUICK_ACTIONS = [
-  { label: '💰 Precificar item',    prompt: 'quero saber o preço justo de algo que tenho para vender' },
-  { label: '🔄 Sugerir trocas',    prompt: 'quero fazer uma troca justa com alguém da cidade' },
-  { label: '📈 Crédito P2P',       prompt: 'quero saber sobre investimento e crédito disponível para mim' },
-  { label: '👨‍💻 Buscar emprego',    prompt: 'quero encontrar oportunidades de emprego na cidade' },
+  { label: '✨ Proactive Insight', prompt: 'Show me my proactive insight' },
+  { label: '💰 Price item',        prompt: 'I want to know the fair price of something I have to sell' },
+  { label: '🔄 Suggest trades',    prompt: 'I want to make a fair trade with someone in the city' },
+  { label: '🌐 Circular Trade',   prompt: 'look for circular trade opportunities for my items' },
+  { label: '📈 P2P Credit',       prompt: 'I want to know about investment and credit available for me' },
 ];
 
-const ChatDrawer = ({ isOpen, onClose }) => {
+const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -35,19 +45,20 @@ const ChatDrawer = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setTimeout(() => {
-        setMessages([{ role: 'agent', content: 'Olá! Sou o **Xchange Core**. Fale o que você precisa ou está oferecendo — pode mandar um áudio!' }]);
+        setMessages([{ role: 'agent', content: 'Hello! I am **Xchange Core**. Tell me what you need or what you are offering — you can send an audio!', cta: null }]);
       }, 400);
     }
   }, [isOpen]);
 
   const sendMessage = (text) => {
     if (!text.trim()) return;
-    setMessages(prev => [...prev, { role: 'user', content: text }]);
+    setMessages(prev => [...prev, { role: 'user', content: text, cta: null }]);
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
       const key = Object.keys(DEMO_RESPONSES).find(k => text.toLowerCase().includes(k)) || 'default';
-      setMessages(prev => [...prev, { role: 'agent', content: DEMO_RESPONSES[key] }]);
+      const response = DEMO_RESPONSES[key];
+      setMessages(prev => [...prev, { role: 'agent', content: response.text, cta: response.cta }]);
     }, 2200);
   };
 
@@ -58,7 +69,7 @@ const ChatDrawer = ({ isOpen, onClose }) => {
     setTimeout(() => {
       setIsRecording(false);
       setWaveActive(false);
-      sendMessage('estou querendo comprar um macbook');
+      sendMessage('I want to buy a macbook');
     }, 2500);
   };
 
@@ -68,8 +79,15 @@ const ChatDrawer = ({ isOpen, onClose }) => {
     setInputText('');
   };
 
+  const handleCTA = (cta) => {
+    if (!cta) return;
+    if (onNavigate) {
+      onNavigate(cta.tab, cta.params);
+    }
+  };
+
   const formatText = (text) =>
-    text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>');
 
   return (
     <>
@@ -88,7 +106,7 @@ const ChatDrawer = ({ isOpen, onClose }) => {
             <div>
               <h3>Xchange Core</h3>
               <p className="agent-status-text" style={{ justifyContent: 'flex-start', marginTop: 2 }}>
-                <ShieldCheck size={13} /> &nbsp;ZKP Privacy Active
+                <ShieldCheck size={13} /> &nbsp;Veritas Passport Sync
               </p>
             </div>
           </div>
@@ -99,16 +117,29 @@ const ChatDrawer = ({ isOpen, onClose }) => {
         <div className="drawer-messages">
           {messages.map((msg, i) => (
             <div key={i} className={`message-wrapper ${msg.role}`}>
-              <div
-                className={`message-bubble ${msg.role}`}
-                dangerouslySetInnerHTML={{ __html: formatText(msg.content) }}
-              />
+              <div className="message-bubble-wrap">
+                <div
+                  className={`message-bubble ${msg.role}`}
+                  dangerouslySetInnerHTML={{ __html: formatText(msg.content) }}
+                />
+                {/* Inline CTA button */}
+                {msg.role === 'agent' && msg.cta && (
+                  <button
+                    className="chat-cta-btn"
+                    onClick={() => handleCTA(msg.cta)}
+                  >
+                    <Zap size={14} />
+                    {msg.cta.label}
+                    <ArrowRight size={14} />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
           {isTyping && (
             <div className="message-wrapper agent">
               <div className="message-bubble agent typing-indicator">
-                <Activity size={14} className="pulse-anim" /> processando intent...
+                <Activity size={14} className="pulse-anim" /> processing intent...
               </div>
             </div>
           )}
@@ -136,7 +167,7 @@ const ChatDrawer = ({ isOpen, onClose }) => {
           </button>
 
           <p className="mic-hint">
-            {isRecording ? 'Ouvindo...' : 'Pressione para falar com o Core'}
+            {isRecording ? 'Listening...' : 'Press to talk to Core'}
           </p>
 
           {/* Quick action chips */}
@@ -160,7 +191,7 @@ const ChatDrawer = ({ isOpen, onClose }) => {
           <form onSubmit={handleSubmit} className="input-form" style={{ marginTop: '16px' }}>
             <input
               type="text"
-              placeholder="Ou escreva sua mensagem..."
+              placeholder="Or write your message..."
               value={inputText}
               onChange={e => setInputText(e.target.value)}
               className="text-input"

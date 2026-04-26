@@ -3,9 +3,9 @@ import { Bot, Power, Wifi, Shield, Check } from 'lucide-react';
 import personalAgentImg from '../assets/personal_agent.png';
 
 const steps = [
-  { icon: <Wifi size={18} />, label: 'Discovering agent endpoint...' },
-  { icon: <Shield size={18} />, label: 'Authenticating with Passport...' },
-  { icon: <Check size={18} />, label: 'Agent connected!' },
+  { icon: <Wifi size={18} />, label: 'Discovering node at AI Haus...' },
+  { icon: <Shield size={18} />, label: 'Syncing Veritas Passport...' },
+  { icon: <Check size={18} />, label: 'Connected to City Graph!' },
 ];
 
 const ConnectAgentScreen = ({ onConnect }) => {

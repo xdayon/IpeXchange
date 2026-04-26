@@ -27,7 +27,7 @@ const CityMap = React.memo(({ activeCategory }) => {
   return (
     <div className="city-map-container" style={{ height: '100%', border: 'none', borderRadius: 0, position: 'relative' }}>
       {/* Badge overlay */}
-      <div className="map-header" style={{ position: 'absolute', top: 16, left: 16, zIndex: 1000 }}>
+      <div className="map-header" style={{ position: 'absolute', top: 16, left: 60, zIndex: 1000 }}>
         <span className="badge">CITY GRAPH • JURERÊ LIVE</span>
       </div>
 
@@ -105,11 +105,11 @@ const CityMap = React.memo(({ activeCategory }) => {
             
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Por {selectedNode.provider}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>By {selectedNode.provider}</p>
                 <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{selectedNode.price}</p>
               </div>
               <button style={{ padding: '6px 12px', background: CATEGORY_COLORS[selectedNode.category], color: '#000', border: 'none', borderRadius: 100, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                Conectar
+                Connect
               </button>
             </div>
           </div>

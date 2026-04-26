@@ -3,9 +3,9 @@ import { Bot, Brain, Database, ShieldCheck, Settings, Activity } from 'lucide-re
 import personalAgentImg from '../assets/personal_agent.png';
 
 const MEMORIES = [
-  { label: 'Intent: comprar macbook', tag: 'Shopping', color: '#38BDF8', time: '2h ago' },
-  { label: 'Preferência: pagamento crypto', tag: 'Finance', color: '#B4F44A', time: '1d ago' },
-  { label: 'Perfil: entusiasta de tecnologia', tag: 'Profile', color: '#818CF8', time: '3d ago' },
+  { label: 'Intent: buying macbook', tag: 'Shopping', color: '#38BDF8', time: '2h ago' },
+  { label: 'Preference: crypto payment', tag: 'Finance', color: '#B4F44A', time: '1d ago' },
+  { label: 'Profile: tech enthusiast', tag: 'Profile', color: '#818CF8', time: '3d ago' },
 ];
 
 const AgentPage = () => (
@@ -17,7 +17,7 @@ const AgentPage = () => (
       </div>
       <div>
         <h2 style={{ fontSize: '26px' }}>Your <span className="text-gradient-cyan">Personal Agent</span></h2>
-        <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>dayonx-agent.ipecity.eth</p>
+        <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>dx.agent.aihaus.ipe</p>
         <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
           <span className="tag badge" style={{ color: '#B4F44A', borderColor: 'rgba(180,244,74,0.3)', background: 'rgba(180,244,74,0.08)' }}>
             <Activity size={12} style={{ display: 'inline', marginRight: 4 }} /> Online

@@ -1,14 +1,30 @@
 import React from 'react';
 
-const ListingCard = ({ listing }) => {
+const ListingCard = ({ listing, onXchange }) => {
+  const handleAction = () => {
+    if (onXchange) onXchange(listing);
+  };
+
   const getActionBtn = () => {
     if (listing.acceptedPayments.includes('free')) {
-      return <button className="btn-primary w-full" style={{background: '#F43F5E', color: '#fff'}}>Request Aid</button>;
+      return (
+        <button className="btn-primary w-full" style={{background: '#F43F5E', color: '#fff'}} onClick={handleAction}>
+          Request Aid
+        </button>
+      );
     }
-    if (listing.acceptedPayments.includes('trade')) {
-      return <button className="btn-primary w-full" style={{background: '#A855F7', color: '#fff'}}>Negotiate Trade</button>;
+    if (listing.acceptedPayments.includes('trade') && !listing.acceptedPayments.includes('fiat') && !listing.acceptedPayments.includes('crypto')) {
+      return (
+        <button className="btn-primary w-full" style={{background: '#A855F7', color: '#fff'}} onClick={handleAction}>
+          Negotiate Trade
+        </button>
+      );
     }
-    return <button className="btn-primary w-full">Xchange</button>;
+    return (
+      <button className="btn-primary w-full xchange-btn" onClick={handleAction}>
+        ⚡ Xchange
+      </button>
+    );
   };
 
   const getPaymentIcon = (type) => {

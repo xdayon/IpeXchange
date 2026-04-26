@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Bell, ShieldCheck, TrendingUp, Users, Zap, MessageCircle, Star, Check, Trash2 } from 'lucide-react';
+import { Bell, ShieldCheck, TrendingUp, Users, Zap, MessageCircle, Star, Check, Trash2, Sparkles } from 'lucide-react';
 
 const NOTIFICATIONS = [
-  { id: 'n1', type: 'match',    unread: true,  time: '2m',  icon: Zap,          color: '#B4F44A', title: '3 matches para sua bicicleta!', desc: 'Encontramos 3 interessados no seu Oggi B.W 8.0. O Core pode conectar você agora.' },
-  { id: 'n2', type: 'trust',   unread: true,  time: '14m', icon: Users,         color: '#38BDF8', title: 'Roberto fez negócio com Carlos', desc: 'Alguém da sua Web of Trust completou uma transação. Reputação atualizada.' },
-  { id: 'n3', type: 'invest',  unread: true,  time: '1h',  icon: TrendingUp,    color: '#818CF8', title: 'Nova oportunidade de investimento', desc: 'Padaria do Ipê está captando R$ 45k a 4.2% a.a. — compatível com seu perfil.' },
-  { id: 'n4', type: 'rep',     unread: false, time: '2h',  icon: Star,          color: '#F59E0B', title: 'Sua reputação subiu para 95!', desc: 'Parabéns! Você atingiu o nível Elite no Xchange. Novos benefícios desbloqueados.' },
-  { id: 'n5', type: 'msg',     unread: false, time: '4h',  icon: MessageCircle, color: '#38BDF8', title: 'Mensagem do Xchange Core', desc: 'Detectei um serviço de encanamento disponível hoje em Jurerê — você tinha uma busca ativa.' },
-  { id: 'n6', type: 'security',unread: false, time: '1d',  icon: ShieldCheck,   color: '#B4F44A', title: 'ZKP sync concluído', desc: '47 attestations sincronizadas com sucesso na Ethereum. Seu histórico está seguro.' },
-  { id: 'n7', type: 'match',   unread: false, time: '2d',  icon: Zap,           color: '#B4F44A', title: 'Troca justa sugerida pelo Core', desc: 'Design gráfico ↔ 6 potes de mel orgânico. Marina aceitaria essa proposta.' },
+  { id: 'n1', type: 'match',    unread: true,  time: '2m',  icon: Zap,          color: '#B4F44A', title: '3 matches for your bicycle!', desc: 'We found 3 interested parties for your Oggi B.W 8.0. Core can connect you now.' },
+  { id: 'n2', type: 'trust',   unread: true,  time: '14m', icon: Users,         color: '#38BDF8', title: 'Roberto traded with Carlos', desc: 'Someone from your Web of Trust completed a transaction. Reputation updated.' },
+  { id: 'n3', type: 'invest',  unread: true,  time: '1h',  icon: TrendingUp,    color: '#818CF8', title: 'New investment opportunity', desc: 'Ipê Bakery is raising $9k at 4.2% p.a. — compatible with your profile.' },
+  { id: 'n4', type: 'rep',     unread: false, time: '2h',  icon: Star,          color: '#F59E0B', title: 'Your reputation rose to 95!', desc: 'Congratulations! You reached Elite level on Xchange. New benefits unlocked.' },
+  { id: 'n5', type: 'msg',     unread: false, time: '4h',  icon: MessageCircle, color: '#38BDF8', title: 'Message from Xchange Core', desc: 'Detected plumbing services available today in Jurerê — you had an active search.' },
+  { id: 'p1', type: 'insight', unread: true,  time: 'Now', icon: Sparkles,      color: '#A855F7', title: '💡 Proactive Insight: Health Focus', desc: 'Noticed your interest in improving health. Marina is selling an E-Bike and the Runners Club meets tomorrow. Want to see?' },
+  { id: 'n6', type: 'security',unread: false, time: '1d',  icon: ShieldCheck,   color: '#B4F44A', title: 'ZKP sync completed', desc: '47 attestations successfully synced on Ethereum. Your history is safe.' },
+  { id: 'n7', type: 'match',   unread: false, time: '2d',  icon: Zap,           color: '#B4F44A', title: 'Fair trade suggested by Core', desc: 'Graphic design ↔ 6 jars of organic honey. Marina would accept this proposal.' },
 ];
 
 const NotificationsPage = () => {
@@ -24,18 +25,18 @@ const NotificationsPage = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28 }}>
         <div>
           <h2 style={{ fontSize: 26, marginBottom: 6 }}>
-            Notificações
+            Notifications
             {unreadCount > 0 && (
               <span style={{ marginLeft: 10, fontSize: 14, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: 'rgba(180,244,74,0.12)', border: '1px solid rgba(180,244,74,0.3)', color: '#B4F44A' }}>
-                {unreadCount} novas
+                {unreadCount} new
               </span>
             )}
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Atualizações do Core, matches e atividades da sua rede.</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Core updates, matches, and activity from your network.</p>
         </div>
         {unreadCount > 0 && (
           <button onClick={markAllRead} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--accent-cyan)', background: 'none', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 100, padding: '7px 14px', cursor: 'pointer' }}>
-            <Check size={13} /> Marcar todas como lidas
+            <Check size={13} /> Mark all as read
           </button>
         )}
       </div>
@@ -66,7 +67,7 @@ const NotificationsPage = () => {
         {notifications.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-secondary)' }}>
             <Bell size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-            <p>Nenhuma notificação no momento.</p>
+            <p>No notifications at the moment.</p>
           </div>
         )}
       </div>

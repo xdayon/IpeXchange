@@ -8,112 +8,112 @@ const OPPORTUNITIES = [
     id: 'i1',
     type: 'Investment',
     typeColor: '#B4F44A',
-    title: 'Expansão da Padaria do Ipê',
+    title: 'Ipê Bakery Expansion',
     owner: 'marina.ipecity.eth',
     reputationScore: 98,
-    amount: 'R$ 45.000',
-    rate: '4.2% a.a.',
-    term: '24 meses',
+    amount: '$45,000',
+    rate: '4.2% APY',
+    term: '24 months',
     raised: 68,
-    collateral: 'NFT do imóvel comercial',
+    collateral: 'Commercial Property NFT',
     backers: 14,
-    description: 'Precisamos de capital para abrir uma segunda unidade na Av. das Rendeiras. Projeção de retorno baseada em 3 anos de histórico verificado on-chain.',
+    description: 'We need capital to open a second branch on Av. das Rendeiras. Projected return based on 3 years of on-chain verified history.',
     badges: ['ZKP Secured', 'On-Chain Proof', 'Reputation 98'],
   },
   {
     id: 'i2',
     type: 'Partnership',
     typeColor: '#38BDF8',
-    title: 'Parceiro para Oficina de Carros Customizados',
+    title: 'Partner for Custom Car Workshop',
     owner: 'carlostech.ipecity.eth',
     reputationScore: 94,
-    amount: 'R$ 80.000',
-    rate: '50% sociedade',
-    term: 'Longo prazo',
+    amount: '$80,000',
+    rate: '50% equity',
+    term: 'Long term',
     raised: 30,
-    collateral: 'Equipamentos + reputação',
+    collateral: 'Equipment + Reputation',
     backers: 3,
-    description: 'Busco sócio com capital para equipamentos de pintura e customização. Já tenho espaço físico e carteira de clientes com 89 transações verificadas on-chain.',
+    description: 'Looking for a partner with capital for painting and customization equipment. I already have the physical space and a client base with 89 on-chain verified transactions.',
     badges: ['ZKP Secured', 'Smart Contract', 'Verified'],
   },
   {
     id: 'i3',
     type: 'Jobs',
     typeColor: '#818CF8',
-    title: 'Web Developer – Plataforma da Cidade',
+    title: 'Web Developer – City Platform',
     owner: 'ipehub.ipecity.eth',
     reputationScore: 99,
-    amount: '4.000 USDC/mês',
-    rate: 'CLT ou PJ',
+    amount: '4,000 USDC/month',
+    rate: 'Contractor',
     term: 'Full-time',
     raised: 100,
     collateral: null,
     backers: 1,
-    description: 'Procuramos dev React/Node.js para trabalhar no ecossistema Ipê. Salário em USDC + tokens de reputação da cidade. Trabalho híbrido em Jurerê.',
+    description: 'Looking for a React/Node.js dev to work on the Ipê ecosystem. Salary in USDC + city reputation tokens. Hybrid work in Jurerê.',
     badges: ['Crypto Payment', 'Reputation Tokens', 'Web3 Native'],
   },
   {
     id: 'i4',
     type: 'Products',
     typeColor: '#F59E0B',
-    title: 'Bicicleta Elétrica Trek – Quase nova',
+    title: 'Trek Electric Bike – Like new',
     owner: 'dayonx.ipecity.eth',
     reputationScore: 95,
-    amount: 'R$ 6.500',
-    rate: 'Troca aceita',
-    term: 'Venda única',
+    amount: '$6,500',
+    rate: 'Trade accepted',
+    term: 'Single sale',
     raised: null,
     collateral: null,
     backers: null,
-    description: 'Trek FX+ com bateria full. 200km rodados. Aceito troca por serviços de design, crypto ou BRL. Histórico de transações verificado on-chain.',
-    badges: ['ZKP Proof', 'Reputation 95', 'Troca Aceita'],
+    description: 'Trek FX+ with full battery. 200km ridden. Accepting trade for design services, crypto, or Fiat. On-chain verified transaction history.',
+    badges: ['ZKP Proof', 'Reputation 95', 'Trade Accepted'],
   },
   {
     id: 'i5',
     type: 'Services',
     typeColor: '#F472B6',
-    title: 'Encanamento e Manutenção Hidráulica',
+    title: 'Plumbing and Hydraulic Maintenance',
     owner: 'roberto.ipecity.eth',
     reputationScore: 87,
-    amount: 'A partir de R$ 150',
-    rate: 'Por serviço',
-    term: 'Disponível agora',
+    amount: 'From $150',
+    rate: 'Per service',
+    term: 'Available now',
     raised: null,
     collateral: null,
     backers: null,
-    description: 'Encanador com 12 anos de experiência. 43 serviços registrados on-chain com avaliação média 4.8★. Atendo toda região de Jurerê e adjacências.',
-    badges: ['Reputation 87', 'On-Chain Reviews', 'Disponível'],
+    description: 'Plumber with 12 years of experience. 43 on-chain registered services with a 4.8★ average rating. Serving all of Jurerê and surrounding areas.',
+    badges: ['Reputation 87', 'On-Chain Reviews', 'Available'],
   },
   {
     id: 'i6',
     type: 'Donations',
     typeColor: '#F43F5E',
-    title: 'Doação: Sofá 3 lugares + Cadeiras',
+    title: 'Donation: 3-Seater Sofa + Chairs',
     owner: 'ana.ipecity.eth',
     reputationScore: 91,
-    amount: 'Grátis',
-    rate: 'Doação',
-    term: 'Retirada local',
+    amount: 'Free',
+    rate: 'Donation',
+    term: 'Local pickup',
     raised: null,
     collateral: null,
     backers: null,
-    description: 'Mudança de casa, doando sofá retrátil 3 lugares + 4 cadeiras. Bom estado. Registro da doação on-chain para seu portfólio de reputação.',
-    badges: ['Rep+ ao Doar', 'ZKP Identidade', 'Verificado'],
+    description: 'Moving houses, donating a 3-seater retractable sofa + 4 chairs. Good condition. On-chain donation record for your reputation portfolio.',
+    badges: ['Rep+ when Donating', 'ZKP Identity', 'Verified'],
   },
   {
     id: 'i7',
     type: 'Investment',
     typeColor: '#B4F44A',
-    title: 'Projeto Energia Solar Jurerê',
+    title: 'Jurerê Solar Energy Project',
     owner: 'solarpower.ipecity.eth',
     reputationScore: 97,
-    amount: 'R$ 120.000',
-    rate: '5.8% a.a.',
-    term: '36 meses',
+    amount: '$120,000',
+    rate: '5.8% APY',
+    term: '36 months',
     raised: 45,
-    collateral: 'Equipamentos fotovoltaicos',
+    collateral: 'Photovoltaic equipment',
     backers: 28,
-    description: 'Instalação de usina solar comunitária para reduzir custos de energia das lojas parceiras. Investimento com garantia real nos equipamentos.',
+    description: 'Installation of a community solar plant to reduce energy costs for partner stores. Investment backed by real equipment collateral.',
     badges: ['ZKP Secured', 'Sustainable', 'Smart Contract'],
   },
   {
@@ -123,52 +123,52 @@ const OPPORTUNITIES = [
     title: 'Co-working & Event Space Hub',
     owner: 'ipehub.ipecity.eth',
     reputationScore: 99,
-    amount: 'R$ 200.000',
+    amount: '$200,000',
     rate: 'Equity share',
-    term: 'Indeterminado',
+    term: 'Indefinite',
     raised: 85,
-    collateral: 'Contrato de aluguel 10 anos',
+    collateral: '10-year lease agreement',
     backers: 12,
-    description: 'Estamos finalizando o maior hub de inovação de Jurerê. Buscamos parceiros estratégicos para a gestão do café e área de eventos.',
+    description: 'We are finalizing the largest innovation hub in Jurerê. Looking for strategic partners to manage the cafe and event area.',
     badges: ['Verified Provider', 'High Return', 'Community Hub'],
   },
   {
     id: 'i9',
     type: 'Investment',
     typeColor: '#B4F44A',
-    title: 'Agricultura Urbana Vertical',
+    title: 'Vertical Urban Farming',
     owner: 'biofarm.ipecity.eth',
     reputationScore: 95,
-    amount: 'R$ 35.000',
-    rate: '4.5% a.a.',
-    term: '18 meses',
+    amount: '$35,000',
+    rate: '4.5% APY',
+    term: '18 months',
     raised: 15,
-    collateral: 'Produção futura (Tokenized)',
+    collateral: 'Future production (Tokenized)',
     backers: 6,
-    description: 'Sistema de hidroponia vertical para produção de microgreens em larga escala dentro da cidade. Baixo custo operacional e alta demanda.',
+    description: 'Vertical hydroponic system for large-scale microgreens production within the city. Low operational cost and high demand.',
     badges: ['Eco Friendly', 'ZKP Proof', 'High Tech'],
   },
   {
     id: 'i10',
     type: 'Services',
     typeColor: '#F472B6',
-    title: 'Consultoria Web3 & Smart Contracts',
+    title: 'Web3 & Smart Contracts Consulting',
     owner: 'soliditydev.ipecity.eth',
     reputationScore: 92,
-    amount: 'R$ 250/hora',
+    amount: '$250/hour',
     rate: 'Hourly',
-    term: 'Sob demanda',
+    term: 'On demand',
     raised: null,
     collateral: null,
     backers: null,
-    description: 'Desenvolvedor sênior disponível para auditoria de contratos e arquitetura de sistemas descentralizados para seu negócio local.',
+    description: 'Senior developer available for contract auditing and decentralized systems architecture for your local business.',
     badges: ['Verified Expert', 'Crypto Payment', 'On-Chain Proof'],
   },
 ];
 
 const typeIcon = { Investment: TrendingUp, Partnership: Users, Jobs: Briefcase, Products: ShieldCheck, Services: Zap, Donations: Star };
 
-const OpportunityCard = ({ opp }) => {
+const OpportunityCard = ({ opp, onInvest }) => {
   const Icon = typeIcon[opp.type] || Zap;
   const c = opp.typeColor;
   return (
@@ -194,20 +194,20 @@ const OpportunityCard = ({ opp }) => {
       {/* Financials */}
       <div className="invest-financials">
         <div className="invest-stat">
-          <span className="invest-stat-label">Valor</span>
+          <span className="invest-stat-label">Amount</span>
           <span className="invest-stat-value" style={{ color: c }}>{opp.amount}</span>
         </div>
         <div className="invest-stat">
-          <span className="invest-stat-label">{opp.type === 'Investment' ? 'Juros' : 'Modelo'}</span>
+          <span className="invest-stat-label">{opp.type === 'Investment' ? 'Interest' : 'Model'}</span>
           <span className="invest-stat-value">{opp.rate}</span>
         </div>
         <div className="invest-stat">
-          <span className="invest-stat-label">Prazo</span>
+          <span className="invest-stat-label">Term</span>
           <span className="invest-stat-value">{opp.term}</span>
         </div>
         {opp.backers !== null && (
           <div className="invest-stat">
-            <span className="invest-stat-label">{opp.type === 'Jobs' ? 'Vagas' : 'Apoiadores'}</span>
+            <span className="invest-stat-label">{opp.type === 'Jobs' ? 'Positions' : 'Backers'}</span>
             <span className="invest-stat-value">{opp.backers}</span>
           </div>
         )}
@@ -217,7 +217,7 @@ const OpportunityCard = ({ opp }) => {
       {opp.raised !== null && opp.type !== 'Jobs' && (
         <div style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>
-            <span>Captação</span>
+            <span>Raised</span>
             <span style={{ fontWeight: 700, color: c }}>{opp.raised}%</span>
           </div>
           <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
@@ -238,8 +238,13 @@ const OpportunityCard = ({ opp }) => {
       {/* Footer */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: 14 }}>
         <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{opp.owner}</span>
-        <button style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: c, background: `${c}10`, border: `1px solid ${c}30`, borderRadius: 100, padding: '6px 14px', cursor: 'pointer', transition: 'all 0.2s' }}>
-          {opp.type === 'Investment' ? 'Investir' : opp.type === 'Jobs' ? 'Candidatar' : opp.type === 'Donations' ? 'Solicitar' : 'Ver mais'}
+        <button
+          onClick={() => onInvest && onInvest(opp)}
+          style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: c, background: `${c}10`, border: `1px solid ${c}30`, borderRadius: 100, padding: '6px 14px', cursor: 'pointer', transition: 'all 0.2s' }}
+          onMouseEnter={e => { e.currentTarget.style.background = `${c}25`; }}
+          onMouseLeave={e => { e.currentTarget.style.background = `${c}10`; }}
+        >
+          {opp.type === 'Investment' ? '📈 Invest' : opp.type === 'Jobs' ? 'Apply' : opp.type === 'Donations' ? 'Request' : 'View more'}
           <ArrowUpRight size={13} />
         </button>
       </div>
@@ -247,9 +252,15 @@ const OpportunityCard = ({ opp }) => {
   );
 };
 
-const InvestmentsPage = () => {
+const InvestmentsPage = ({ onNavigate }) => {
   const [filter, setFilter] = useState('All');
   const filtered = filter === 'All' ? OPPORTUNITIES : OPPORTUNITIES.filter(o => o.type === filter);
+
+  const handleInvest = (opp) => {
+    if (onNavigate) {
+      onNavigate('investment-detail', { opp, sourceTab: 'investments' });
+    }
+  };
 
   return (
     <div className="inner-page container">
@@ -261,7 +272,7 @@ const InvestmentsPage = () => {
               Xchange <span className="text-gradient-cyan">Capital</span>
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 15, maxWidth: 560 }}>
-              Investimentos, parcerias e oportunidades na cidade — 100% on-chain, com reputação verificada e juros baixos garantidos por smart contracts.
+              Investments, partnerships, and opportunities in the city — 100% on-chain, with verified reputation and low interest rates guaranteed by smart contracts.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
@@ -280,16 +291,34 @@ const InvestmentsPage = () => {
         {/* Stats row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
           {[
-            { label: 'Capital na rede', value: 'R$ 2.3M', color: '#B4F44A' },
-            { label: 'Tx on-chain', value: '1.847', color: '#38BDF8' },
-            { label: 'Taxa de inadimplência', value: '0.3%', color: '#818CF8' },
-            { label: 'APY médio', value: '5.1%', color: '#F59E0B' },
+            { label: 'Capital on network', value: '$2.3M', color: '#B4F44A' },
+            { label: 'On-chain Tx', value: '1,847', color: '#38BDF8' },
+            { label: 'Default rate', value: '0.3%', color: '#818CF8' },
+            { label: 'Average APY', value: '5.1%', color: '#F59E0B' },
           ].map(stat => (
             <div key={stat.label} className="glass-panel" style={{ padding: '16px 18px', textAlign: 'center' }}>
               <p style={{ fontSize: 22, fontWeight: 800, color: stat.color, marginBottom: 4 }}>{stat.value}</p>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{stat.label}</p>
             </div>
           ))}
+        </div>
+
+        {/* Artizen Banner */}
+        <div className="glass-panel" style={{ background: 'linear-gradient(135deg, rgba(56,189,248,0.1), rgba(180,244,74,0.05))', padding: '20px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, border: '1px solid rgba(56,189,248,0.2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(56,189,248,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(56,189,248,0.3)' }}>
+              <Star size={24} color="#38BDF8" />
+            </div>
+            <div>
+              <h4 style={{ fontSize: 16, fontWeight: 800, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+                Grants & Crowdfunding <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 100, background: '#38BDF8', color: '#000', fontWeight: 800 }}>POWERED BY ARTIZEN</span>
+              </h4>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 400 }}>Community projects and local startups seeking funding. Support with donations or buy equity shares.</p>
+            </div>
+          </div>
+          <button style={{ padding: '10px 20px', borderRadius: 100, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+            Explore Grants
+          </button>
         </div>
 
         <div className="filter-chips">
@@ -301,18 +330,18 @@ const InvestmentsPage = () => {
 
       {/* Cards */}
       <div className="invest-grid">
-        {filtered.map(opp => <OpportunityCard key={opp.id} opp={opp} />)}
+        {filtered.map(opp => <OpportunityCard key={opp.id} opp={opp} onInvest={handleInvest} />)}
       </div>
 
       {/* How it works */}
       <div className="glass-panel" style={{ marginTop: 32, padding: '28px 32px' }}>
-        <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Como funciona a segurança on-chain</h4>
+        <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>How on-chain security works</h4>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
           {[
-            { icon: ShieldCheck, color: '#B4F44A', title: 'Reputation Score', desc: 'Cada transação, avaliação e empréstimo pago fortalece seu score on-chain, visível por qualquer participante.' },
-            { icon: Lock, color: '#38BDF8', title: 'ZKP Privacy', desc: 'Provas de conhecimento zero garantem que seus dados financeiros fiquem privados, mas verificáveis.' },
-            { icon: Zap, color: '#818CF8', title: 'Smart Contracts', desc: 'Empréstimos são codificados em contratos imutáveis. Sem intermediários, sem surpresas.' },
-            { icon: TrendingUp, color: '#F59E0B', title: 'Colateral On-Chain', desc: 'NFTs de imóveis, tokens de reputação e outros ativos digitais servem como garantia verificável.' },
+            { icon: ShieldCheck, color: '#B4F44A', title: 'Reputation Score', desc: 'Every transaction, review, and paid loan strengthens your on-chain score, visible to any participant.' },
+            { icon: Lock, color: '#38BDF8', title: 'ZKP Privacy', desc: 'Zero-knowledge proofs ensure your financial data remains private, yet verifiable.' },
+            { icon: Zap, color: '#818CF8', title: 'Smart Contracts', desc: 'Loans are encoded in immutable contracts. No intermediaries, no surprises.' },
+            { icon: TrendingUp, color: '#F59E0B', title: 'On-Chain Collateral', desc: 'Real estate NFTs, reputation tokens, and other digital assets serve as verifiable collateral.' },
           ].map(item => (
             <div key={item.title} style={{ display: 'flex', gap: 12 }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: `${item.color}15`, border: `1px solid ${item.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

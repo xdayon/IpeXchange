@@ -65,98 +65,98 @@ const ConfigPage = () => {
     <div className="inner-page container" style={{ maxWidth: 800 }}>
       <div style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 28, marginBottom: 8 }}>
-          Configurações <span className="text-gradient-cyan">do Sistema</span>
+          System <span className="text-gradient-cyan">Settings</span>
         </h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Ajuste suas preferências de privacidade, comportamento do Core e parâmetros da rede Ipê.</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Adjust your privacy preferences, Core behavior, and Ipê network parameters.</p>
       </div>
 
-      <ConfigSection title="Privacidade e Zero-Knowledge" icon={Shield}>
+      <ConfigSection title="Privacy & Zero-Knowledge" icon={Shield}>
         <ToggleRow 
-          label="Modo ZKP Estrito (Strict Mode)" 
-          description="Obriga o uso de Zero-Knowledge Proofs para todas as interações financeiras, sem exceção. Omissão total de valores públicos."
+          label="Strict ZKP Mode" 
+          description="Forces the use of Zero-Knowledge Proofs for all financial interactions, with no exceptions. Total omission of public values."
           defaultChecked={true}
-          badge={{ text: 'Recomendado', color: '#B4F44A' }}
+          badge={{ text: 'Recommended', color: '#B4F44A' }}
         />
         <ToggleRow 
-          label="Visibilidade no Web of Trust" 
-          description="Permite que contatos de 2º grau vejam seu perfil de reputação (apenas score e categorias, sem histórico)."
+          label="Web of Trust Visibility" 
+          description="Allows 2nd degree contacts to see your reputation profile (only score and categories, no history)."
           defaultChecked={true}
         />
         <ToggleRow 
-          label="Sincronização EAS Automática" 
-          description="Envia periodicamente suas proofs locais para o Ethereum Attestation Service."
+          label="Automatic EAS Synchronization" 
+          description="Periodically sends your local proofs to the Ethereum Attestation Service."
           defaultChecked={true}
         />
       </ConfigSection>
 
-      <ConfigSection title="Comportamento do Xchange Core" icon={Bot}>
+      <ConfigSection title="Xchange Core Behavior" icon={Bot}>
         <SelectRow 
-          label="Nível de Proatividade do Agente" 
-          description="Define quão agressivamente o Core busca matches para seus intents ativos."
+          label="Agent Proactivity Level" 
+          description="Defines how aggressively Core searches for matches for your active intents."
           options={[
-            { value: 'low', label: 'Conservador (Apenas matches exatos)' },
-            { value: 'medium', label: 'Equilibrado (Recomendado)' },
-            { value: 'high', label: 'Proativo (Sugere alternativas e trocas)' }
+            { value: 'low', label: 'Conservative (Exact matches only)' },
+            { value: 'medium', label: 'Balanced (Recommended)' },
+            { value: 'high', label: 'Proactive (Suggests alternatives and trades)' }
           ]}
           defaultValue="medium"
         />
         <ToggleRow 
-          label="Automação de Preços (Fair Pricing AI)" 
-          description="Permite que o Core sugira automaticamente preços justos baseados na economia da cidade ao criar um intent."
+          label="Fair Pricing AI" 
+          description="Allows Core to automatically suggest fair prices based on city economics when creating an intent."
           defaultChecked={true}
-          badge={{ text: 'Novo', color: '#38BDF8' }}
+          badge={{ text: 'New', color: '#38BDF8' }}
         />
         <ToggleRow 
-          label="Agente de Negociação Autônomo" 
-          description="Permite que seu agente pessoal negocie valores (até 10% de margem) com outros agentes sem te interromper."
+          label="Autonomous Negotiation Agent" 
+          description="Allows your personal agent to negotiate values (up to 10% margin) with other agents without interrupting you."
           defaultChecked={false}
         />
       </ConfigSection>
 
-      <ConfigSection title="Notificações e Alertas" icon={Bell}>
+      <ConfigSection title="Notifications & Alerts" icon={Bell}>
         <ToggleRow 
-          label="Matches de Alta Relevância" 
-          description="Notifica instantaneamente quando um match perfeito (100% de compatibilidade) é encontrado."
+          label="High Relevance Matches" 
+          description="Notifies instantly when a perfect match (100% compatibility) is found."
           defaultChecked={true}
         />
         <ToggleRow 
-          label="Alertas da Rede de Confiança" 
-          description="Avisa quando pessoas na sua Web of Trust completam transações ou melhoram de reputação."
+          label="Trust Network Alerts" 
+          description="Warns when people in your Web of Trust complete transactions or improve their reputation."
           defaultChecked={false}
         />
         <SelectRow 
-          label="Frequência do Digest da Cidade" 
-          description="Resumo de atividades econômicas e novas lojas em Jurerê."
+          label="City Digest Frequency" 
+          description="Summary of economic activities and new stores in Jurerê."
           options={[
-            { value: 'realtime', label: 'Tempo Real' },
-            { value: 'daily', label: 'Diário' },
-            { value: 'weekly', label: 'Semanal' },
-            { value: 'never', label: 'Desativado' }
+            { value: 'realtime', label: 'Real-time' },
+            { value: 'daily', label: 'Daily' },
+            { value: 'weekly', label: 'Weekly' },
+            { value: 'never', label: 'Disabled' }
           ]}
           defaultValue="daily"
         />
       </ConfigSection>
 
-      <ConfigSection title="Rede e Integrações" icon={Network}>
+      <ConfigSection title="Network & Integrations" icon={Network}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Database size={20} style={{ color: 'var(--text-secondary)' }} />
             <div>
               <p style={{ fontSize: 14, fontWeight: 600 }}>City Graph Node</p>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Conectado a Jurerê (Latência: 12ms)</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Connected to Jurerê (Latency: 12ms)</p>
             </div>
           </div>
-          <button style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6, background: 'rgba(255,255,255,0.1)' }}>Trocar Nó</button>
+          <button style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6, background: 'rgba(255,255,255,0.1)' }}>Change Node</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Key size={20} style={{ color: 'var(--text-secondary)' }} />
             <div>
-              <p style={{ fontSize: 14, fontWeight: 600 }}>Chaves ZKP Locais</p>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Armazenadas com segurança no enclave do dispositivo</p>
+              <p style={{ fontSize: 14, fontWeight: 600 }}>Local ZKP Keys</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Securely stored in the device enclave</p>
             </div>
           </div>
-          <button style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6, background: 'rgba(244,63,94,0.1)', color: '#F43F5E', border: '1px solid rgba(244,63,94,0.3)' }}>Regerar Chaves</button>
+          <button style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6, background: 'rgba(244,63,94,0.1)', color: '#F43F5E', border: '1px solid rgba(244,63,94,0.3)' }}>Regenerate Keys</button>
         </div>
       </ConfigSection>
       

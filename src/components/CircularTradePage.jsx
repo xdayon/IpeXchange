@@ -1,0 +1,95 @@
+import React, { useState } from 'react';
+import { Activity, RefreshCw, Layers } from 'lucide-react';
+import MultiHopTradeCard from './MultiHopTradeCard';
+
+const MOCK_CYCLES = [
+  {
+    id: 'cycle-1',
+    matchScore: 98,
+    nodes: [
+      { user: 'You', avatar: null, item: 'Electric Bike', rep: 85 },
+      { user: 'Carlos M.', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100&h=100', item: 'Web Consulting (10h)', rep: 92 },
+      { user: 'Bia T.', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100&h=100', item: 'Macbook Pro M1', rep: 98 }
+    ]
+  },
+  {
+    id: 'cycle-2',
+    matchScore: 94,
+    nodes: [
+      { user: 'You', avatar: null, item: 'English Lessons (4h)', rep: 85 },
+      { user: 'Sofia L.', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100&h=100', item: 'Graphic Design (Logo)', rep: 89 },
+      { user: 'Rafa G.', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100&h=100', item: 'Physiotherapy Sessions (2x)', rep: 95 },
+      { user: 'João P.', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100&h=100', item: 'Noise Cancelling Headphones', rep: 91 }
+    ]
+  }
+];
+
+const CircularTradePage = () => {
+  const [cycles, setCycles] = useState(MOCK_CYCLES);
+  const [isScanning, setIsScanning] = useState(false);
+
+  const handleScan = () => {
+    setIsScanning(true);
+    setTimeout(() => {
+      setIsScanning(false);
+    }, 2000);
+  };
+
+  return (
+    <div className="inner-page container">
+      {/* Header */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 18 }}>
+          <div>
+            <h2 style={{ fontSize: 28, marginBottom: 6 }}>
+              Multi-hop <span className="text-gradient-cyan">Trades</span>
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 15, maxWidth: 600 }}>
+              Artificial Intelligence analyzes the entire city network to find indirect matches. Sign smart contracts to execute chain trades.
+            </p>
+          </div>
+          <button 
+            onClick={handleScan}
+            disabled={isScanning}
+            className="checkout-cta" 
+            style={{ maxWidth: 220, background: 'linear-gradient(135deg, #818CF8, #38BDF8)' }}
+          >
+            <RefreshCw size={16} className={isScanning ? "spin-animation" : ""} />
+            {isScanning ? 'Analyzing Graph...' : 'Search New Cycles'}
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+          <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(56,189,248,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Layers size={20} color="#38BDF8" />
+            </div>
+            <div>
+              <p style={{ fontSize: 20, fontWeight: 800 }}>2</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Pending Cycles</p>
+            </div>
+          </div>
+          <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(180,244,74,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Activity size={20} color="#B4F44A" />
+            </div>
+            <div>
+              <p style={{ fontSize: 20, fontWeight: 800 }}>98%</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Max Match Score</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Cycle List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {cycles.map(cycle => (
+          <MultiHopTradeCard key={cycle.id} cycle={cycle} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default CircularTradePage;
