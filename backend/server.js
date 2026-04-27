@@ -13,6 +13,7 @@ import {
   createListing,
   searchListingsBySimilarity,
   createDemand,
+  getTradeCycles,
 } from './lib/supabase.js';
 
 const app = express();
@@ -248,6 +249,19 @@ app.get('/api/history/:sessionId', async (req, res) => {
     res.json({ history });
   } catch (err) {
     res.status(500).json({ error: 'Failed to load history' });
+  }
+});
+
+// ─── Multi-Hop Trades ─────────────────────────────────────────────────────────
+
+app.get('/api/cycles/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+  try {
+    const cycles = await getTradeCycles(sessionId);
+    res.json({ cycles });
+  } catch (err) {
+    console.error('GET /api/cycles error:', err);
+    res.status(500).json({ error: 'Failed to load trade cycles' });
   }
 });
 

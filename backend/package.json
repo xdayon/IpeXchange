@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "db:setup": "node db-setup.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
@@ -14,7 +15,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
-    "express-rate-limit": "^7.4.1"
+    "express-rate-limit": "^7.4.1",
+    "postgres": "^3.4.9"
   },
   "engines": {
     "node": ">=18.0.0"
