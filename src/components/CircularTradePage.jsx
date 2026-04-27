@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Activity, RefreshCw, Layers } from 'lucide-react';
 import MultiHopTradeCard from './MultiHopTradeCard';
 
+let API_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+if (API_URL.startsWith('http') && !API_URL.endsWith('/api')) {
+  API_URL += '/api';
+}
 
 
 const CircularTradePage = () => {
@@ -11,8 +15,8 @@ const CircularTradePage = () => {
   const fetchCycles = async () => {
     setIsScanning(true);
     try {
-      // Hardcoded test-session-id until real auth is implemented
-      const res = await fetch('https://ipexchange.onrender.com/api/cycles/test-session-id');
+      // Dynamic API URL for both local and production
+      const res = await fetch(`${API_URL}/cycles/test-session-id`);
       if (res.ok) {
         const data = await res.json();
         setCycles(data.cycles || []);
