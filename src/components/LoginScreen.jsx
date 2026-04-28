@@ -23,8 +23,8 @@ const LoginScreen = ({ onLogin }) => {
   return (
     <div className="onboarding-screen">
       <div className="login-container glass-panel">
-        <div className="icon-wrapper">
-          <Fingerprint size={64} className="text-gradient-lime" />
+        <div className="icon-wrapper" style={{ padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
+          <img src="/passport-logo.png" alt="Ipê Passport" style={{ width: 80, height: 80, borderRadius: 20 }} />
         </div>
         <h1 className="hero-title">
           <img src="/logo.png" alt="IpêXchange" style={{ height: '36px', width: '36px', borderRadius: '8px', verticalAlign: 'middle', marginRight: '10px' }} />
