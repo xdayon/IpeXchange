@@ -5,16 +5,35 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    nodePolyfills(), // polyfill ALL node modules — must come before react
+    nodePolyfills(),
     react(),
   ],
   define: {
-    // Ensure `global` is always available for libraries that rely on it
     global: 'globalThis',
   },
   optimizeDeps: {
-    // Force Vite to pre-bundle privy and its dependencies
-    include: ['@privy-io/react-auth'],
+    // Force Vite to pre-bundle these as CJS so they don't create circular ESM deps
+    include: [
+      '@privy-io/react-auth',
+      'viem',
+      'viem/utils',
+      'viem/chains',
+    ],
+  },
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+    rolldownOptions: {
+      output: {
+        // Prevent viem from being split into multiple async chunks
+        // which causes circular initialization issues
+        manualChunks: (id) => {
+          if (id.includes('node_modules/viem')) return 'viem';
+          if (id.includes('node_modules/@privy-io')) return 'privy';
+        },
+      },
+    },
   },
   server: {
     proxy: {
