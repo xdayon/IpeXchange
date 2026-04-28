@@ -5,16 +5,17 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    nodePolyfills(), // polyfill ALL node modules — must come before react
     react(),
-    nodePolyfills({
-      include: ['buffer', 'process', 'events', 'util', 'stream'],
-      globals: {
-        Buffer: true,
-        global: true,
-        process: true,
-      },
-    }),
   ],
+  define: {
+    // Ensure `global` is always available for libraries that rely on it
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    // Force Vite to pre-bundle privy and its dependencies
+    include: ['@privy-io/react-auth'],
+  },
   server: {
     proxy: {
       '/api': {
