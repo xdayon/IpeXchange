@@ -10,6 +10,7 @@ export default defineConfig({
       include: ['buffer', 'process'],
       globals: {
         Buffer: true,
+        global: true,
         process: true,
       },
     }),
