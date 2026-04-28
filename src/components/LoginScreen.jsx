@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Fingerprint, ArrowRight, Loader2 } from 'lucide-react';
+import { usePrivy } from '@privy-io/react-auth';
 
 const LoginScreen = ({ onLogin }) => {
-  const [step, setStep] = useState('idle'); // idle | loading | found
+  const { ready, authenticated, login, user } = usePrivy();
+  const [showEntry, setShowEntry] = useState(false);
 
-  const handleConnect = () => {
-    setStep('loading');
-    setTimeout(() => {
-      setStep('found');
-    }, 1500);
-  };
+  useEffect(() => {
+    if (ready && authenticated) {
+      // Simulate a small delay for dramatic effect after Privy login completes
+      const timer = setTimeout(() => {
+        setShowEntry(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [ready, authenticated]);
+
+  const displayId = user?.wallet?.address 
+    ? `${user.wallet.address.slice(0, 6)}...${user.wallet.address.slice(-4)}`
+    : user?.email?.address || 'Ipê Passport';
 
   return (
     <div className="onboarding-screen">
@@ -20,32 +29,32 @@ const LoginScreen = ({ onLogin }) => {
         <h1 className="hero-title">Ipê<span className="text-gradient-lime">Xchange</span></h1>
         <p className="hero-subtitle">Connect your identity to enter the ecosystem.</p>
 
-        {step === 'idle' && (
-          <button className="btn-primary w-full pulse-btn" onClick={handleConnect} style={{ marginTop: 24 }}>
+        {!ready && (
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            <Loader2 size={32} className="spin" style={{ margin: '0 auto 16px', color: '#B4F44A' }} />
+            <p>Initializing connection...</p>
+          </div>
+        )}
+
+        {ready && !authenticated && (
+          <button className="btn-primary w-full pulse-btn" onClick={login} style={{ marginTop: 24 }}>
             <span>Connect Ipê Passport</span>
           </button>
         )}
 
-        {step === 'loading' && (
-          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            <Loader2 size={32} className="spin" style={{ margin: '0 auto 16px', color: '#B4F44A' }} />
-            <p>Searching for local Passport...</p>
-          </div>
-        )}
-
-        {step === 'found' && (
+        {ready && authenticated && showEntry && (
           <div style={{ animation: 'fade-in 0.5s ease-out', marginTop: 24 }}>
             <div className="passport-card">
               <div className="passport-header">
-                <span className="badge">Ipê Passport Found</span>
+                <span className="badge">Ipê Passport Linked</span>
               </div>
               <div className="passport-details">
-                <h3>dayonx.ipecity.eth</h3>
-                <p className="wallet-address">0x17e9...7da1</p>
+                <h3>{user?.email?.address ? 'Verified Email' : 'Connected Wallet'}</h3>
+                <p className="wallet-address">{displayId}</p>
               </div>
             </div>
             <button className="btn-primary w-full pulse-btn" onClick={onLogin} style={{ marginTop: 24 }}>
-              <span>Authenticate & Enter</span>
+              <span>Enter Ecosystem</span>
               <ArrowRight size={20} />
             </button>
           </div>
