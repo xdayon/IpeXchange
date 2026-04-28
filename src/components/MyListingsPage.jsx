@@ -8,9 +8,9 @@ import {
 import { getMyListings, toggleListingStatus, markListingAsSold } from '../data/xchangeStore';
 
 const STATUS_CONFIG = {
-  active:  { color: '#22c55e', label: 'Ativo',    icon: PlayCircle  },
-  paused:  { color: '#F59E0B', label: 'Pausado',  icon: PauseCircle },
-  sold:    { color: '#38BDF8', label: 'Vendido',   icon: CheckCircle2 },
+  active:  { color: '#22c55e', label: 'Active',  icon: PlayCircle  },
+  paused:  { color: '#F59E0B', label: 'Paused',  icon: PauseCircle },
+  sold:    { color: '#38BDF8', label: 'Sold',    icon: CheckCircle2 },
 };
 
 const TYPE_ICON = { Products: Package, Services: Wrench, Donations: Gift };
@@ -19,15 +19,15 @@ const PAYMENT_LABELS = { fiat: '💵 Fiat', crypto: '⛓️ Crypto', trade: '�
 
 const formatDate = (iso) => {
   const d = new Date(iso);
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
 const formatRelative = (iso) => {
   const diff = Date.now() - new Date(iso).getTime();
   const days = Math.floor(diff / 86400000);
-  if (days === 0) return 'Hoje';
-  if (days === 1) return 'Ontem';
-  return `${days} dias atrás`;
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  return `${days} days ago`;
 };
 
 // ─── Empty State ──────────────────────────────────────────
@@ -36,13 +36,13 @@ const EmptyListings = () => (
     <div className="mp-empty-icon">
       <Store size={40} color="rgba(56,189,248,0.6)" />
     </div>
-    <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Nenhum anúncio ainda</h3>
+    <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>No listings yet</h3>
     <p style={{ color: 'var(--text-secondary)', fontSize: 14, maxWidth: 320, textAlign: 'center', lineHeight: 1.6 }}>
-      Crie seus primeiros anúncios para oferecer produtos, serviços ou trocas para a comunidade de Jurerê.
+      Create your first listings to offer products, services, or trades to the Ipê City community.
     </p>
     <button className="checkout-cta" style={{ marginTop: 24, maxWidth: 240, background: 'linear-gradient(135deg, #38BDF8, #818CF8)' }}>
       <Plus size={16} />
-      Criar Anúncio
+      Create Listing
     </button>
   </div>
 );
@@ -61,7 +61,7 @@ const MyListingCard = ({ listing, onToggle, onMarkSold }) => {
         {isSold && (
           <div className="sold-overlay">
             <CheckCircle2 size={28} color="#38BDF8" />
-            <span>Vendido</span>
+            <span>Sold</span>
           </div>
         )}
         <div className="my-listing-category-badge">
@@ -101,11 +101,11 @@ const MyListingCard = ({ listing, onToggle, onMarkSold }) => {
         <div className="my-listing-stats">
           <div className="my-listing-stat">
             <Eye size={13} color="var(--text-secondary)" />
-            <span>{listing.views || 0} visualizações</span>
+            <span>{listing.views || 0} views</span>
           </div>
           <div className="my-listing-stat">
             <MessageSquare size={13} color="var(--text-secondary)" />
-            <span>{listing.inquiries || 0} interessados</span>
+            <span>{listing.inquiries || 0} interested</span>
           </div>
           <div className="my-listing-stat">
             <Clock size={13} color="var(--text-secondary)" />
@@ -114,7 +114,7 @@ const MyListingCard = ({ listing, onToggle, onMarkSold }) => {
           <div className="my-listing-stat">
             <ShieldCheck size={13} color={listing.isPublic ? '#22c55e' : 'var(--text-secondary)'} />
             <span style={{ color: listing.isPublic ? '#22c55e' : 'var(--text-secondary)' }}>
-              {listing.isPublic ? 'Público' : 'Privado'}
+              {listing.isPublic ? 'Public' : 'Private'}
             </span>
           </div>
         </div>
@@ -132,7 +132,7 @@ const MyListingCard = ({ listing, onToggle, onMarkSold }) => {
               }}
             >
               {listing.status === 'active' ? <PauseCircle size={14} /> : <PlayCircle size={14} />}
-              {listing.status === 'active' ? 'Pausar' : 'Ativar'}
+              {listing.status === 'active' ? 'Pause' : 'Activate'}
             </button>
 
             {listing.category === 'Products' && (
@@ -142,15 +142,13 @@ const MyListingCard = ({ listing, onToggle, onMarkSold }) => {
                 style={{ color: '#38BDF8', borderColor: 'rgba(56,189,248,0.3)', background: 'rgba(56,189,248,0.06)' }}
               >
                 <CheckCircle2 size={14} />
-                Marcar como vendido
+                Mark as sold
               </button>
             )}
 
-            <button
-              className="my-listing-action-btn edit"
-            >
+            <button className="my-listing-action-btn edit">
               <Edit3 size={14} />
-              Editar
+              Edit
             </button>
           </div>
         )}
@@ -169,10 +167,10 @@ const ListingsStats = ({ listings }) => {
   return (
     <div className="mp-stats-bar">
       {[
-        { label: 'Anúncios ativos', value: active, color: '#22c55e' },
-        { label: 'Pausados', value: paused, color: '#F59E0B' },
-        { label: 'Vendidos', value: sold, color: '#38BDF8' },
-        { label: 'Total de views', value: views, color: '#818CF8' },
+        { label: 'Active listings', value: active, color: '#22c55e' },
+        { label: 'Paused',          value: paused, color: '#F59E0B' },
+        { label: 'Sold',            value: sold,   color: '#38BDF8' },
+        { label: 'Total views',     value: views,  color: '#818CF8' },
       ].map(s => (
         <div key={s.label} className="glass-panel mp-stat-card">
           <p style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</p>
@@ -185,10 +183,10 @@ const ListingsStats = ({ listings }) => {
 
 // ─── Filter Tabs ──────────────────────────────────────────
 const FILTERS = [
-  { id: 'all',    label: 'Todos'    },
-  { id: 'active', label: 'Ativos'   },
-  { id: 'paused', label: 'Pausados' },
-  { id: 'sold',   label: 'Vendidos' },
+  { id: 'all',    label: 'All'    },
+  { id: 'active', label: 'Active' },
+  { id: 'paused', label: 'Paused' },
+  { id: 'sold',   label: 'Sold'   },
 ];
 
 // ─── Main Component ───────────────────────────────────────
@@ -219,22 +217,22 @@ const MyListingsPage = ({ onNavigate, onBack }) => {
       {/* Back Button */}
       <button className="checkout-back-btn" onClick={onBack} style={{ marginBottom: 24 }}>
         <ArrowLeft size={18} />
-        Voltar à Wallet
+        Back to Wallet
       </button>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 18 }}>
           <div>
             <h2 style={{ fontSize: 28, marginBottom: 6 }}>
-              Meus <span className="text-gradient-cyan">Anúncios</span>
+              My <span className="text-gradient-cyan">Listings</span>
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
-              Gerencie tudo que você oferece na rede Xchange — produtos, serviços e trocas.
+              Manage everything you offer on the Xchange network — products, services, and trades.
             </p>
           </div>
           <button className="checkout-cta" style={{ maxWidth: 200, background: 'linear-gradient(135deg, #38BDF8, #818CF8)', fontSize: 14, padding: '12px 20px' }}>
             <Plus size={16} />
-            Novo Anúncio
+            New Listing
           </button>
         </div>
 
@@ -255,7 +253,7 @@ const MyListingsPage = ({ onNavigate, onBack }) => {
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
           <Store size={36} style={{ marginBottom: 12, opacity: 0.3 }} />
-          <p>Nenhum anúncio neste status.</p>
+          <p>No listings with this status.</p>
         </div>
       ) : (
         <div className="my-listings-grid">
@@ -275,9 +273,9 @@ const MyListingsPage = ({ onNavigate, onBack }) => {
         <div className="glass-panel" style={{ marginTop: 32, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, borderLeft: '4px solid #38BDF8' }}>
           <TrendingUp size={22} color="#38BDF8" />
           <div>
-            <p style={{ fontSize: 14, fontWeight: 600 }}>Dica do Core</p>
+            <p style={{ fontSize: 14, fontWeight: 600 }}>Core Tip</p>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>
-              Anúncios com foto de qualidade e aceite de crypto têm <strong style={{ color: '#B4F44A' }}>3.2× mais</strong> visualizações na rede. Atualize seus anúncios para maximizar alcance.
+              Listings with quality photos and crypto acceptance get <strong style={{ color: '#B4F44A' }}>3.2× more</strong> views in the network. Update your listings to maximize reach.
             </p>
           </div>
         </div>

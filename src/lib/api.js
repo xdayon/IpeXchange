@@ -5,12 +5,12 @@ if (API_URL.startsWith('http') && !API_URL.endsWith('/api')) {
   API_URL += '/api';
 }
 
-export async function sendChatMessage(sessionId, message, isAudio = false, audioBase64 = null, mimeType = null) {
+export async function sendChatMessage(sessionId, message, isAudio = false, audioBase64 = null, mimeType = null, walletAddress = null) {
   try {
     const response = await fetch(`${API_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId, message, isAudio, audioBase64, mimeType }),
+      body: JSON.stringify({ sessionId, message, isAudio, audioBase64, mimeType, walletAddress }),
     });
 
     if (!response.ok) {

@@ -7,9 +7,9 @@ import {
 import { getPurchases, clearPurchases } from '../data/xchangeStore';
 
 const STATUS_CONFIG = {
-  confirmed: { color: '#22c55e', label: 'Confirmado', icon: CheckCircle2 },
-  pending:   { color: '#F59E0B', label: 'Pendente',   icon: Clock },
-  disputed:  { color: '#F43F5E', label: 'Em disputa', icon: RefreshCw },
+  confirmed: { color: '#22c55e', label: 'Confirmed', icon: CheckCircle2 },
+  pending:   { color: '#F59E0B', label: 'Pending',   icon: Clock },
+  disputed:  { color: '#F43F5E', label: 'Disputed',  icon: RefreshCw },
 };
 
 const TYPE_ICON = {
@@ -19,17 +19,17 @@ const TYPE_ICON = {
 };
 
 const PAYMENT_LABELS = {
-  fiat: '💵 PIX / Fiat',
+  fiat:   '💵 PIX / Fiat',
   crypto: '⛓️ USDC On-Chain',
-  ipe: '🌳 $IPE Token',
-  trade: '🔄 Trade',
+  ipe:    '🌳 $IPE Token',
+  trade:  '🔄 Trade',
 };
 
-const FILTERS = ['Todos', 'Products', 'Services', 'Donations'];
+const FILTERS = ['All', 'Products', 'Services', 'Donations'];
 
 const formatDate = (iso) => {
   const d = new Date(iso);
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
 // ─── Empty State ──────────────────────────────────────────
@@ -38,13 +38,13 @@ const EmptyPurchases = ({ onDiscover }) => (
     <div className="mp-empty-icon">
       <ShoppingBag size={40} color="rgba(180,244,74,0.6)" />
     </div>
-    <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Nenhuma compra ainda</h3>
+    <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>No purchases yet</h3>
     <p style={{ color: 'var(--text-secondary)', fontSize: 14, maxWidth: 320, textAlign: 'center', lineHeight: 1.6 }}>
-      Suas transações Xchange aparecerão aqui com TX hash, detalhes de pagamento e reputação acumulada.
+      Your Xchange transactions will appear here with TX hash, payment details, and earned reputation.
     </p>
     <button className="checkout-cta" style={{ marginTop: 24, maxWidth: 280 }} onClick={onDiscover}>
       <Zap size={16} />
-      Explorar Discover
+      Explore Discover
     </button>
   </div>
 );
@@ -62,10 +62,7 @@ const PurchaseCard = ({ entry }) => {
       {/* Main row */}
       <div className="mp-card-main" onClick={() => setExpanded(e => !e)}>
         {/* Image */}
-        <div
-          className="mp-card-img"
-          style={{ backgroundImage: `url(${listing.image})` }}
-        >
+        <div className="mp-card-img" style={{ backgroundImage: `url(${listing.image})` }}>
           <div className="mp-card-type-badge">
             <TypeIcon size={12} />
           </div>
@@ -113,11 +110,11 @@ const PurchaseCard = ({ entry }) => {
 
           <div className="mp-detail-grid">
             <div className="mp-detail-row">
-              <span className="mp-detail-label">Categoria</span>
+              <span className="mp-detail-label">Category</span>
               <span className="mp-detail-value">{listing.category}</span>
             </div>
             <div className="mp-detail-row">
-              <span className="mp-detail-label">Método de pagamento</span>
+              <span className="mp-detail-label">Payment method</span>
               <span className="mp-detail-value">{PAYMENT_LABELS[paymentMethod] || paymentMethod}</span>
             </div>
             <div className="mp-detail-row">
@@ -127,24 +124,24 @@ const PurchaseCard = ({ entry }) => {
               </span>
             </div>
             <div className="mp-detail-row">
-              <span className="mp-detail-label">Privacidade Zodl ZK</span>
+              <span className="mp-detail-label">Zodl ZK Privacy</span>
               <span className="mp-detail-value" style={{ color: '#B4F44A', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <ShieldCheck size={12} /> Transação blindada nativamente
+                <ShieldCheck size={12} /> Natively shielded transaction
               </span>
             </div>
             {listing.type === 'Product' && (
               <div className="mp-detail-row">
-                <span className="mp-detail-label">Disponibilidade</span>
+                <span className="mp-detail-label">Availability</span>
                 <span className="mp-detail-value" style={{ color: '#F43F5E' }}>
-                  Produto removido do Discover
+                  Product removed from Discover
                 </span>
               </div>
             )}
             {listing.type === 'Service' && (
               <div className="mp-detail-row">
-                <span className="mp-detail-label">Disponibilidade</span>
+                <span className="mp-detail-label">Availability</span>
                 <span className="mp-detail-value" style={{ color: '#22c55e' }}>
-                  Serviço continua ativo no Discover
+                  Service remains active on Discover
                 </span>
               </div>
             )}
@@ -153,7 +150,7 @@ const PurchaseCard = ({ entry }) => {
           <div className="mp-rep-note">
             <Zap size={13} color="#B4F44A" />
             <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              Esta transação contribuiu com <strong style={{ color: '#B4F44A' }}>+2 pontos</strong> ao seu Reputation Score on-chain.
+              This transaction added <strong style={{ color: '#B4F44A' }}>+2 points</strong> to your on-chain Reputation Score.
             </p>
           </div>
         </div>
@@ -164,7 +161,7 @@ const PurchaseCard = ({ entry }) => {
 
 // ─── Stats Bar ────────────────────────────────────────────
 const StatsBar = ({ purchases }) => {
-  const total = purchases.length;
+  const total    = purchases.length;
   const products = purchases.filter(p => p.listing.category === 'Products').length;
   const services = purchases.filter(p => p.listing.category === 'Services').length;
   const repGained = total * 2;
@@ -172,10 +169,10 @@ const StatsBar = ({ purchases }) => {
   return (
     <div className="mp-stats-bar">
       {[
-        { label: 'Total de compras', value: total, color: '#B4F44A' },
-        { label: 'Produtos adquiridos', value: products, color: '#38BDF8' },
-        { label: 'Serviços contratados', value: services, color: '#818CF8' },
-        { label: 'Rep acumulado', value: `+${repGained}`, color: '#F59E0B' },
+        { label: 'Total purchases',    value: total,     color: '#B4F44A' },
+        { label: 'Products acquired',  value: products,  color: '#38BDF8' },
+        { label: 'Services hired',     value: services,  color: '#818CF8' },
+        { label: 'Rep earned',         value: `+${repGained}`, color: '#F59E0B' },
       ].map(s => (
         <div key={s.label} className="glass-panel mp-stat-card">
           <p style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</p>
@@ -189,13 +186,13 @@ const StatsBar = ({ purchases }) => {
 // ─── Main Component ───────────────────────────────────────
 const MyPurchasesPage = ({ onNavigate, onBack }) => {
   const [purchases, setPurchases] = useState([]);
-  const [filter, setFilter] = useState('Todos');
+  const [filter, setFilter] = useState('All');
 
   useEffect(() => {
     setPurchases(getPurchases());
   }, []);
 
-  const filtered = filter === 'Todos'
+  const filtered = filter === 'All'
     ? purchases
     : purchases.filter(p => p.listing.category === filter);
 
@@ -204,17 +201,17 @@ const MyPurchasesPage = ({ onNavigate, onBack }) => {
       {/* Back Button */}
       <button className="checkout-back-btn" onClick={onBack} style={{ marginBottom: 24 }}>
         <ArrowLeft size={18} />
-        Voltar à Wallet
+        Back to Wallet
       </button>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 18 }}>
           <div>
             <h2 style={{ fontSize: 28, marginBottom: 6 }}>
-              Minhas <span className="text-gradient-lime">Compras</span>
+              My <span className="text-gradient-lime">Purchases</span>
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
-              Histórico completo das suas transações Xchange — tudo registrado on-chain.
+              Full history of your Xchange transactions — all recorded on-chain.
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -248,7 +245,7 @@ const MyPurchasesPage = ({ onNavigate, onBack }) => {
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-secondary)' }}>
               <Filter size={32} style={{ marginBottom: 12, opacity: 0.4 }} />
-              <p>Nenhuma compra nesta categoria.</p>
+              <p>No purchases in this category.</p>
             </div>
           ) : (
             filtered.map(entry => <PurchaseCard key={entry.id} entry={entry} />)
@@ -258,13 +255,13 @@ const MyPurchasesPage = ({ onNavigate, onBack }) => {
 
       {/* How it works */}
       <div className="glass-panel" style={{ marginTop: 40, padding: '24px 28px' }}>
-        <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Como funciona o registro on-chain</h4>
+        <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>How on-chain records work</h4>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
           {[
-            { icon: ShieldCheck, color: '#B4F44A', title: 'Zodl ZK Privacy', desc: 'Transações blindadas pelo Zodl sem expor dados pessoais.' },
-            { icon: ShieldCheck, color: '#38BDF8', title: 'Ipê Passport', desc: 'Vendedores identificados e verificados pelo ENS nativo.' },
-            { icon: Package, color: '#818CF8', title: 'Produto único = Sold', desc: 'Produtos comprados são removidos do Discover.' },
-            { icon: Zap, color: '#F59E0B', title: 'Rep Score', desc: 'Cada compra concluída aumenta seu Reputation Score on-chain.' },
+            { icon: ShieldCheck, color: '#B4F44A', title: 'Zodl ZK Privacy', desc: 'Transactions shielded by Zodl without exposing personal data.' },
+            { icon: ShieldCheck, color: '#38BDF8', title: 'Ipê Passport', desc: 'Sellers identified and verified via native ENS.' },
+            { icon: Package,     color: '#818CF8', title: 'Unique product = Sold', desc: 'Purchased products are removed from Discover.' },
+            { icon: Zap,         color: '#F59E0B', title: 'Rep Score', desc: 'Every completed purchase increases your on-chain Reputation Score.' },
           ].map(item => (
             <div key={item.title} style={{ display: 'flex', gap: 12 }}>
               <div style={{ width: 34, height: 34, borderRadius: 10, background: `${item.color}15`, border: `1px solid ${item.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

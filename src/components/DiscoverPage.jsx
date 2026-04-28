@@ -57,7 +57,7 @@ const DiscoverPage = ({ onNavigate }) => {
             Discover <span className="text-gradient-lime">Opportunities</span>
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>
-            Últimas ofertas e demandas da sua rede local
+            Latest offers and demands from your local network
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -74,7 +74,7 @@ const DiscoverPage = ({ onNavigate }) => {
               }}
             >
               <EyeOff size={13} />
-              {showSold ? 'Ocultar Adquiridos' : `${hiddenCount} adquirido${hiddenCount > 1 ? 's' : ''}`}
+              {showSold ? 'Hide Acquired' : `${hiddenCount} acquired`}
             </button>
           )}
           
@@ -101,7 +101,7 @@ const DiscoverPage = ({ onNavigate }) => {
       {loading ? (
         <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
           <Activity size={24} className="pulse-anim" style={{ margin: '0 auto 16px', display: 'block', color: 'var(--accent-lime)' }} />
-          Sincronizando com a rede Ipê...
+          Syncing with the Ipê network...
         </div>
       ) : (
         <>
@@ -110,7 +110,7 @@ const DiscoverPage = ({ onNavigate }) => {
             <div style={{ marginTop: '32px', marginBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '16px' }}>
                 <span style={{ fontSize: 20 }}>🔥</span>
-                <h3 style={{ fontSize: '18px', margin: 0 }}>Trending (IA detectou alta demanda)</h3>
+                <h3 style={{ fontSize: '18px', margin: 0 }}>Trending (AI-detected high demand)</h3>
               </div>
               <div className="listings-grid">
                 {trending.map((listing) => (
@@ -121,7 +121,7 @@ const DiscoverPage = ({ onNavigate }) => {
                       color: '#000', fontSize: 11, fontWeight: 800, padding: '4px 12px',
                       borderRadius: 100, boxShadow: '0 4px 12px rgba(180, 244, 74, 0.3)'
                     }}>
-                      ✨ Alta Demanda ({listing.trendCount} buscas hoje)
+                      ✨ High Demand ({listing.trendCount} searches today)
                     </div>
                     <ListingCard listing={listing} onXchange={handleXchange} />
                   </div>
@@ -132,7 +132,7 @@ const DiscoverPage = ({ onNavigate }) => {
 
           {/* Regular Grid */}
           <div style={{ marginTop: trending.length > 0 && activeFilter === 'All' ? '16px' : '32px' }}>
-            <h3 style={{ fontSize: '18px', marginBottom: '16px', color: 'var(--text-secondary)' }}>Todas as Ofertas</h3>
+            <h3 style={{ fontSize: '18px', marginBottom: '16px', color: 'var(--text-secondary)' }}>All Listings</h3>
             <div className="listings-grid">
               {filtered.map(listing => {
                 const isSold = soldIds.includes(listing.id);
@@ -145,7 +145,7 @@ const DiscoverPage = ({ onNavigate }) => {
                         fontSize: 11, fontWeight: 800, padding: '3px 10px',
                         borderRadius: 100, letterSpacing: 0.5
                       }}>
-                        ✓ Adquirido
+                        ✓ Acquired
                       </div>
                     )}
                     <ListingCard listing={listing} onXchange={!isSold ? handleXchange : undefined} />

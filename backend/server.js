@@ -60,7 +60,7 @@ app.get('/api/health', (req, res) => {
 // ─── Chat ─────────────────────────────────────────────────────────────────────
 
 app.post('/api/chat', async (req, res) => {
-  const { sessionId, message, isAudio = false, audioBase64 = null, mimeType = null } = req.body;
+  const { sessionId, message, isAudio = false, audioBase64 = null, mimeType = null, walletAddress = null } = req.body;
 
   if (!sessionId || (!message?.trim() && !audioBase64)) {
     return res.status(400).json({ error: 'sessionId and either message or audio are required' });
@@ -113,8 +113,8 @@ app.post('/api/chat', async (req, res) => {
           if (listing && listing.title) {
             const embeddingText = `${listing.title} ${listing.description || ''} ${listing.category || ''}`;
             const embedding = await generateEmbedding(embeddingText);
-            await createListing({ sessionId, listing, embedding });
-            console.log(`📦 New listing created via chat: "${listing.title}" (session: ${sessionId})`);
+            await createListing({ sessionId, listing, embedding, walletAddress });
+            console.log(`📦 New listing created via chat: "${listing.title}" (session: ${sessionId}, wallet: ${walletAddress || 'anon'})`);
           }
         }
       }).catch(err => console.error('Async intent/listing error:', err.message));

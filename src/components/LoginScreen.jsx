@@ -28,7 +28,7 @@ const LoginScreen = ({ onLogin }) => {
         </div>
         <h1 className="hero-title">
           <img src="/logo.png" alt="IpêXchange" style={{ height: '36px', width: '36px', borderRadius: '8px', verticalAlign: 'middle', marginRight: '10px' }} />
-          Ipê<span className="text-gradient-lime">Xchange</span>
+          <span>Ipê<span className="text-gradient-lime">Xchange</span></span>
         </h1>
         <p className="hero-subtitle">Connect your identity to enter the ecosystem.</p>
 

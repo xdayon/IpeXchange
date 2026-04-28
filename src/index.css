@@ -1129,6 +1129,62 @@ input, textarea {
   cursor: not-allowed;
 }
 
+/* ─── MIC PRIMARY BUTTON (right-side, shown when input is empty) ─── */
+.mic-btn-primary {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.25s;
+  animation: subtle-pulse 2.5s ease-in-out infinite;
+}
+
+.mic-btn-primary:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: var(--accent-cyan);
+  transform: scale(1.06);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+  animation: none;
+}
+
+/* ─── LISTING PUBLISHED BANNER ───────────────────────── */
+.listing-published-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(180, 244, 74, 0.08);
+  border: 1px solid rgba(180, 244, 74, 0.28);
+  color: #B4F44A;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.listing-published-link {
+  margin-left: auto;
+  background: rgba(180, 244, 74, 0.15);
+  border: 1px solid rgba(180, 244, 74, 0.3);
+  color: #B4F44A;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.listing-published-link:hover {
+  background: rgba(180, 244, 74, 0.25);
+}
+
 /* ─── AUDIO BUBBLE ───────────────────────────────────── */
 .message-bubble.audio-bubble.user {
   display: flex;

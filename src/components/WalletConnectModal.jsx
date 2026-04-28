@@ -20,11 +20,11 @@ const PixFlow = ({ onSuccess }) => {
       <div className="wc-flow-icon" style={{ background: 'rgba(0,184,148,0.12)', borderColor: 'rgba(0,184,148,0.3)' }}>
         <span style={{ fontSize: 28 }}>💸</span>
       </div>
-      <h3 className="wc-flow-title">Conectar PIX</h3>
-      <p className="wc-flow-sub">Vincule sua chave PIX para pagamentos instantâneos no Xchange.</p>
+      <h3 className="wc-flow-title">Connect PIX</h3>
+      <p className="wc-flow-sub">Link your PIX key for instant payments on Xchange.</p>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        {['cpf','email','telefone','aleatória'].map(t => (
+        {['cpf','email','phone','random'].map(t => (
           <button key={t} onClick={() => setKeyType(t)}
             style={{ flex: 1, padding: '7px 4px', fontSize: 11, fontWeight: 600, borderRadius: 8, border: `1px solid ${keyType===t ? '#00B894' : 'var(--border-color)'}`, background: keyType===t ? 'rgba(0,184,148,0.12)' : 'transparent', color: keyType===t ? '#00B894' : 'var(--text-secondary)', cursor: 'pointer' }}>
             {t}
@@ -33,22 +33,22 @@ const PixFlow = ({ onSuccess }) => {
       </div>
 
       <div className="wc-input-group">
-        <label>Chave PIX ({keyType})</label>
-        <input className="wc-input" placeholder={keyType === 'cpf' ? '000.000.000-00' : keyType === 'email' ? 'seu@email.com' : keyType === 'telefone' ? '+55 (48) 9xxxx-xxxx' : 'Chave aleatória'} value={keyValue} onChange={e => setKeyValue(e.target.value)} />
+        <label>PIX Key ({keyType})</label>
+        <input className="wc-input" placeholder={keyType === 'cpf' ? '000.000.000-00' : keyType === 'email' ? 'your@email.com' : keyType === 'phone' ? '+55 (48) 9xxxx-xxxx' : 'Random key'} value={keyValue} onChange={e => setKeyValue(e.target.value)} />
       </div>
       <div className="wc-input-group">
-        <label>Nome do titular</label>
-        <input className="wc-input" placeholder="Como aparece no banco" value={name} onChange={e => setName(e.target.value)} />
+        <label>Account holder name</label>
+        <input className="wc-input" placeholder="As shown in your bank" value={name} onChange={e => setName(e.target.value)} />
       </div>
 
       <div className="wc-security-note">
         <ShieldCheck size={13} color="#B4F44A" />
-        <span>Seus dados ficam criptografados localmente. Nunca compartilhados sem sua autorização.</span>
+        <span>Your data is encrypted locally. Never shared without your authorization.</span>
       </div>
 
       <button className="wc-confirm-btn" style={{ background: 'linear-gradient(135deg,#00B894,#10B981)' }} onClick={handleConfirm} disabled={!keyValue || !name || loading}>
         {loading ? <Loader2 size={16} className="spin" /> : <CheckCircle2 size={16} />}
-        {loading ? 'Verificando...' : 'Vincular Chave PIX'}
+        {loading ? 'Verifying...' : 'Link PIX Key'}
       </button>
     </div>
   );
@@ -76,8 +76,8 @@ const CardFlow = ({ onSuccess }) => {
       <div className="wc-flow-icon" style={{ background: 'rgba(56,189,248,0.12)', borderColor: 'rgba(56,189,248,0.3)' }}>
         <CreditCard size={28} color="#38BDF8" />
       </div>
-      <h3 className="wc-flow-title">Adicionar Cartão</h3>
-      <p className="wc-flow-sub">Visa, Mastercard ou Elo. Seus dados são criptografados e nunca armazenados em texto puro.</p>
+      <h3 className="wc-flow-title">Add Card</h3>
+      <p className="wc-flow-sub">Visa, Mastercard or Elo. Your data is encrypted and never stored in plain text.</p>
 
       {/* Card preview */}
       <div className="wc-card-preview">
@@ -87,23 +87,23 @@ const CardFlow = ({ onSuccess }) => {
         </div>
         <p className="wc-card-number">{card.number || '•••• •••• •••• ••••'}</p>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 12, opacity: 0.8 }}>{card.name || 'NOME DO TITULAR'}</span>
-          <span style={{ fontSize: 12, opacity: 0.8 }}>{card.expiry || 'MM/AA'}</span>
+          <span style={{ fontSize: 12, opacity: 0.8 }}>{card.name || 'CARDHOLDER NAME'}</span>
+          <span style={{ fontSize: 12, opacity: 0.8 }}>{card.expiry || 'MM/YY'}</span>
         </div>
       </div>
 
       <div className="wc-input-group">
-        <label>Número do cartão</label>
+        <label>Card number</label>
         <input className="wc-input" placeholder="0000 0000 0000 0000" maxLength={19} value={card.number} onChange={e => setCard(c => ({ ...c, number: formatCard(e.target.value) }))} />
       </div>
       <div className="wc-input-group">
-        <label>Nome do titular</label>
-        <input className="wc-input" placeholder="Como no cartão" value={card.name} onChange={e => setCard(c => ({ ...c, name: e.target.value.toUpperCase() }))} />
+        <label>Cardholder name</label>
+        <input className="wc-input" placeholder="As shown on card" value={card.name} onChange={e => setCard(c => ({ ...c, name: e.target.value.toUpperCase() }))} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div className="wc-input-group">
-          <label>Validade</label>
-          <input className="wc-input" placeholder="MM/AA" maxLength={5} value={card.expiry} onChange={e => setCard(c => ({ ...c, expiry: formatExpiry(e.target.value) }))} />
+          <label>Expiry</label>
+          <input className="wc-input" placeholder="MM/YY" maxLength={5} value={card.expiry} onChange={e => setCard(c => ({ ...c, expiry: formatExpiry(e.target.value) }))} />
         </div>
         <div className="wc-input-group">
           <label>CVV</label>
@@ -118,12 +118,12 @@ const CardFlow = ({ onSuccess }) => {
 
       <div className="wc-security-note">
         <ShieldCheck size={13} color="#B4F44A" />
-        <span>Processamento seguro via tokenização. Número real nunca trafega em texto claro.</span>
+        <span>Secure processing via tokenization. Real card number is never transmitted in plain text.</span>
       </div>
 
       <button className="wc-confirm-btn" style={{ background: 'linear-gradient(135deg,#38BDF8,#818CF8)' }} onClick={handleConfirm} disabled={loading}>
         {loading ? <Loader2 size={16} className="spin" /> : <ShieldCheck size={16} />}
-        {loading ? 'Verificando cartão...' : 'Adicionar Cartão'}
+        {loading ? 'Verifying card...' : 'Add Card'}
       </button>
     </div>
   );
@@ -152,9 +152,9 @@ const MetaMaskFlow = ({ onSuccess }) => {
 
       {step === 'idle' && (
         <>
-          <p className="wc-flow-sub">Conecte sua carteira MetaMask para usar USDC e ETH no Xchange.</p>
+          <p className="wc-flow-sub">Connect your MetaMask wallet to use USDC and ETH on Xchange.</p>
           <div className="wc-steps-list">
-            {['MetaMask detectada no browser','Solicitar permissão de leitura','Assinar mensagem de autenticação (sem custo)'].map((s,i) => (
+            {['MetaMask detected in browser','Request read permission','Sign auth message (no gas cost)'].map((s,i) => (
               <div key={i} className="wc-step-row"><span className="wc-step-num">{i+1}</span><span>{s}</span></div>
             ))}
           </div>
@@ -167,25 +167,25 @@ const MetaMaskFlow = ({ onSuccess }) => {
       {step === 'connecting' && (
         <div style={{ padding: '24px 0' }}>
           <Loader2 size={40} color="#F6851B" className="spin" style={{ margin: '0 auto 16px' }} />
-          <p style={{ color: 'var(--text-secondary)' }}>Aguardando MetaMask...</p>
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8 }}>Verifique a extensão no seu browser</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Waiting for MetaMask...</p>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8 }}>Check the extension in your browser</p>
         </div>
       )}
 
       {step === 'sign' && (
         <>
-          <p className="wc-flow-sub">MetaMask conectada! Assine a mensagem para autenticar no IpêXchange.</p>
+          <p className="wc-flow-sub">MetaMask connected! Sign the message to authenticate on IpêXchange.</p>
           <div className="wc-sign-box">
-            <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 8 }}>Mensagem de autenticação:</p>
+            <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 8 }}>Authentication message:</p>
             <p style={{ fontFamily: 'monospace', fontSize: 12, color: '#F6851B', wordBreak: 'break-all' }}>
               "IpêXchange Authentication\nTimestamp: {Date.now()}\nNonce: 0x9f2a..."
             </p>
           </div>
           <p style={{ fontSize: 12, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 16 }}>
-            <ShieldCheck size={13} /> Sem custo de gas — apenas assinatura
+            <ShieldCheck size={13} /> No gas cost — signature only
           </p>
           <button className="wc-confirm-btn" style={{ background: 'linear-gradient(135deg,#F6851B,#E07318)' }} onClick={handleSign}>
-            Assinar mensagem
+            Sign message
           </button>
         </>
       )}
@@ -193,7 +193,7 @@ const MetaMaskFlow = ({ onSuccess }) => {
       {step === 'done' && (
         <div style={{ padding: '16px 0' }}>
           <CheckCircle2 size={48} color="#22c55e" style={{ margin: '0 auto 16px', display: 'block' }} />
-          <p style={{ fontWeight: 700, marginBottom: 4 }}>Carteira conectada!</p>
+          <p style={{ fontWeight: 700, marginBottom: 4 }}>Wallet connected!</p>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>0x7f3a...d8c2</p>
         </div>
       )}
@@ -211,7 +211,7 @@ const WalletConnectFlow = ({ onSuccess }) => {
         <span style={{ fontSize: 28 }}>📱</span>
       </div>
       <h3 className="wc-flow-title">WalletConnect</h3>
-      <p className="wc-flow-sub">Escaneie o QR com qualquer carteira mobile: Trust, Rainbow, Uniswap, etc.</p>
+      <p className="wc-flow-sub">Scan the QR with any mobile wallet: Trust, Rainbow, Uniswap, etc.</p>
 
       {/* Mock QR */}
       <div className="wc-qr-box">
@@ -230,7 +230,7 @@ const WalletConnectFlow = ({ onSuccess }) => {
 
       {scanned && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', color: '#22c55e', fontSize: 13 }}>
-          <Loader2 size={14} className="spin" /> Aguardando confirmação no app...
+          <Loader2 size={14} className="spin" /> Waiting for confirmation in the app...
         </div>
       )}
     </div>
@@ -252,7 +252,7 @@ const CoinbaseFlow = ({ onSuccess }) => {
       {step === 'idle' && (
         <>
           <div className="wc-steps-list">
-            {['Abra o Coinbase Wallet','Vá em "Connect to app"','Escaneie ou clique em conectar'].map((s,i) => (
+            {['Open Coinbase Wallet','Go to "Connect to app"','Scan or click to connect'].map((s,i) => (
               <div key={i} className="wc-step-row"><span className="wc-step-num">{i+1}</span><span>{s}</span></div>
             ))}
           </div>
@@ -270,7 +270,7 @@ const CoinbaseFlow = ({ onSuccess }) => {
       {step === 'loading' && (
         <div style={{ padding: '24px 0' }}>
           <Loader2 size={40} color="#0052FF" className="spin" style={{ margin: '0 auto 16px' }} />
-          <p style={{ color: 'var(--text-secondary)' }}>Conectando ao Coinbase Wallet...</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Connecting to Coinbase Wallet...</p>
         </div>
       )}
     </div>
@@ -295,7 +295,7 @@ const TangemFlow = ({ onSuccess }) => {
         <span style={{ fontSize: 28 }}>🪪</span>
       </div>
       <h3 className="wc-flow-title">Tangem Wallet</h3>
-      <p className="wc-flow-sub">Aproxime seu cartão Tangem do dispositivo para assinar transações com segurança de hardware.</p>
+      <p className="wc-flow-sub">Tap your Tangem card to the device to sign transactions with hardware-level security.</p>
 
       {step === 'idle' && (
         <div style={{ marginTop: 16 }}>
@@ -306,7 +306,7 @@ const TangemFlow = ({ onSuccess }) => {
             <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: 2, color: '#fff' }}>TANGEM</span>
           </div>
           <button className="wc-confirm-btn" style={{ background: '#1E293B', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }} onClick={handleTap}>
-            Aproximar Cartão NFC
+            Tap NFC Card
           </button>
         </div>
       )}
@@ -314,15 +314,15 @@ const TangemFlow = ({ onSuccess }) => {
       {step === 'scanning' && (
         <div style={{ padding: '24px 0' }}>
           <div className="spin" style={{ width: 60, height: 60, border: '4px solid rgba(255,255,255,0.1)', borderTopColor: '#38BDF8', borderRadius: '50%', margin: '0 auto 16px' }} />
-          <p style={{ color: 'var(--text-secondary)' }}>Lendo cartão Tangem via NFC...</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Reading Tangem card via NFC...</p>
         </div>
       )}
 
       {step === 'done' && (
         <div style={{ padding: '16px 0' }}>
           <CheckCircle2 size={48} color="#22c55e" style={{ margin: '0 auto 16px', display: 'block' }} />
-          <p style={{ fontWeight: 700, marginBottom: 4 }}>Cartão Autenticado!</p>
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Chaves privadas verificadas offline.</p>
+          <p style={{ fontWeight: 700, marginBottom: 4 }}>Card Authenticated!</p>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Private keys verified offline.</p>
         </div>
       )}
     </div>
@@ -346,16 +346,16 @@ const RaycashFlow = ({ onSuccess }) => {
         <span style={{ fontSize: 28 }}>💵</span>
       </div>
       <h3 className="wc-flow-title" style={{ textAlign: 'center' }}>Raycash</h3>
-      <p className="wc-flow-sub">Conecte sua conta Raycash para pagamentos instantâneos com Stablecoins (USDC/USDT) sem volatilidade.</p>
+      <p className="wc-flow-sub">Connect your Raycash account for instant Stablecoin payments (USDC/USDT) with no volatility.</p>
 
       <div className="wc-input-group" style={{ marginTop: 12 }}>
-        <label>Email da conta Raycash</label>
-        <input className="wc-input" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} />
+        <label>Raycash account email</label>
+        <input className="wc-input" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} />
       </div>
 
       <button className="wc-confirm-btn" style={{ background: 'linear-gradient(135deg, #10B981, #059669)', marginTop: 8 }} onClick={handleConfirm} disabled={!email || loading}>
         {loading ? <Loader2 size={16} className="spin" /> : <CheckCircle2 size={16} />}
-        {loading ? 'Conectando...' : 'Vincular Raycash'}
+        {loading ? 'Connecting...' : 'Link Raycash'}
       </button>
     </div>
   );
@@ -376,20 +376,20 @@ const YodlFlow = ({ onSuccess }) => {
         <span style={{ fontSize: 28 }}>🪙</span>
       </div>
       <h3 className="wc-flow-title">Yodl Crypto Payments</h3>
-      <p className="wc-flow-sub">O gateway de pagamentos crypto nativo do ecossistema. Pague com qualquer token suportado, liquidação instantânea.</p>
+      <p className="wc-flow-sub">The native crypto payment gateway of the ecosystem. Pay with any supported token, instant settlement.</p>
 
       <div style={{ background: 'rgba(129,140,248,0.05)', padding: 16, borderRadius: 12, border: '1px solid rgba(129,140,248,0.2)', margin: '12px 0', textAlign: 'left' }}>
-        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>Vantagens Yodl:</p>
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>Yodl advantages:</p>
         <ul style={{ fontSize: 13, paddingLeft: 20, color: 'var(--text-primary)', margin: 0 }}>
-          <li>Suporte multi-chain</li>
-          <li>Conversão automática no checkout</li>
-          <li>Integração direta via smart contracts</li>
+          <li>Multi-chain support</li>
+          <li>Automatic conversion at checkout</li>
+          <li>Direct integration via smart contracts</li>
         </ul>
       </div>
 
       <button className="wc-confirm-btn" style={{ background: 'linear-gradient(135deg, #818CF8, #6366F1)' }} onClick={handleConnect} disabled={loading}>
         {loading ? <Loader2 size={16} className="spin" /> : <CheckCircle2 size={16} />}
-        {loading ? 'Inicializando Yodl...' : 'Ativar Yodl Gateway'}
+        {loading ? 'Initializing Yodl...' : 'Activate Yodl Gateway'}
       </button>
     </div>
   );

@@ -6,10 +6,10 @@ import { mockDemands } from '../data/mockData';
 const CityMap = lazy(() => import('./CityMap'));
 
 const LIVE_FEED = [
-  { icon: <Zap size={14} />, color: '#B4F44A', text: 'New offer: Macbook Pro M3 — $1,500', time: '2m' },
-  { icon: <Users size={14} />, color: '#38BDF8', text: 'Trade: Bicycle for Legal Services', time: '5m' },
+  { icon: <Zap size={14} />, color: '#B4F44A', text: 'New listing: MacBook Pro M3 — $1,500', time: '2m' },
+  { icon: <Users size={14} />, color: '#38BDF8', text: 'Trade: Electric Bike for Legal Services', time: '5m' },
   { icon: <TrendingUp size={14} />, color: '#818CF8', text: 'Organic Honey sold out — 4 buyers waiting', time: '8m' },
-  { icon: <MapPin size={14} />, color: '#F43F5E', text: 'Vet Dr. Sarah available now — Jurerê', time: '12m' },
+  { icon: <MapPin size={14} />, color: '#F43F5E', text: 'Vet Dr. Sarah available now — Ipê City', time: '12m' },
   { icon: <Zap size={14} />, color: '#B4F44A', text: 'Graphic Design — accepts crypto or trade', time: '18m' },
   { icon: <Lock size={14} />, color: '#94A3B8', text: 'Private transaction completed on-chain via ZKP', time: '22m' },
   { icon: <Wallet size={14} />, color: '#B4F44A', text: 'P2P loan funded at Ipê Bakery', time: '35m' },
@@ -39,11 +39,11 @@ const HomePage = () => {
       {/* Dashboard Top Row */}
       <div>
         <h2 style={{ fontSize: 24, marginBottom: 16 }}>
-          Ipê City <span className="text-gradient-cyan">Dashboard</span>
+          Ipê City <span className="text-gradient-cyan">Marketplace</span>
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-          <StatCard icon={TrendingUp} color="#B4F44A" title="24h Volume" value="$8.2k" subtext="+12%" />
-          <StatCard icon={Users} color="#38BDF8" title="Active Citizens" value="1,240" subtext="Jurerê" />
+          <StatCard icon={TrendingUp} color="#B4F44A" title="Volume 24h" value="R$8.2k" subtext="+12%" />
+          <StatCard icon={Users} color="#38BDF8" title="Active Citizens" value="1,240" subtext="Ipê City" />
           <StatCard icon={Store} color="#818CF8" title="On-Chain Stores" value="48" subtext="Operating" />
           <StatCard icon={Network} color="#F59E0B" title="Connected Intents" value="156" subtext="Today" />
         </div>
@@ -61,7 +61,7 @@ const HomePage = () => {
         {/* Live Activity Feed sidebar */}
         <aside className="activity-feed" style={{ display: 'flex', flexDirection: 'column' }}>
           <h4 className="feed-title" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', margin: 0 }}>
-            <span className="live-dot" /> Activity in Jurerê
+            <span className="live-dot" /> Atividade em Ipê City
           </h4>
           <ul className="feed-list" style={{ overflowY: 'auto', flex: 1, padding: '16px 0' }}>
             {LIVE_FEED.map((item, i) => (
@@ -142,7 +142,7 @@ const HomePage = () => {
         <Zap size={24} color="#B4F44A" />
         <div>
           <p style={{ fontSize: 15, fontWeight: 600 }}>Core Tip</p>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>There is a high demand for tech services in the Jurerê region today. Talk to Core if you want to announce a service at a premium price.</p>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>Alta demanda por serviços de tecnologia em Ipê City hoje. Converse com o Core para anunciar um serviço com preço premium.</p>
         </div>
       </div>
 
