@@ -37,13 +37,13 @@ const NAV_TABS = [
   { id: 'discover',   icon: <Compass size={16} />,     label: 'Discover' },
   { id: 'stores',     icon: <Store size={16} />,       label: 'Stores' },
   { id: 'investments',icon: <TrendingUp size={16} />,  label: 'Invest' },
+  { id: 'circular',   icon: <Repeat size={16} />,      label: 'Multi-Hop' },
 ];
 
 const NAV_ICONS = [
   { id: 'profile',  icon: <User size={20} />,     label: 'Profile' },
   { id: 'wallet',   icon: <Wallet size={20} />,   label: 'Wallet' },
   { id: 'agent',    icon: <Bot size={20} />,      label: 'Agent' },
-  { id: 'circular', icon: <Repeat size={20} />,   label: 'Cycles' },
   { id: 'config',   icon: <Settings size={20} />, label: 'Config' },
 ];
 
