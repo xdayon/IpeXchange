@@ -10,6 +10,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="description" content="IpêXchange — P2P marketplace com reputação on-chain, pagamentos cripto e trocas na cidade de Jurerê." />
     <title>IpêXchange — Cidade On-Chain</title>
+    <!-- Polyfills for Node.js globals required by wallet/crypto libraries (Privy, viem, etc.)
+         This MUST be a regular <script>, not type="module", so it runs synchronously
+         before any ES module is parsed. -->
+    <script>
+      window.global = window.global ?? globalThis;
+      window.process = window.process ?? { env: {}, version: '', versions: {} };
+      window.Buffer = window.Buffer ?? { isBuffer: () => false };
+    </script>
   </head>
   <body>
     <div id="root"></div>
