@@ -14,6 +14,10 @@ import {
   searchListingsBySimilarity,
   createDemand,
   getTradeCycles,
+  upsertUser,
+  getUserProfile,
+  getUserTransactions,
+  recordTransaction,
 } from './lib/supabase.js';
 
 const app = express();
@@ -262,6 +266,69 @@ app.get('/api/cycles/:sessionId', async (req, res) => {
   } catch (err) {
     console.error('GET /api/cycles error:', err);
     res.status(500).json({ error: 'Failed to load trade cycles' });
+  }
+});
+
+// ─── User: Upsert on login ────────────────────────────────────────────────────────
+// Called after Privy auth completes. Creates or updates the user record.
+app.post('/api/users/upsert', async (req, res) => {
+  const { walletAddress, email, privyId, displayName } = req.body;
+
+  if (!walletAddress && !email) {
+    return res.status(400).json({ error: 'walletAddress or email is required' });
+  }
+
+  try {
+    const user = await upsertUser({ walletAddress, email, privyId, displayName });
+    if (!user) return res.status(500).json({ error: 'Failed to upsert user' });
+    return res.json({ user });
+  } catch (err) {
+    console.error('POST /api/users/upsert error:', err);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// ─── User: Get profile + stats ───────────────────────────────────────────────────
+app.get('/api/users/:wallet/profile', async (req, res) => {
+  const { wallet } = req.params;
+  try {
+    const profile = await getUserProfile(wallet);
+    if (!profile) return res.status(404).json({ error: 'User not found' });
+    return res.json({ profile });
+  } catch (err) {
+    console.error('GET /api/users/:wallet/profile error:', err);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// ─── User: Get transaction history ──────────────────────────────────────────────
+app.get('/api/users/:wallet/transactions', async (req, res) => {
+  const { wallet } = req.params;
+  const limit = parseInt(req.query.limit) || 20;
+  try {
+    const transactions = await getUserTransactions(wallet, limit);
+    return res.json({ transactions });
+  } catch (err) {
+    console.error('GET /api/users/:wallet/transactions error:', err);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// ─── Transactions: Record a purchase ─────────────────────────────────────────────
+app.post('/api/transactions', async (req, res) => {
+  const { listingId, buyerWallet, sellerWallet, amountFiat, amountCrypto, currency, isTrade, tradeDescription } = req.body;
+
+  if (!buyerWallet) {
+    return res.status(400).json({ error: 'buyerWallet is required' });
+  }
+
+  try {
+    const tx = await recordTransaction({ listingId, buyerWallet, sellerWallet, amountFiat, amountCrypto, currency, isTrade, tradeDescription });
+    if (!tx) return res.status(500).json({ error: 'Failed to record transaction' });
+    return res.status(201).json({ transaction: tx });
+  } catch (err) {
+    console.error('POST /api/transactions error:', err);
+    return res.status(500).json({ error: 'Internal error' });
   }
 });
 

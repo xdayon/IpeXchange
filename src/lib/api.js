@@ -58,3 +58,65 @@ export async function pingHealth() {
     // Ignore, just a keepalive ping
   }
 }
+
+// ─── User Identity ──────────────────────────────────────────────────────────
+
+/** Called once after Privy login. Creates/updates the user record in the DB. */
+export async function upsertUser({ walletAddress, email, privyId, displayName }) {
+  try {
+    const res = await fetch(`${API_URL}/users/upsert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ walletAddress, email, privyId, displayName }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error('upsertUser error:', err);
+    return null;
+  }
+}
+
+/** Fetches full profile + aggregated stats for the given wallet address. */
+export async function fetchUserProfile(walletAddress) {
+  if (!walletAddress) return null;
+  try {
+    const res = await fetch(`${API_URL}/users/${walletAddress}/profile`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.profile || null;
+  } catch (err) {
+    console.error('fetchUserProfile error:', err);
+    return null;
+  }
+}
+
+/** Fetches the user's recent transactions (purchases + sales). */
+export async function fetchUserTransactions(walletAddress, limit = 20) {
+  if (!walletAddress) return [];
+  try {
+    const res = await fetch(`${API_URL}/users/${walletAddress}/transactions?limit=${limit}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.transactions || [];
+  } catch (err) {
+    console.error('fetchUserTransactions error:', err);
+    return [];
+  }
+}
+
+/** Records a completed purchase/sale in the DB. */
+export async function recordTransaction({ listingId, buyerWallet, sellerWallet, amountFiat, currency, isTrade, tradeDescription }) {
+  try {
+    const res = await fetch(`${API_URL}/transactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId, buyerWallet, sellerWallet, amountFiat, currency, isTrade, tradeDescription }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error('recordTransaction error:', err);
+    return null;
+  }
+}

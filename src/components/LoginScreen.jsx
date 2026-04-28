@@ -26,7 +26,10 @@ const LoginScreen = ({ onLogin }) => {
         <div className="icon-wrapper">
           <Fingerprint size={64} className="text-gradient-lime" />
         </div>
-        <h1 className="hero-title">Ipê<span className="text-gradient-lime">Xchange</span></h1>
+        <h1 className="hero-title">
+          <img src="/logo.png" alt="IpêXchange" style={{ height: '36px', width: '36px', borderRadius: '8px', verticalAlign: 'middle', marginRight: '10px' }} />
+          Ipê<span className="text-gradient-lime">Xchange</span>
+        </h1>
         <p className="hero-subtitle">Connect your identity to enter the ecosystem.</p>
 
         {!ready && (

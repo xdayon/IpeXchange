@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { PrivyProvider } from '@privy-io/react-auth'
+import { UserProvider } from './lib/UserContext'
 import './index.css'
 import App from './App.jsx'
 
@@ -15,11 +16,13 @@ createRoot(document.getElementById('root')).render(
         appearance: {
           theme: 'dark',
           accentColor: '#B4F44A',
-          logo: 'https://ipexchange.onrender.com/favicon.svg', // Assuming there's a logo or default it
+          logo: 'https://ipexchange.onrender.com/logo.png',
         },
       }}
     >
-      <App />
+      <UserProvider>
+        <App />
+      </UserProvider>
     </PrivyProvider>
   </StrictMode>,
 )

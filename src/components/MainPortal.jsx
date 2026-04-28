@@ -176,7 +176,8 @@ const MainPortal = () => {
           <header className="navbar glass-panel">
             <div className="container flex-between nav-content">
               <div className="brand flex-center" style={{ gap: '20px' }}>
-                <h1 className="logo" style={{ cursor: 'pointer' }} onClick={() => handleSetTab('home')}>
+                <h1 className="logo" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => handleSetTab('home')}>
+                  <img src="/logo.png" alt="IpêXchange" style={{ height: '32px', width: '32px', borderRadius: '8px' }} />
                   Ipê<span className="text-gradient-lime">Xchange</span>
                 </h1>
                 {/* Desktop nav tabs — hidden on mobile via CSS */}

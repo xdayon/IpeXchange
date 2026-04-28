@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
+// ─── User Management ──────────────────────────────────────────────────────────
+
 let supabase = null;
 let dbAvailable = false;
 
@@ -318,6 +320,163 @@ export async function getTradeCycles(sessionId) {
   
   // Pl/PgSQL JSONB returns either null or an array
   return data || [];
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+/**
+ * Creates or updates a user record tied to their Privy identity.
+ * Called once on login. Safe to call multiple times (upsert by wallet_address).
+ */
+export async function upsertUser({ walletAddress, email, privyId, displayName }) {
+  if (!dbAvailable) {
+    // In-memory fallback — just return a minimal user object
+    return { id: privyId || walletAddress, wallet_address: walletAddress, email, display_name: displayName, ipe_rep_score: 0 };
+  }
+
+  const now = new Date().toISOString();
+  const identifier = walletAddress || email;
+  if (!identifier) return null;
+
+  // Build the upsert payload
+  const payload = {
+    last_seen: now,
+    ...(walletAddress && { wallet_address: walletAddress }),
+    ...(email        && { email }),
+    ...(privyId      && { privy_id: privyId }),
+    ...(displayName  && { display_name: displayName }),
+  };
+
+  // Try upsert by wallet address first, fall back to email
+  const conflictColumn = walletAddress ? 'wallet_address' : 'email';
+
+  const { data, error } = await supabase
+    .from('users')
+    .upsert({ ...payload, created_at: now }, { onConflict: conflictColumn, ignoreDuplicates: false })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('upsertUser error:', error.message);
+    return null;
+  }
+  return data;
+}
+
+/**
+ * Returns a user's profile including aggregated stats:
+ * listing count, purchase count, and base rep score.
+ */
+export async function getUserProfile(walletAddress) {
+  if (!dbAvailable || !walletAddress) return null;
+
+  const { data: user, error: userErr } = await supabase
+    .from('users')
+    .select('*')
+    .eq('wallet_address', walletAddress)
+    .single();
+
+  if (userErr || !user) {
+    console.error('getUserProfile error:', userErr?.message);
+    return null;
+  }
+
+  // Count listings created by this user
+  const { count: listingCount } = await supabase
+    .from('listings')
+    .select('id', { count: 'exact', head: true })
+    .eq('wallet_address', walletAddress)
+    .eq('active', true);
+
+  // Count purchases (transactions as buyer)
+  const { count: purchaseCount } = await supabase
+    .from('transactions')
+    .select('id', { count: 'exact', head: true })
+    .eq('buyer_wallet', walletAddress);
+
+  // Count sales (transactions as seller)
+  const { count: salesCount } = await supabase
+    .from('transactions')
+    .select('id', { count: 'exact', head: true })
+    .eq('seller_wallet', walletAddress);
+
+  const totalTx = (purchaseCount || 0) + (salesCount || 0);
+
+  // Simple reputation formula: base 0, +2 per completed tx, capped at 100
+  const computedRep = Math.min(100, totalTx * 2);
+  const repScore = Math.max(user.ipe_rep_score || 0, computedRep);
+
+  return {
+    ...user,
+    listing_count: listingCount || 0,
+    purchase_count: purchaseCount || 0,
+    sales_count: salesCount || 0,
+    total_tx: totalTx,
+    rep_score: repScore,
+  };
+}
+
+/**
+ * Returns a user's recent transactions (as buyer or seller).
+ */
+export async function getUserTransactions(walletAddress, limit = 20) {
+  if (!dbAvailable || !walletAddress) return [];
+
+  // Fetch as buyer
+  const { data: asBuyer, error: buyerErr } = await supabase
+    .from('transactions')
+    .select('id, listing_id, amount_fiat, amount_crypto, currency, is_trade, trade_description, created_at, seller_wallet, listing:listings(title, category, image_url)')
+    .eq('buyer_wallet', walletAddress)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (buyerErr) console.error('getUserTransactions (buyer) error:', buyerErr.message);
+
+  // Fetch as seller
+  const { data: asSeller, error: sellerErr } = await supabase
+    .from('transactions')
+    .select('id, listing_id, amount_fiat, amount_crypto, currency, is_trade, trade_description, created_at, buyer_wallet, listing:listings(title, category, image_url)')
+    .eq('seller_wallet', walletAddress)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (sellerErr) console.error('getUserTransactions (seller) error:', sellerErr.message);
+
+  const buyerTxs = (asBuyer || []).map(tx => ({ ...tx, direction: 'out', counterparty: tx.seller_wallet }));
+  const sellerTxs = (asSeller || []).map(tx => ({ ...tx, direction: 'in', counterparty: tx.buyer_wallet }));
+
+  return [...buyerTxs, ...sellerTxs]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, limit);
+}
+
+/**
+ * Records a completed purchase transaction.
+ * Called from checkout after the user confirms.
+ */
+export async function recordTransaction({ listingId, buyerWallet, sellerWallet, amountFiat, amountCrypto, currency, isTrade, tradeDescription }) {
+  if (!dbAvailable) return null;
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert({
+      listing_id: listingId || null,
+      buyer_wallet: buyerWallet || null,
+      seller_wallet: sellerWallet || null,
+      amount_fiat: amountFiat || null,
+      amount_crypto: amountCrypto || null,
+      currency: currency || 'USD',
+      is_trade: isTrade || false,
+      trade_description: tradeDescription || null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('recordTransaction error:', error.message);
+    return null;
+  }
+  return data;
 }
 
 export default supabase;

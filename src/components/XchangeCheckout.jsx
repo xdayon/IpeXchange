@@ -6,6 +6,8 @@ import {
   AlertCircle, Sparkles, ExternalLink
 } from 'lucide-react';
 import { savePurchase } from '../data/xchangeStore';
+import { useUser } from '../lib/UserContext';
+import { recordTransaction } from '../lib/api';
 
 const PAYMENT_METHODS = [
   {
@@ -237,19 +239,38 @@ const StepPayment = ({ listing, onNext }) => {
 
 // --- Step 3: Confirm ---
 const StepConfirm = ({ listing, paymentMethod, onConfirm }) => {
+  const { walletAddress, refreshProfile } = useUser();
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [txHash, setTxHash] = useState('0x7f3a...d8c2');
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      // Persist purchase to localStorage
-      const entry = savePurchase({ listing, paymentMethod });
-      setTxHash(entry.txHash);
-      setConfirmed(true);
-    }, 2200);
+    
+    // Simulate smart contract delay
+    await new Promise(r => setTimeout(r, 2200));
+    
+    // Persist purchase to localStorage (legacy)
+    const entry = savePurchase({ listing, paymentMethod });
+    
+    // Persist to Supabase backend
+    if (walletAddress) {
+      const rawPrice = listing.price ? parseFloat(listing.price.replace(/[^\d.]/g, '')) || 0 : 0;
+      await recordTransaction({
+        listingId: listing.id,
+        buyerWallet: walletAddress,
+        sellerWallet: listing.wallet_address || null,
+        amountFiat: rawPrice,
+        currency: 'USD',
+        isTrade: paymentMethod === 'trade',
+        tradeDescription: paymentMethod === 'trade' ? 'Barter negotiation' : null,
+      });
+      await refreshProfile(); // update user rep score and stats
+    }
+    
+    setTxHash(entry.txHash);
+    setConfirmed(true);
+    setLoading(false);
   };
 
   if (confirmed) {
