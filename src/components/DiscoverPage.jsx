@@ -27,6 +27,7 @@ const DiscoverPage = ({ onNavigate }) => {
   
   const [listings, setListings] = useState([]);
   const [trending, setTrending] = useState([]);
+  const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
     setSoldIds(getSoldProductIds());
@@ -42,11 +43,19 @@ const DiscoverPage = ({ onNavigate }) => {
   }, [activeFilter, activeSubFilter]);
 
   const loadData = async ({ category, subcategory, silent = false } = {}) => {
-    if (!silent) setLoading(true);
-    const data = await fetchDiscoverItems({ category, subcategory });
-    setListings(data.listings || []);
-    setTrending(data.trending || []);
-    if (!silent) setLoading(false);
+    try {
+      if (!silent) setLoading(true);
+      setFetchError(null);
+      const data = await fetchDiscoverItems({ category, subcategory });
+      setListings(data.listings || []);
+      setTrending(data.trending || []);
+    } catch (err) {
+      console.error('Discover fetch error:', err);
+      setFetchError('Could not reach the marketplace. Try again.');
+      setListings([]);
+    } finally {
+      if (!silent) setLoading(false);
+    }
   };
 
   const handleCategoryChange = (cat) => {
@@ -64,6 +73,8 @@ const DiscoverPage = ({ onNavigate }) => {
     if (isSoldProduct && soldIds.includes(l.id) && !showSold) return false;
     return true;
   });
+
+  const safeListings = available.filter(l => l && l.id && l.title);
 
   const hiddenCount = listings.filter(l =>
     l.category === 'Products' && soldIds.includes(l.id)
@@ -194,18 +205,28 @@ const DiscoverPage = ({ onNavigate }) => {
             </div>
           )}
 
+          {/* Error State */}
+          {fetchError && (
+            <div style={{ padding: '24px', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', borderRadius: 12, marginBottom: 24, textAlign: 'center' }}>
+              <p style={{ color: '#F43F5E', fontWeight: 600 }}>{fetchError}</p>
+              <button onClick={() => loadData({ category: activeFilter, subcategory: activeSubFilter })} className="btn-secondary" style={{ marginTop: 12 }}>
+                Try Again
+              </button>
+            </div>
+          )}
+
           {/* Regular Grid */}
           <div style={{ marginTop: trending.length > 0 && activeFilter === 'All' ? '16px' : '32px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '18px', margin: 0, color: 'var(--text-secondary)' }}>
                 {activeFilter === 'All' ? 'All Listings' : `${activeFilter}${activeSubFilter ? ` · ${activeSubFilter}` : ''}`}
               </h3>
-              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{available.length} found</span>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{safeListings.length} found</span>
             </div>
             
-            {available.length > 0 ? (
+            {safeListings.length > 0 ? (
               <div className="listings-grid">
-                {available.map(listing => {
+                {safeListings.map(listing => {
                   const isSold = soldIds.includes(listing.id);
                   return (
                     <div key={listing.id} style={{ position: 'relative', opacity: isSold ? 0.55 : 1, transition: 'opacity 0.3s' }}>
@@ -227,7 +248,7 @@ const DiscoverPage = ({ onNavigate }) => {
             ) : (
               <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-secondary)', border: '1px dashed var(--border-color)', borderRadius: 20 }}>
                 <Activity size={40} style={{ margin: '0 auto 16px', opacity: 0.2 }} />
-                <p>No listings found in this category.</p>
+                <p>{fetchError ? 'Unable to load listings' : 'No listings found in this category.'}</p>
                 <button 
                   onClick={() => handleCategoryChange('All')}
                   style={{ background: 'none', border: 'none', color: 'var(--accent-lime)', marginTop: 12, cursor: 'pointer', fontWeight: 600 }}

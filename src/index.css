@@ -3841,6 +3841,7 @@ input, textarea {
 .acc-stream {
   flex: 1;
   padding: 30px;
+  padding-bottom: 24px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -3915,15 +3916,20 @@ input, textarea {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px;
+  padding: 12px 14px;
   text-align: left;
   border-radius: 12px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  transition: all 0.18s ease;
 }
 
 .acc-skill-card:hover {
-  background: rgba(180, 244, 74, 0.08);
-  border-color: rgba(180, 244, 74, 0.3);
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
 }
 
 .skill-icon {
@@ -3933,8 +3939,7 @@ input, textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.05);
-  color: var(--accent-cyan);
+  flex-shrink: 0;
 }
 
 .skill-info {
@@ -3982,19 +3987,23 @@ input, textarea {
 }
 
 .acc-action-btn {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
-  background: rgba(255,255,255,0.05);
+  color: #B4F44A;
+  background: rgba(180, 244, 74, 0.1);
+  border: 1.5px solid rgba(180, 244, 74, 0.35);
+  box-shadow: 0 0 12px rgba(180, 244, 74, 0.15);
+  transition: all 0.2s ease;
 }
 
 .acc-action-btn:hover {
-  color: var(--accent-cyan);
-  background: rgba(56, 189, 248, 0.1);
+  background: rgba(180, 244, 74, 0.2);
+  box-shadow: 0 0 20px rgba(180, 244, 74, 0.3);
+  transform: scale(1.05);
 }
 
 .acc-send-btn {
@@ -4022,10 +4031,20 @@ input, textarea {
 
 .acc-wave {
   flex: 1;
-  height: 40px;
+  height: 56px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  padding: 0 8px;
+}
+
+.acc-wave .wave-bar {
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(to top, rgba(180,244,74,0.4), #B4F44A);
+  animation: wave-anim 1.2s ease-in-out infinite;
+  min-height: 6px;
+  max-height: 44px;
 }
 
 .acc-stop-btn {

@@ -37,23 +37,32 @@ const AgentPage = () => {
   return (
     <div className="inner-page container">
       <div className="agent-status-hero" style={{ position: 'relative' }}>
-        <button onClick={handleDisconnect} style={{ position: 'absolute', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', padding: '6px 12px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-          <Power size={13} /> Disconnect
-        </button>
-        <div className="agent-avatar-container floating-animation" style={{ width: 120, height: 120 }}>
-          <img src={personalAgentImg} alt="Agent" className="agent-image" />
-          <div className="glow-ring"></div>
+        {/* Top row: title + disconnect button side by side */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 20 }}>
+          <h2 style={{ fontSize: '26px', margin: 0 }}>
+            Your <span className="text-gradient-cyan">Personal Agent</span>
+          </h2>
+          <button onClick={handleDisconnect} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', padding: '6px 12px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+            <Power size={13} /> Disconnect
+          </button>
         </div>
-        <div>
-          <h2 style={{ fontSize: '26px' }}>Your <span className="text-gradient-cyan">Personal Agent</span></h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>dx.agent.aihaus.ipe</p>
-          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            <span className="tag badge" style={{ color: '#B4F44A', borderColor: 'rgba(180,244,74,0.3)', background: 'rgba(180,244,74,0.08)' }}>
-              <Activity size={12} style={{ display: 'inline', marginRight: 4 }} /> Online
-            </span>
-            <span className="tag badge" style={{ color: '#38BDF8', borderColor: 'rgba(56,189,248,0.3)', background: 'rgba(56,189,248,0.08)' }}>
-              <ShieldCheck size={12} style={{ display: 'inline', marginRight: 4 }} /> ZKP Active
-            </span>
+
+        {/* Bottom row: avatar + identity info */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div className="agent-avatar-container floating-animation" style={{ width: 100, height: 100, flexShrink: 0 }}>
+            <img src={personalAgentImg} alt="Agent" className="agent-image" />
+            <div className="glow-ring" />
+          </div>
+          <div>
+            <p style={{ color: 'var(--text-secondary)', marginTop: 0, marginBottom: 10 }}>dx.agent.aihaus.ipe</p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span className="tag badge" style={{ color: '#B4F44A', borderColor: 'rgba(180,244,74,0.3)', background: 'rgba(180,244,74,0.08)' }}>
+                <Activity size={12} style={{ display: 'inline', marginRight: 4 }} /> Online
+              </span>
+              <span className="tag badge" style={{ color: '#38BDF8', borderColor: 'rgba(56,189,248,0.3)', background: 'rgba(56,189,248,0.08)' }}>
+                <ShieldCheck size={12} style={{ display: 'inline', marginRight: 4 }} /> ZKP Active
+              </span>
+            </div>
           </div>
         </div>
       </div>

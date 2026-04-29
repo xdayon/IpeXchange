@@ -1,19 +1,10 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { MapPin, Zap, TrendingUp, Users, Store, Network, Lock, Wallet, AlertTriangle, X } from 'lucide-react';
 import { mockDemands } from '../data/mockData';
+import { fetchDiscoverItems } from '../lib/api';
 
 // Lazy-load Leaflet so it doesn't block the initial render
 const CityMap = lazy(() => import('./CityMap'));
-
-const LIVE_FEED = [
-  { icon: <Zap size={14} />, color: '#B4F44A', text: 'New listing: MacBook Pro M3 — $1,500', time: '2m' },
-  { icon: <Users size={14} />, color: '#38BDF8', text: 'Trade: Electric Bike for Legal Services', time: '5m' },
-  { icon: <TrendingUp size={14} />, color: '#818CF8', text: 'Organic Honey sold out — 4 buyers waiting', time: '8m' },
-  { icon: <MapPin size={14} />, color: '#F43F5E', text: 'Vet Dr. Sarah available now — Ipê City', time: '12m' },
-  { icon: <Zap size={14} />, color: '#B4F44A', text: 'Graphic Design — accepts crypto or trade', time: '18m' },
-  { icon: <Lock size={14} />, color: '#94A3B8', text: 'Private transaction completed on-chain via ZKP', time: '22m' },
-  { icon: <Wallet size={14} />, color: '#B4F44A', text: 'P2P loan funded at Ipê Bakery', time: '35m' },
-];
 
 const StatCard = ({ icon: Icon, color, title, value, subtext }) => (
   <div className="glass-panel" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -32,6 +23,31 @@ const StatCard = ({ icon: Icon, color, title, value, subtext }) => (
 
 const HomePage = () => {
   const [selectedDemand, setSelectedDemand] = useState(null);
+  const [liveFeed, setLiveFeed] = useState([]);
+
+  useEffect(() => {
+    fetchDiscoverItems({}).then(data => {
+      const items = (data.listings || []).slice(0, 7).map((l, i) => ({
+        icon: l.category === 'Services' ? <Zap size={14} /> :
+              l.category === 'Knowledge' ? <Users size={14} /> :
+              l.category === 'Donations' ? <MapPin size={14} /> : <TrendingUp size={14} />,
+        color: l.category === 'Services' ? '#B4F44A' :
+               l.category === 'Knowledge' ? '#818CF8' :
+               l.category === 'Donations' ? '#F43F5E' : '#38BDF8',
+        text: l.acceptsTrade
+          ? `${l.title} — accepts trade`
+          : `New listing: ${l.title}${l.priceFiat ? ` — $${l.priceFiat}` : ''}`,
+        time: i === 0 ? '2m' : i === 1 ? '5m' : `${(i + 1) * 4}m`,
+      }));
+      setLiveFeed(items);
+    });
+  }, []);
+
+  const todaysSeed = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+  const shuffled = [...mockDemands].sort((a, b) =>
+    (a.id + todaysSeed).localeCompare(b.id + todaysSeed)
+  );
+  const visibleDemands = shuffled.slice(0, 4);
 
   return (
     <div className="container" style={{ paddingTop: '24px', paddingBottom: '24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -64,15 +80,21 @@ const HomePage = () => {
             <span className="live-dot" /> Live Activity in Ipê City
           </h4>
           <ul className="feed-list" style={{ overflowY: 'auto', flex: 1, padding: '16px 0' }}>
-            {LIVE_FEED.map((item, i) => (
-              <li key={i} className="feed-item" style={{ padding: '12px 24px', borderBottom: i < LIVE_FEED.length - 1 ? '1px solid var(--border-color)' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span className="feed-icon" style={{ color: item.color, background: `${item.color}15`, padding: 8, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span className="feed-text" style={{ fontSize: 13, lineHeight: 1.4, display: 'block', whiteSpace: 'normal' }}>{item.text}</span>
-                  <span className="feed-time" style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{item.time} ago</span>
-                </div>
-              </li>
-            ))}
+            {liveFeed.length > 0 ? (
+              liveFeed.map((item, i) => (
+                <li key={i} className="feed-item" style={{ padding: '12px 24px', borderBottom: i < liveFeed.length - 1 ? '1px solid var(--border-color)' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span className="feed-icon" style={{ color: item.color, background: `${item.color}15`, padding: 8, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span className="feed-text" style={{ fontSize: 13, lineHeight: 1.4, display: 'block', whiteSpace: 'normal' }}>{item.text}</span>
+                    <span className="feed-time" style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{item.time} ago</span>
+                  </div>
+                </li>
+              ))
+            ) : (
+              [...Array(5)].map((_, i) => (
+                <li key={i} className="feed-item skeleton" style={{ padding: '12px 24px', height: 60 }} />
+              ))
+            )}
           </ul>
         </aside>
       </div>
@@ -81,9 +103,12 @@ const HomePage = () => {
       <div>
         <h3 style={{ fontSize: 20, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
           <AlertTriangle size={20} color="#F43F5E" /> Village Demands (Gaps)
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 8, fontWeight: 400 }}>
+            · Last analyzed {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </span>
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
-          {mockDemands.map(demand => (
+          {visibleDemands.map(demand => (
             <div 
               key={demand.id} 
               className="glass-panel" 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, ShieldCheck, Database, Zap } from 'lucide-react';
-import personalAgentImg from '../assets/personal_agent.png';
+import personalAgentImg from '../assets/agent_bot.svg';
 import xchangeCoreImg from '../assets/xchange_core.png';
 
 const PACKETS = [

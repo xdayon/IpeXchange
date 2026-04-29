@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { TrendingUp, Users, Briefcase, ShieldCheck, Zap, Lock, Star, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, Users, Briefcase, ShieldCheck, Zap, Lock, Star, ChevronRight, ArrowUpRight, X, ExternalLink, Activity } from 'lucide-react';
+import { MOCK_GRANTS, MOCK_LOANS } from '../data/mockData';
 
 const FILTERS = ['All', 'Investment', 'Partnership', 'Jobs', 'Products', 'Services', 'Donations'];
 
@@ -168,6 +169,101 @@ const OPPORTUNITIES = [
 
 const typeIcon = { Investment: TrendingUp, Partnership: Users, Jobs: Briefcase, Products: ShieldCheck, Services: Zap, Donations: Star };
 
+const ArtizenGrantsModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box glass-panel animate-scale-up" onClick={e => e.stopPropagation()} style={{ maxWidth: 800 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#38BDF8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Star size={24} color="#000" />
+            </div>
+            <div>
+              <h3 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>Artizen Grants</h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>Funding the decentralized frontier</p>
+            </div>
+          </div>
+          <button className="btn-icon" onClick={onClose}><X size={24} /></button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, maxHeight: '60vh', overflowY: 'auto', paddingRight: 10 }}>
+          {MOCK_GRANTS.map(grant => (
+            <div key={grant.id} className="glass-panel" style={{ padding: 16, border: '1px solid rgba(56,189,248,0.2)' }}>
+              <div style={{ height: 160, borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+                <img src={grant.image} alt={grant.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                <h4 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{grant.title}</h4>
+                <span className="badge" style={{ color: '#38BDF8', borderColor: 'rgba(56,189,248,0.3)', background: 'rgba(56,189,248,0.05)' }}>{grant.amount}</span>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>{grant.description}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Deadline: {grant.deadline}</span>
+                <a href={grant.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#38BDF8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  Apply Now <ExternalLink size={14} />
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LoanCard = ({ loan }) => (
+  <div className="glass-panel invest-card">
+    <div className="invest-card-header">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Wallet size={18} style={{ color: '#38BDF8' }} />
+        </div>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: 1, padding: '2px 8px', borderRadius: 100, border: '1px solid rgba(56,189,248,0.3)', background: 'rgba(56,189,248,0.05)' }}>
+          LOAN REQUEST
+        </span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Activity size={13} style={{ color: '#B4F44A' }} />
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#B4F44A' }}>Verified Provider</span>
+      </div>
+    </div>
+
+    <h3 style={{ fontSize: 17, fontWeight: 700, margin: '14px 0 8px', lineHeight: 1.3 }}>{loan.title}</h3>
+    <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 16 }}>{loan.description}</p>
+
+    <div className="invest-financials">
+      <div className="invest-stat">
+        <span className="invest-stat-label">Amount</span>
+        <span className="invest-stat-value" style={{ color: '#38BDF8' }}>{loan.amount}</span>
+      </div>
+      <div className="invest-stat">
+        <span className="invest-stat-label">Terms</span>
+        <span className="invest-stat-value">{loan.repayment}</span>
+      </div>
+      <div className="invest-stat">
+        <span className="invest-stat-label">Collateral</span>
+        <span className="invest-stat-value" style={{ fontSize: 11 }}>{loan.collateral}</span>
+      </div>
+    </div>
+
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>
+        <span>Funded</span>
+        <span style={{ fontWeight: 700, color: '#38BDF8' }}>{loan.funded}%</span>
+      </div>
+      <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${loan.funded}%`, background: 'linear-gradient(to right, #38BDF888, #38BDF8)', borderRadius: 4 }} />
+      </div>
+    </div>
+
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: 14 }}>
+      <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{loan.provider}</span>
+      <button className="btn-primary" style={{ padding: '6px 14px', fontSize: 13 }}>Fund Loan</button>
+    </div>
+  </div>
+);
+
 const OpportunityCard = ({ opp, onInvest }) => {
   const Icon = typeIcon[opp.type] || Zap;
   const c = opp.typeColor;
@@ -254,6 +350,9 @@ const OpportunityCard = ({ opp, onInvest }) => {
 
 const InvestmentsPage = ({ onNavigate }) => {
   const [filter, setFilter] = useState('All');
+  const [activeTab, setActiveTab] = useState('Opportunities');
+  const [showGrants, setShowGrants] = useState(false);
+
   const filtered = filter === 'All' ? OPPORTUNITIES : OPPORTUNITIES.filter(o => o.type === filter);
 
   const handleInvest = (opp) => {
@@ -316,21 +415,32 @@ const InvestmentsPage = ({ onNavigate }) => {
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 400 }}>Community projects and local startups seeking funding. Support with donations or buy equity shares.</p>
             </div>
           </div>
-          <button style={{ padding: '10px 20px', borderRadius: 100, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+          <button onClick={() => setShowGrants(true)} style={{ padding: '10px 20px', borderRadius: 100, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
             Explore Grants
           </button>
         </div>
 
-        <div className="filter-chips">
-          {FILTERS.map(f => (
-            <button key={f} className={`filter-chip ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>{f}</button>
-          ))}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+          <button onClick={() => setActiveTab('Opportunities')} className={`filter-chip ${activeTab === 'Opportunities' ? 'active' : ''}`}>Opportunities</button>
+          <button onClick={() => setActiveTab('P2P Loans')} className={`filter-chip ${activeTab === 'P2P Loans' ? 'active' : ''}`}>P2P Loans</button>
         </div>
+
+        {activeTab === 'Opportunities' && (
+          <div className="filter-chips">
+            {FILTERS.map(f => (
+              <button key={f} className={`filter-chip ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>{f}</button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Cards */}
       <div className="invest-grid">
-        {filtered.map(opp => <OpportunityCard key={opp.id} opp={opp} onInvest={handleInvest} />)}
+        {activeTab === 'Opportunities' ? (
+          filtered.map(opp => <OpportunityCard key={opp.id} opp={opp} onInvest={handleInvest} />)
+        ) : (
+          MOCK_LOANS.map(loan => <LoanCard key={loan.id} loan={loan} />)
+        )}
       </div>
 
       {/* How it works */}
@@ -355,6 +465,8 @@ const InvestmentsPage = ({ onNavigate }) => {
           ))}
         </div>
       </div>
+
+      <ArtizenGrantsModal isOpen={showGrants} onClose={() => setShowGrants(false)} />
     </div>
   );
 };

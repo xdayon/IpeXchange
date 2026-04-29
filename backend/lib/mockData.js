@@ -186,8 +186,11 @@ export const MOCK_LISTINGS = [
 
 export const MOCK_DEMANDS = [
   { session_id: 'test-session-id', description: 'Looking for web design and development consulting', category: 'Services', accepts_trade: true, is_mock: true },
-  { session_id: 'bia-tech-id', description: 'I want fresh artisan sourdough bread', category: 'Products', accepts_trade: true, is_mock: true },
-  { session_id: 'bread-co-id', description: 'Need an electric bike for deliveries', category: 'Products', accepts_trade: true, is_mock: true },
-  { session_id: 'luna-photo-id', description: 'I want graphic design for my portfolio', category: 'Services', accepts_trade: true, is_mock: true },
-  { session_id: 'marina-h-id', description: 'Looking for Python and AI training', category: 'Knowledge', accepts_trade: true, is_mock: true }
+  { session_id: 'bia-tech-id',      description: 'I want fresh artisan sourdough bread', category: 'Products', accepts_trade: true, is_mock: true },
+  { session_id: 'bread-co-id',      description: 'Need an electric bike for deliveries', category: 'Products', accepts_trade: true, is_mock: true },
+  { session_id: 'skyview-lab-id',   description: 'I want reiki energy healing', category: 'Services', accepts_trade: true, is_mock: true },
+  { session_id: 'marina-h-id',      description: 'Looking for Python and AI training', category: 'Knowledge', accepts_trade: true, is_mock: true },
+  { session_id: 'code-lab-id',      description: 'Need a drone for aerial shots', category: 'Products', accepts_trade: true, is_mock: true },
+  { session_id: 'green-roots-id',   description: 'I want pure bracatinga honey', category: 'Products', accepts_trade: true, is_mock: true },
+  { session_id: 'ipe-farm-id',      description: 'Looking for a solar panel kit', category: 'Products', accepts_trade: true, is_mock: true }
 ];

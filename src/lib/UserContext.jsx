@@ -24,20 +24,24 @@ export function UserProvider({ children }) {
   const [initialized, setInitialized]   = useState(false);
 
   // Derive primary wallet address from Privy user object
-  const walletAddress = privyUser?.wallet?.address || null;
+  const walletAddress = privyUser?.wallet?.address || (localStorage.getItem('ipeXchange_demoSession') ? '0x73a...Hansen' : null);
   const email         = privyUser?.email?.address  || null;
   const privyId       = privyUser?.id              || null;
 
   // Build a human-readable display name:
-  //   email (if present) → shortened wallet address → 'Anon'
-  const displayName = email
+  //   demo session → email (if present) → shortened wallet address → 'Anon'
+  const displayName = localStorage.getItem('ipeXchange_demoSession')
+    ? 'Jean Hansen'
+    : email
     ? email.split('@')[0]
     : walletAddress
     ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`
     : 'Anon';
 
   // Shortened wallet for display in the UI
-  const shortWallet = walletAddress
+  const shortWallet = localStorage.getItem('ipeXchange_demoSession')
+    ? '0x73a...Hansen'
+    : walletAddress
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
     : null;
 
@@ -91,6 +95,7 @@ export function UserProvider({ children }) {
     } catch (_) { /* ignore */ }
     setXchangeUser(null);
     localStorage.removeItem('ipeXchangeState');
+    localStorage.removeItem('ipeXchange_demoSession');
     window.location.reload();
   }, [privyLogout]);
 

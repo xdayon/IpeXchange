@@ -24,7 +24,33 @@ const LoginScreen = ({ onLogin }) => {
     <div className="onboarding-screen">
       <div className="login-container glass-panel">
         <div className="icon-wrapper" style={{ padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
-          <img src="/passport-logo.png" alt="Ipê Passport" style={{ width: 80, height: 80, borderRadius: 20 }} />
+          <div style={{
+            width: 80, height: 80, borderRadius: 20,
+            background: 'linear-gradient(135deg, #1a2a1a 0%, #1a3a1a 40%, #2a4a2a 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 0 1px rgba(56,189,248,0.2), 0 8px 32px rgba(0,0,0,0.4)',
+            position: 'relative', overflow: 'hidden',
+          }}>
+            {/* Subtle gradient overlay for depth */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'radial-gradient(ellipse at 30% 30%, rgba(56,189,248,0.12) 0%, transparent 70%)',
+            }} />
+            {/* Fingerprint SVG */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none"
+              stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+              style={{ position: 'relative', zIndex: 1 }}>
+              <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
+              <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
+              <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
+              <path d="M2 12a10 10 0 0 1 18-6" />
+              <path d="M2 16h.01" />
+              <path d="M21.8 16c.2-2 .131-5.354 0-6" />
+              <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2" />
+              <path d="M8.65 22c.21-.66.45-1.32.57-2" />
+              <path d="M9 6.8a6 6 0 0 1 9 5.2v2" />
+            </svg>
+          </div>
         </div>
         <h1 className="hero-title">
           <img src="/logo.png" alt="IpêXchange" style={{ height: '36px', width: '36px', borderRadius: '8px', verticalAlign: 'middle', marginRight: '10px' }} />
@@ -40,9 +66,26 @@ const LoginScreen = ({ onLogin }) => {
         )}
 
         {ready && !authenticated && (
-          <button className="btn-primary w-full pulse-btn" onClick={login} style={{ marginTop: 24 }}>
-            <span>Connect Ipê Passport</span>
-          </button>
+          <>
+            <button className="btn-primary w-full pulse-btn" onClick={login} style={{ marginTop: 24 }}>
+              <span>Connect Ipê Passport</span>
+            </button>
+            <div style={{ margin: '20px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>OR</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
+            </div>
+            <button 
+              className="btn-secondary w-full" 
+              onClick={() => {
+                localStorage.setItem('ipeXchange_demoSession', 'jean-hansen-demo-session');
+                onLogin();
+              }}
+              style={{ padding: '12px', fontSize: 14 }}
+            >
+              🚀 Enter as Guest (Demo Mode)
+            </button>
+          </>
         )}
 
         {ready && authenticated && showEntry && (

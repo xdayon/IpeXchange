@@ -6,12 +6,12 @@ import { sendChatMessage, fetchSessionHistory, publishListing } from '../lib/api
 import { useUser } from '../lib/UserContext';
 
 const SKILLS = [
-  { label: 'Market Insight', icon: <Activity size={18} />, desc: 'Trending offers today', prompt: "Show me what's trending in the city today" },
-  { label: 'Price Estimator', icon: <Zap size={18} />, desc: 'Get fair value advice', prompt: 'I need help pricing something I want to sell' },
-  { label: 'Trade Finder', icon: <ArrowRight size={18} />, desc: 'Suggest swap matches', prompt: 'What interesting trades do you suggest for me?' },
-  { label: 'Multi-Hop Loop', icon: <Network size={18} />, desc: 'Deep liquidity search', prompt: 'Search for circular multi-hop trade opportunities in the ecosystem' },
-  { label: 'Knowledge Hub', icon: <Brain size={18} />, desc: 'List your workshops', prompt: 'I want to publish a course or workshop I teach' },
-  { label: 'Service Catalog', icon: <Database size={18} />, desc: 'Offer your professional skills', prompt: 'I want to list a therapy or wellness service' },
+  { label: 'Market Insight',   icon: <Activity size={18} />,  color: '#B4F44A', desc: 'Trending offers today',          prompt: "Show me what's trending in the city today" },
+  { label: 'Price Estimator',  icon: <Zap size={18} />,       color: '#F59E0B', desc: 'Get fair value advice',           prompt: 'I need help pricing something I want to sell' },
+  { label: 'Trade Finder',     icon: <ArrowRight size={18} />, color: '#38BDF8', desc: 'Suggest swap matches',            prompt: 'What interesting trades do you suggest for me?' },
+  { label: 'Multi-Hop Loop',   icon: <Network size={18} />,   color: '#818CF8', desc: 'Deep liquidity search',           prompt: 'Search for circular multi-hop trade opportunities in the ecosystem' },
+  { label: 'Knowledge Hub',    icon: <Brain size={18} />,     color: '#F472B6', desc: 'List your workshops',             prompt: 'I want to publish a course or workshop I teach' },
+  { label: 'Service Catalog',  icon: <Database size={18} />,  color: '#34D399', desc: 'Offer your professional skills',  prompt: 'I want to list a therapy or wellness service' },
 ];
 
 const MIN_RECORDING_MS = 1000;
@@ -214,8 +214,11 @@ const AgentCommandCenter = ({ isOpen, onClose, onNavigate }) => {
         <div className="acc-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Cpu size={20} className="text-gradient-cyan" />
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Agent Command Center</h2>
-            <div className="status-badge">
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Core Command Center</h2>
+              <p style={{ fontSize: 10, color: 'var(--text-secondary)', margin: 0, opacity: 0.8 }}>Powered by Xchange Core · ZKP secured</p>
+            </div>
+            <div className="status-badge" style={{ marginLeft: 10 }}>
               <div className="status-dot online" />
               <span>SYNCED</span>
             </div>
@@ -227,7 +230,7 @@ const AgentCommandCenter = ({ isOpen, onClose, onNavigate }) => {
           {/* Left Column: Agent HUD */}
           <div className="acc-hud">
             <div className="acc-avatar-wrap floating-animation">
-              <img src={personalAgentImg} alt="Agent" className="acc-avatar" />
+              <img src={xchangeCoreImg} alt="Agent" className="acc-avatar" />
               <div className="acc-avatar-glow" />
             </div>
             <div className="acc-hud-stats">
@@ -243,6 +246,20 @@ const AgentCommandCenter = ({ isOpen, onClose, onNavigate }) => {
                 <span className="label">Memory</span>
                 <span className="value">1.4 GB</span>
               </div>
+              <div className="acc-hud-stat">
+                <span className="label">Session</span>
+                <span className="value" style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
+                  {sessionId ? sessionId.slice(0, 8) + '…' : '—'}
+                </span>
+              </div>
+              <div className="acc-hud-stat">
+                <span className="label">Network</span>
+                <span className="value" style={{ color: '#B4F44A' }}>Ipê City</span>
+              </div>
+              <div className="acc-hud-stat">
+                <span className="label">Msg Count</span>
+                <span className="value">{messages.length}</span>
+              </div>
             </div>
           </div>
 
@@ -253,7 +270,7 @@ const AgentCommandCenter = ({ isOpen, onClose, onNavigate }) => {
                 <div key={i} className={`acc-msg-wrap ${msg.role}`}>
                   {msg.role === 'agent' && (
                     <div className="acc-msg-avatar">
-                      <img src={personalAgentImg} alt="C" />
+                      <img src={xchangeCoreImg} alt="C" />
                     </div>
                   )}
                   <div className="acc-msg-content">
@@ -304,7 +321,7 @@ const AgentCommandCenter = ({ isOpen, onClose, onNavigate }) => {
               ))}
               {isTyping && (
                 <div className="acc-msg-wrap agent">
-                  <div className="acc-msg-avatar"><img src={personalAgentImg} alt="C" /></div>
+                  <div className="acc-msg-avatar"><img src={xchangeCoreImg} alt="C" /></div>
                   <div className="acc-msg-bubble agent typing">
                     <Activity size={14} className="pulse-anim" /> Core is processing...
                   </div>
@@ -321,8 +338,10 @@ const AgentCommandCenter = ({ isOpen, onClose, onNavigate }) => {
             </h4>
             <div className="acc-skills-grid">
               {SKILLS.map((skill) => (
-                <button key={skill.label} className="acc-skill-card glass-panel" onClick={() => handleSendMessage(skill.prompt)} disabled={isTyping}>
-                  <div className="skill-icon">{skill.icon}</div>
+                <button key={skill.label} className="acc-skill-card" onClick={() => handleSendMessage(skill.prompt)} disabled={isTyping}>
+                  <div className="skill-icon" style={{ background: `${skill.color}15`, border: `1px solid ${skill.color}30` }}>
+                    <span style={{ color: skill.color }}>{skill.icon}</span>
+                  </div>
                   <div className="skill-info">
                     <span className="skill-label">{skill.label}</span>
                     <span className="skill-desc">{skill.desc}</span>
@@ -338,7 +357,7 @@ const AgentCommandCenter = ({ isOpen, onClose, onNavigate }) => {
           {isRecording ? (
             <div className="acc-recording-area">
               <div className="acc-wave">
-                {[...Array(12)].map((_, i) => <div key={i} className="wave-bar" style={{ animationDelay: `${i * 0.1}s` }} />)}
+                {[...Array(20)].map((_, i) => <div key={i} className="wave-bar" style={{ animationDelay: `${i * 0.07}s` }} />)}
               </div>
               <span className="rec-timer">{formatDuration(recSeconds)}</span>
               <button className={`acc-stop-btn ${canStop ? 'active' : ''}`} onClick={stopRecording} disabled={!canStop}>

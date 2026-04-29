@@ -224,3 +224,56 @@ export const mockDemands = [
     description: 'The community garden is preparing for the spring planting season and needs bulk organic compost. Looking for up to 500kg. Willing to trade fresh produce for compost or pay in local tokens.'
   },
 ];
+export const MOCK_GRANTS = [
+  {
+    id: 'g1',
+    title: 'Artizen: Bio-Regenerative Hub',
+    provider: 'Artizen Fund',
+    type: 'Grant',
+    description: 'Funding for projects creating decentralized regenerative infrastructure in local communities.',
+    amount: '$5,000',
+    deadline: 'May 15, 2026',
+    image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=600&h=400',
+    tags: ['Ecology', 'DAO'],
+    url: 'https://artizen.fund/grant/regeneration'
+  },
+  {
+    id: 'g2',
+    title: 'Ipê City Culture Fund',
+    provider: 'Ipê Council',
+    type: 'Grant',
+    description: 'Support for local artists and cultural events that strengthen community identity.',
+    amount: '2,500 RBTC',
+    deadline: 'June 1, 2026',
+    image: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&q=80&w=600&h=400',
+    tags: ['Art', 'Community'],
+    url: 'https://ipe.city/culture-fund'
+  }
+];
+
+export const MOCK_LOANS = [
+  {
+    id: 'loan1',
+    title: 'Expansion: Artisan Sourdough',
+    provider: 'Bread & Co',
+    type: 'Loan Request',
+    description: 'We need to purchase a larger stone oven to meet the increasing demand for our local bread.',
+    amount: '$1,200',
+    repayment: '10 months @ 5%',
+    collateral: 'Business Assets',
+    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=400&h=300',
+    funded: 45
+  },
+  {
+    id: 'loan2',
+    title: 'Inventory: Eco-Sensor Node',
+    provider: 'Jurere Climate',
+    type: 'Loan Request',
+    description: 'Purchasing 20 new air quality sensors to expand our monitoring network to the South Sector.',
+    amount: '500 USDC',
+    repayment: '3 months @ 0%',
+    collateral: 'Data Revenue',
+    image: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=400&h=300',
+    funded: 80
+  }
+];

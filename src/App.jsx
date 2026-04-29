@@ -32,11 +32,20 @@ function App() {
   });
 
   const handleSetAppState = (newState) => {
+    // If we just logged in via Demo Mode, jump straight to portal
+    if (newState === 'agent' && localStorage.getItem('ipeXchange_demoSession')) {
+      localStorage.setItem('ipeXchangeState', 'portal');
+      localStorage.setItem('ipeXchange_agentConnected', 'true');
+      setAppState('portal');
+      return;
+    }
+
     if (newState === 'portal') {
       localStorage.setItem('ipeXchangeState', 'portal');
     }
     if (newState === 'login') {
       localStorage.removeItem('ipeXchangeState');
+      localStorage.removeItem('ipeXchange_demoSession');
     }
     setAppState(newState);
   };

@@ -67,6 +67,23 @@ const PageSkeleton = () => (
   </div>
 );
 
+// Add a tiny ErrorBoundary class component at top of MainPortal.jsx
+class TabBoundary extends React.Component {
+  state = { error: null };
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) return (
+      <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
+        <p>Something went wrong loading this page.</p>
+        <button onClick={() => this.setState({ error: null })} className="btn-secondary" style={{ marginTop: 16 }}>
+          Retry
+        </button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 const MainPortal = () => {
   const [tab, setTab]           = useState('home');
@@ -254,16 +271,18 @@ const MainPortal = () => {
           {/* Main Content */}
           <main className="main-content" style={{ paddingTop: isPage ? '24px' : 0 }}>
             <Suspense fallback={<PageSkeleton />}>
-              {tab === 'home'          && <HomePage onNavigate={handleNavigate} />}
-              {tab === 'discover'      && <DiscoverPage onNavigate={handleNavigate} />}
-              {tab === 'stores'        && <StoresPage onNavigate={handleNavigate} />}
-              {tab === 'investments'   && <InvestmentsPage onNavigate={handleNavigate} />}
-              {tab === 'profile'       && <ProfilePage />}
-              {tab === 'wallet'        && <WalletPage onNavigate={handleNavigate} />}
-              {tab === 'agent'         && <AgentPage />}
-              {tab === 'circular'      && <CircularTradePage />}
-              {tab === 'config'        && <ConfigPage />}
-              {tab === 'notifications' && <NotificationsPage />}
+              <TabBoundary key={tab}>
+                {tab === 'home'          && <HomePage onNavigate={handleNavigate} />}
+                {tab === 'discover'      && <DiscoverPage onNavigate={handleNavigate} />}
+                {tab === 'stores'        && <StoresPage onNavigate={handleNavigate} />}
+                {tab === 'investments'   && <InvestmentsPage onNavigate={handleNavigate} />}
+                {tab === 'profile'       && <ProfilePage />}
+                {tab === 'wallet'        && <WalletPage onNavigate={handleNavigate} />}
+                {tab === 'agent'         && <AgentPage />}
+                {tab === 'circular'      && <CircularTradePage />}
+                {tab === 'config'        && <ConfigPage />}
+                {tab === 'notifications' && <NotificationsPage />}
+              </TabBoundary>
             </Suspense>
           </main>
 
