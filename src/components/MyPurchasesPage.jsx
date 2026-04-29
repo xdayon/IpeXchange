@@ -5,6 +5,7 @@ import {
   RefreshCw, CheckCircle2, Zap, Filter, Eye, ArrowLeft
 } from 'lucide-react';
 import { getPurchases, clearPurchases } from '../data/xchangeStore';
+import { DEMO_PURCHASES } from '../data/demoProfile';
 
 const STATUS_CONFIG = {
   confirmed: { color: '#22c55e', label: 'Confirmed', icon: CheckCircle2 },
@@ -189,7 +190,8 @@ const MyPurchasesPage = ({ onNavigate, onBack }) => {
   const [filter, setFilter] = useState('All');
 
   useEffect(() => {
-    setPurchases(getPurchases());
+    const isDemo = !!localStorage.getItem('ipeXchange_demoSession');
+    setPurchases(isDemo ? DEMO_PURCHASES : getPurchases());
   }, []);
 
   const filtered = filter === 'All'

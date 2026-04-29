@@ -13,6 +13,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { upsertUser, fetchUserProfile } from './api';
+import { DEMO_USER } from '../data/demoProfile';
 
 const UserContext = createContext(null);
 
@@ -70,6 +71,14 @@ export function UserProvider({ children }) {
       setInitialized(true);
     }
   }, [authenticated, privyUser, walletAddress, email, privyId, displayName]);
+
+  // Demo mode: populate xchangeUser from static profile without Privy
+  useEffect(() => {
+    if (localStorage.getItem('ipeXchange_demoSession')) {
+      setXchangeUser(DEMO_USER);
+      setInitialized(true);
+    }
+  }, []);
 
   // Sync on auth change
   useEffect(() => {

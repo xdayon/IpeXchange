@@ -54,7 +54,7 @@ function App() {
     <Suspense fallback={<FullScreenLoader />}>
       {appState === 'login' && (
         <div className="app-layout">
-          <main className="main-content">
+          <main className="main-content" style={{ paddingTop: 0, display: 'flex', flex: 1 }}>
             <LoginScreen onLogin={() => handleSetAppState('agent')} />
           </main>
         </div>

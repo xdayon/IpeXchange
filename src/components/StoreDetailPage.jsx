@@ -91,21 +91,44 @@ const StoreStats = ({ store }) => (
 );
 
 // ─── Main ─────────────────────────────────────────────────
-const StoreDetailPage = ({ store, onBack, onXchange }) => {
+const StoreDetailPage = ({ store, storeId, onBack, onXchange }) => {
+  const [resolvedStore, setResolvedStore] = useState(store || null);
   const [activeTab, setActiveTab] = useState('catalog');
   const [liked, setLiked] = useState(false);
   const [catalog, setCatalog] = useState(null);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
 
-  const repScore = store.reputation_score || store.reputationScore || 80;
+  // Resolve store object if only storeId is provided
+  useEffect(() => {
+    if (!resolvedStore && storeId) {
+      fetch(`${API_URL}/stores`)
+        .then(r => r.json())
+        .then(data => {
+          const found = (data.stores || []).find(s => s.id === storeId);
+          if (found) setResolvedStore(found);
+        })
+        .catch(() => {});
+    }
+  }, [storeId, resolvedStore]);
+
+  if (!resolvedStore) {
+    return (
+      <div className="store-detail-layout container flex-center" style={{ minHeight: '60vh' }}>
+        <RefreshCw size={32} className="spin-animation" style={{ color: 'var(--accent-cyan)' }} />
+      </div>
+    );
+  }
+
+  const repScore = resolvedStore.reputation_score || resolvedStore.reputationScore || 80;
   const repColor = repScore >= 95 ? '#B4F44A' : repScore >= 85 ? '#38BDF8' : '#F59E0B';
-  const reviewCount = store.review_count || store.reviews || 0;
+  const reviewCount = resolvedStore.review_count || resolvedStore.reviews || 0;
 
   // Fetch products from API, fallback to hardcoded
   useEffect(() => {
+    if (!resolvedStore.id) return;
     const loadCatalog = async () => {
       try {
-        const res = await fetch(`${API_URL}/stores/${store.id}/products`);
+        const res = await fetch(`${API_URL}/stores/${resolvedStore.id}/products`);
         if (res.ok) {
           const data = await res.json();
           if (data.products && data.products.length > 0) {
@@ -117,20 +140,20 @@ const StoreDetailPage = ({ store, onBack, onXchange }) => {
         console.warn('Store products API unavailable, using fallback');
       }
       // Fallback
-      setCatalog(FALLBACK_CATALOG[store.id] || DEFAULT_CATALOG);
+      setCatalog(FALLBACK_CATALOG[resolvedStore.id] || DEFAULT_CATALOG);
       setLoadingCatalog(false);
     };
     loadCatalog().finally(() => setLoadingCatalog(false));
-  }, [store.id]);
+  }, [resolvedStore.id]);
 
-  const displayCatalog = catalog || FALLBACK_CATALOG[store.id] || DEFAULT_CATALOG;
+  const displayCatalog = catalog || FALLBACK_CATALOG[resolvedStore.id] || DEFAULT_CATALOG;
 
   const handleItemXchange = (item) => {
     if (onXchange) {
       onXchange({
-        id: `${store.id}-${item.id}`,
+        id: `${resolvedStore.id}-${item.id}`,
         title: item.name,
-        provider: store.name,
+        provider: resolvedStore.name,
         type: item.type,
         category: item.type === 'Product' ? 'Products' : 'Services',
         acceptedPayments: item.payments || ['fiat'],
@@ -139,13 +162,13 @@ const StoreDetailPage = ({ store, onBack, onXchange }) => {
         description: item.desc || item.description,
         image: item.image || item.image_url,
         sourceType: 'store_product',
-        storeId: store.id,
+        storeId: resolvedStore.id,
       });
     }
   };
 
   // Resolve icon: from icon_key string or icon component
-  const IconComponent = store.icon || Store;
+  const IconComponent = resolvedStore.icon || Store;
 
   return (
     <div className="store-detail-layout container">
@@ -158,23 +181,23 @@ const StoreDetailPage = ({ store, onBack, onXchange }) => {
         <div className="store-hero-banner">
           <div className="store-hero-gradient" />
           <div className="store-hero-content">
-            <div className="store-hero-icon" style={{ background: store.icon_bg || store.iconBg, borderColor: `${store.icon_color || store.iconColor}40` }}>
-              <IconComponent size={36} style={{ color: store.icon_color || store.iconColor }} />
+            <div className="store-hero-icon" style={{ background: resolvedStore.icon_bg || resolvedStore.iconBg, borderColor: `${resolvedStore.icon_color || resolvedStore.iconColor}40` }}>
+              <IconComponent size={36} style={{ color: resolvedStore.icon_color || resolvedStore.iconColor }} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                <h2 style={{ fontSize: 26, fontWeight: 800 }}>{store.name}</h2>
-                {store.on_chain && <span style={{ fontSize: 11, fontWeight: 700, color: '#B4F44A', background: 'rgba(180,244,74,0.15)', padding: '3px 9px', borderRadius: 100, border: '1px solid rgba(180,244,74,0.3)' }}>⬡ On-Chain</span>}
+                <h2 style={{ fontSize: 26, fontWeight: 800 }}>{resolvedStore.name}</h2>
+                {resolvedStore.on_chain && <span style={{ fontSize: 11, fontWeight: 700, color: '#B4F44A', background: 'rgba(180,244,74,0.15)', padding: '3px 9px', borderRadius: 100, border: '1px solid rgba(180,244,74,0.3)' }}>⬡ On-Chain</span>}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#F59E0B' }}>
-                  <Star size={13} fill="#F59E0B" /> {store.rating} <span style={{ color: 'var(--text-secondary)' }}>({reviewCount})</span>
+                  <Star size={13} fill="#F59E0B" /> {resolvedStore.rating} <span style={{ color: 'var(--text-secondary)' }}>({reviewCount})</span>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: repColor }}>
                   <ShieldCheck size={13} /> Rep {repScore}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-secondary)' }}>
-                  <MapPin size={11} /> {store.address}
+                  <MapPin size={11} /> {resolvedStore.address}
                 </span>
               </div>
             </div>
@@ -189,20 +212,20 @@ const StoreDetailPage = ({ store, onBack, onXchange }) => {
           </div>
         </div>
         <div style={{ padding: '0 24px 24px' }}>
-          <StoreStats store={store} />
+          <StoreStats store={resolvedStore} />
         </div>
       </div>
 
       {/* Description + tags */}
       <div className="glass-panel" style={{ padding: '20px 24px', marginTop: 16 }}>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 14 }}>{store.description}</p>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 14 }}>{resolvedStore.description}</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-          {(store.tags || []).map(tag => <span key={tag} className="store-tag">{tag}</span>)}
+          {(resolvedStore.tags || []).map(tag => <span key={tag} className="store-tag">{tag}</span>)}
         </div>
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
             <Fingerprint size={13} />
-            <span style={{ fontFamily: 'monospace', color: '#38BDF8' }}>{store.owner_ens || store.owner}</span>
+            <span style={{ fontFamily: 'monospace', color: '#38BDF8' }}>{resolvedStore.owner_ens || resolvedStore.owner}</span>
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#22c55e' }}>
             <Clock size={13} /> Mon–Sat: 8am–8pm
@@ -250,9 +273,9 @@ const StoreDetailPage = ({ store, onBack, onXchange }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 4 }}>
           <div className="glass-panel" style={{ padding: '20px 24px', display: 'flex', gap: 24, alignItems: 'center' }}>
             <div style={{ textAlign: 'center', flexShrink: 0 }}>
-              <p style={{ fontSize: 48, fontWeight: 800, lineHeight: 1, color: '#F59E0B' }}>{store.rating}</p>
+              <p style={{ fontSize: 48, fontWeight: 800, lineHeight: 1, color: '#F59E0B' }}>{resolvedStore.rating}</p>
               <div style={{ display: 'flex', gap: 2, justifyContent: 'center', margin: '6px 0 4px' }}>
-                {[1,2,3,4,5].map(i => <Star key={i} size={14} color="#F59E0B" fill={i <= Math.round(store.rating) ? '#F59E0B' : 'none'} />)}
+                {[1,2,3,4,5].map(i => <Star key={i} size={14} color="#F59E0B" fill={i <= Math.round(resolvedStore.rating) ? '#F59E0B' : 'none'} />)}
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{reviewCount} reviews</p>
             </div>
@@ -304,7 +327,7 @@ const StoreDetailPage = ({ store, onBack, onXchange }) => {
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
               {[
-                { icon: ShieldCheck, color: '#B4F44A', title: 'Ipê Passport / ENS', desc: `Verified owner: ${store.owner_ens || store.owner}` },
+                { icon: ShieldCheck, color: '#B4F44A', title: 'Ipê Passport / ENS', desc: `Verified owner: ${resolvedStore.owner_ens || resolvedStore.owner}` },
                 { icon: Lock,        color: '#38BDF8', title: 'Zodl (ZK Privacy)',   desc: 'All transactions natively shielded by Zodl' },
                 { icon: TrendingUp,  color: '#818CF8', title: `Rep Score: ${repScore}`, desc: repScore >= 95 ? 'Elite — Top 5% of Xchange network' : 'Trusted — Verified and reliable' },
                 { icon: Users,       color: '#F59E0B', title: `${reviewCount} reviews`, desc: 'All reviews registered on-chain, immutable' },
@@ -340,7 +363,7 @@ const StoreDetailPage = ({ store, onBack, onXchange }) => {
       {/* Sticky CTA */}
       <div className="store-detail-cta-bar glass-panel">
         <div>
-          <p style={{ fontSize: 13, fontWeight: 600 }}>{store.name}</p>
+          <p style={{ fontSize: 13, fontWeight: 600 }}>{resolvedStore.name}</p>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Rep {repScore} · {reviewCount} reviews</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>

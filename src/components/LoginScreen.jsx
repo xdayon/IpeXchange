@@ -26,17 +26,19 @@ const LoginScreen = ({ onLogin }) => {
         <div className="icon-wrapper" style={{ padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
           <div style={{
             width: 80, height: 80, borderRadius: 20,
-            background: 'linear-gradient(135deg, #1a2a1a 0%, #1a3a1a 40%, #2a4a2a 100%)',
+            background: 'linear-gradient(145deg, #080C14 0%, #0B1421 35%, #0d1f2d 65%, #0a1a1a 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 0 1px rgba(56,189,248,0.2), 0 8px 32px rgba(0,0,0,0.4)',
+            boxShadow: '0 0 0 1px rgba(56,189,248,0.35), 0 0 24px rgba(56,189,248,0.15), 0 8px 32px rgba(0,0,0,0.6)',
             position: 'relative', overflow: 'hidden',
           }}>
-            {/* Subtle gradient overlay for depth */}
             <div style={{
               position: 'absolute', inset: 0,
-              background: 'radial-gradient(ellipse at 30% 30%, rgba(56,189,248,0.12) 0%, transparent 70%)',
+              background: 'radial-gradient(ellipse at 20% 20%, rgba(56,189,248,0.22) 0%, rgba(0,180,140,0.08) 40%, transparent 70%)',
             }} />
-            {/* Fingerprint SVG */}
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%',
+              background: 'linear-gradient(to top, rgba(56,189,248,0.07) 0%, transparent 100%)',
+            }} />
             <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none"
               stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
               style={{ position: 'relative', zIndex: 1 }}>

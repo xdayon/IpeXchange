@@ -175,11 +175,12 @@ const MainPortal = () => {
         </main>
       )}
 
-      {tab === 'store-detail' && navParams?.store && (
+      {tab === 'store-detail' && (navParams?.store || navParams?.storeId) && (
         <main className="main-content" style={{ paddingTop: 0 }}>
           <Suspense fallback={<PageSkeleton />}>
             <StoreDetailPage
-              store={navParams.store}
+              store={navParams.store || null}
+              storeId={navParams.storeId || null}
               onBack={handleBack}
               onXchange={(listing) => handleNavigate('checkout', { listing, sourceTab: 'store-detail' })}
             />

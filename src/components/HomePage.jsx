@@ -26,21 +26,32 @@ const HomePage = () => {
   const [liveFeed, setLiveFeed] = useState([]);
 
   useEffect(() => {
-    fetchDiscoverItems({}).then(data => {
-      const items = (data.listings || []).slice(0, 7).map((l, i) => ({
-        icon: l.category === 'Services' ? <Zap size={14} /> :
-              l.category === 'Knowledge' ? <Users size={14} /> :
-              l.category === 'Donations' ? <MapPin size={14} /> : <TrendingUp size={14} />,
-        color: l.category === 'Services' ? '#B4F44A' :
-               l.category === 'Knowledge' ? '#818CF8' :
-               l.category === 'Donations' ? '#F43F5E' : '#38BDF8',
-        text: l.acceptsTrade
-          ? `${l.title} — accepts trade`
-          : `New listing: ${l.title}${l.priceFiat ? ` — $${l.priceFiat}` : ''}`,
-        time: i === 0 ? '2m' : i === 1 ? '5m' : `${(i + 1) * 4}m`,
-      }));
-      setLiveFeed(items);
-    });
+    let cancelled = false;
+    fetchDiscoverItems({})
+      .then(data => {
+        if (cancelled) return;
+        const items = (data.listings || []).slice(0, 7).map((l, i) => ({
+          icon: l.category === 'Services' ? <Zap size={14} /> :
+                l.category === 'Knowledge' ? <Users size={14} /> :
+                l.category === 'Donations' ? <MapPin size={14} /> : <TrendingUp size={14} />,
+          color: l.category === 'Services' ? '#B4F44A' :
+                 l.category === 'Knowledge' ? '#818CF8' :
+                 l.category === 'Donations' ? '#F43F5E' : '#38BDF8',
+          text: l.acceptsTrade
+            ? `${l.title} — accepts trade`
+            : `New listing: ${l.title}${l.priceFiat ? ` — $${l.priceFiat}` : ''}`,
+          time: i === 0 ? '2m' : i === 1 ? '5m' : `${(i + 1) * 4}m`,
+        }));
+        setLiveFeed(items.length > 0 ? items : [
+          { icon: <TrendingUp size={14} />, color: '#B4F44A', text: 'Marketplace is live — be the first to list!', time: 'now' },
+        ]);
+      })
+      .catch(() => {
+        if (!cancelled) setLiveFeed([
+          { icon: <TrendingUp size={14} />, color: '#38BDF8', text: 'Live feed connecting...', time: 'now' },
+        ]);
+      });
+    return () => { cancelled = true; };
   }, []);
 
   const todaysSeed = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'

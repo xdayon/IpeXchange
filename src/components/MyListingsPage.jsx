@@ -6,6 +6,7 @@ import {
   Clock, TrendingUp, ArrowLeft
 } from 'lucide-react';
 import { getMyListings, toggleListingStatus, markListingAsSold } from '../data/xchangeStore';
+import { DEMO_LISTINGS } from '../data/demoProfile';
 
 const STATUS_CONFIG = {
   active:  { color: '#22c55e', label: 'Active',  icon: PlayCircle  },
@@ -195,7 +196,8 @@ const MyListingsPage = ({ onNavigate, onBack }) => {
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    setListings(getMyListings());
+    const isDemo = !!localStorage.getItem('ipeXchange_demoSession');
+    setListings(isDemo ? DEMO_LISTINGS : getMyListings());
   }, []);
 
   const filtered = filter === 'all'

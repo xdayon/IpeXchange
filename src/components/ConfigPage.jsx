@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Sliders, RefreshCw, Database, CheckCircle2, AlertCircle, Shield, Bot, Bell, Network, Key } from 'lucide-react';
 import { seedMockData } from '../lib/api';
 import { useUser } from '../lib/UserContext';
 

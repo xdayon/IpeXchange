@@ -197,7 +197,10 @@ const AgentCommandCenter = ({ isOpen, onClose, onNavigate }) => {
 
   const handleCTA = (cta) => {
     if (cta && onNavigate) {
-      onNavigate(cta.tab, null);
+      const params = (cta.tab === 'store-detail' && cta.storeId)
+        ? { storeId: cta.storeId }
+        : null;
+      onNavigate(cta.tab, params);
       onClose();
     }
   };

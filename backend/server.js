@@ -80,14 +80,17 @@ app.post('/api/chat', async (req, res) => {
 
     const history = await getSessionHistory(sessionId, 20);
 
-    // Load live listings to inject as context into the LLM
-    const contextListings = await getListings({ limit: 20 });
+    // Load live listings and stores to inject as context into the LLM
+    const [contextListings, contextStores] = await Promise.all([
+      getListings({ limit: 20 }),
+      getStores(),
+    ]);
 
     const displayMessage = isAudio && !message?.trim() ? '🎤 Audio Sent' : message;
     await saveMessage({ sessionId, role: 'user', content: displayMessage, isAudio });
 
-    // Call Gemini with live listings context
-    const response = await chat(history, message, audioBase64, mimeType, contextListings);
+    // Call Gemini with live listings and stores context
+    const response = await chat(history, message, audioBase64, mimeType, contextListings, contextStores);
 
     await saveMessage({ sessionId, role: 'agent', content: response.text });
 
@@ -163,27 +166,6 @@ app.post('/api/listings', async (req, res) => {
   }
 });
 
-// ─── Get listings ──────────────────────────────────────────────────────────────
-
-app.get('/api/discover', async (req, res) => {
-  const { category, subcategory, tags } = req.query;
-  try {
-    const listings = await getListings({ category, subcategory, tags });
-    console.log(`[Diagnostic] /api/discover: category=${category}, subcategory=${subcategory}, found ${listings.length} listings`);
-    
-    // For "All", we also fetch trending items (high frequency intents)
-    let trending = [];
-    if (!category || category === 'All') {
-      trending = await getHotIntents();
-      console.log(`[Diagnostic] trending found: ${trending.length}`);
-    }
-
-    res.json({ listings, trending });
-  } catch (error) {
-    console.error('Discover API error:', error);
-    res.status(500).json({ error: 'Failed to fetch items' });
-  }
-});
 
 // ─── Semantic search ──────────────────────────────────────────────────────────
 

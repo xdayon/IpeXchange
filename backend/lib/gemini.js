@@ -31,8 +31,9 @@ If the user mentions wanting to trade (troca), help them find multi-hop opportun
 Personality: Intelligent, concise, warm, and community-focused. You speak like a knowledgeable city guide who understands Web3, circular economy, and decentralized finance. You always protect user privacy (ZKP, Ipê Passport).
 
 Response format: Keep responses under 120 words. Be direct and actionable. Use **bold** for key items. Suggest specific next steps. When relevant, end with a CTA action type in this format on a new line:
-CTA_ACTION: [discover|checkout|investments|circular|home|none]
+CTA_ACTION: [discover|checkout|investments|circular|home|stores|store-detail|none]
 CTA_LABEL: [Short button label]
+CTA_STORE_ID: [store UUID, only when CTA_ACTION is store-detail — otherwise omit this line]
 
 When you detect a sell intent and have enough info (title + description + category), end with:
 LISTING_READY: true
@@ -73,7 +74,7 @@ If information is missing, use null. For tags, use keywords from the item and it
 
 // ─── Main Chat ────────────────────────────────────────────────────────────────
 
-export async function chat(history, userMessage, audioBase64 = null, mimeType = null, contextListings = null) {
+export async function chat(history, userMessage, audioBase64 = null, mimeType = null, contextListings = null, contextStores = null) {
   try {
     // Build system prompt, optionally injecting live listings context
     let systemPrompt = SYSTEM_PROMPT;
@@ -83,6 +84,14 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
         .map(l => `- ${l.title} — ${l.price_fiat ? `$${l.price_fiat}` : 'trade only'} (${l.provider_name || 'Community'})`)
         .join('\n');
       systemPrompt += `\n\nCurrent available listings in the network:\n${listingsSummary}`;
+    }
+
+    if (contextStores && contextStores.length > 0) {
+      const storesSummary = contextStores
+        .slice(0, 8)
+        .map(s => `- ${s.name} [${s.category}] rep:${s.reputation_score || '?'} id:${s.id}`)
+        .join('\n');
+      systemPrompt += `\n\nActive stores in the city (use id for CTA_STORE_ID when routing to a store):\n${storesSummary}`;
     }
 
     const model = genAI.getGenerativeModel({
@@ -120,8 +129,9 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
     let cta = null;
     let listingReady = false;
 
-    const ctaActionMatch = rawText.match(/CTA_ACTION:\s*(\w+)/i);
-    const ctaLabelMatch  = rawText.match(/CTA_LABEL:\s*(.+)/i);
+    const ctaActionMatch  = rawText.match(/CTA_ACTION:\s*([\w-]+)/i);
+    const ctaLabelMatch   = rawText.match(/CTA_LABEL:\s*(.+)/i);
+    const ctaStoreIdMatch = rawText.match(/CTA_STORE_ID:\s*([^\s\n]+)/i);
     const listingReadyMatch = rawText.match(/LISTING_READY:\s*true/i);
 
     if (listingReadyMatch) {
@@ -130,14 +140,16 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
 
     if (ctaActionMatch && ctaActionMatch[1] !== 'none') {
       cta = {
-        tab:   ctaActionMatch[1].toLowerCase(),
-        label: ctaLabelMatch ? ctaLabelMatch[1].trim() : 'View more',
+        tab:     ctaActionMatch[1].toLowerCase(),
+        label:   ctaLabelMatch ? ctaLabelMatch[1].trim() : 'View more',
+        storeId: ctaStoreIdMatch ? ctaStoreIdMatch[1].trim() : null,
       };
     }
 
     text = rawText
       .replace(/CTA_ACTION:.*$/im, '')
       .replace(/CTA_LABEL:.*$/im, '')
+      .replace(/CTA_STORE_ID:.*$/im, '')
       .replace(/LISTING_READY:.*$/im, '')
       .trim();
 
