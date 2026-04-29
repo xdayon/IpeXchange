@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Settings, Shield, Bell, Bot, Database, Eye, Globe, Sliders, Smartphone, Key, Network, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { seedMockData } from '../lib/api';
+import { useUser } from '../lib/UserContext';
 
 const AdminDebugSection = () => {
   const [loading, setLoading] = useState(false);
@@ -116,6 +116,9 @@ const SelectRow = ({ label, description, options, defaultValue }) => {
 };
 
 const ConfigPage = () => {
+  const { email } = useUser();
+  const isAdmin = email === 'dayon.bochnia@gmail.com';
+
   return (
     <div className="inner-page container" style={{ maxWidth: 800 }}>
       <div style={{ marginBottom: 32 }}>
@@ -215,7 +218,7 @@ const ConfigPage = () => {
         </div>
       </ConfigSection>
 
-      <AdminDebugSection />
+      {isAdmin && <AdminDebugSection />}
       
       <div style={{ textAlign: 'center', marginTop: 40, marginBottom: 20 }}>
         <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Ipê Xchange Core v1.4.2 — Build 8f7a91</p>

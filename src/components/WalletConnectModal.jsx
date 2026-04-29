@@ -159,7 +159,7 @@ const MetaMaskFlow = ({ onSuccess }) => {
             ))}
           </div>
           <button className="wc-confirm-btn" style={{ background: 'linear-gradient(135deg,#F6851B,#E07318)' }} onClick={handleConnect}>
-            <span>🦊</span> Conectar MetaMask
+            <span>🦊</span> Connect MetaMask
           </button>
         </>
       )}
@@ -221,10 +221,10 @@ const WalletConnectFlow = ({ onSuccess }) => {
 
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', margin: '16px 0' }}>
         <button style={{ fontSize: 12, padding: '7px 14px', borderRadius: 100, border: '1px solid var(--border-color)', color: 'var(--text-secondary)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Copy size={12} /> Copiar URI
+          <Copy size={12} /> Copy URI
         </button>
         <button style={{ fontSize: 12, padding: '7px 14px', borderRadius: 100, border: '1px solid rgba(59,153,252,0.4)', color: '#3B99FC', background: 'rgba(59,153,252,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => { setScanned(true); setTimeout(() => onSuccess({ label: 'WalletConnect', sub: 'Rainbow Wallet' }), 1500); }}>
-          <Smartphone size={12} /> Simular escaneio
+          <Smartphone size={12} /> Simulate scan
         </button>
       </div>
 
@@ -247,7 +247,7 @@ const CoinbaseFlow = ({ onSuccess }) => {
         <span style={{ fontSize: 28 }}>🔵</span>
       </div>
       <h3 className="wc-flow-title">Coinbase Wallet</h3>
-      <p className="wc-flow-sub">Conecte via Coinbase Wallet app ou extensão. Suporte a Base, Ethereum e Polygon.</p>
+      <p className="wc-flow-sub">Connect via Coinbase Wallet app or extension. Supports Base, Ethereum, and Polygon.</p>
 
       {step === 'idle' && (
         <>
@@ -258,7 +258,7 @@ const CoinbaseFlow = ({ onSuccess }) => {
           </div>
           <div style={{ display: 'flex', gap: 10, flexDirection: 'column' }}>
             <button className="wc-confirm-btn" style={{ background: 'linear-gradient(135deg,#0052FF,#3B82F6)' }} onClick={() => { setStep('loading'); setTimeout(() => onSuccess({ label: 'Coinbase Wallet', sub: '0x4c2b...a91f' }), 2000); }}>
-              🔵 Conectar via extensão
+              🔵 Connect via extension
             </button>
             <button style={{ padding: '12px', borderRadius: 12, border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13 }}>
               <QrCode size={14} style={{ display: 'inline', marginRight: 6 }} /> Mostrar QR Code
@@ -367,7 +367,7 @@ const YodlFlow = ({ onSuccess }) => {
 
   const handleConnect = () => {
     setLoading(true);
-    setTimeout(() => { setLoading(false); onSuccess({ label: 'Yodl Gateway', sub: 'Conectado' }); }, 1500);
+    setTimeout(() => { setLoading(false); onSuccess({ label: 'Yodl Gateway', sub: 'Connected' }); }, 1500);
   };
 
   return (

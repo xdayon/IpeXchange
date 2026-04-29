@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bot, Power, Wifi, Shield, Check } from 'lucide-react';
-import personalAgentImg from '../assets/personal_agent.png';
+import personalAgentImg from '../assets/agent_bot.svg';
 
 const steps = [
   { icon: <Wifi size={18} />, label: 'Discovering node at AI Haus...' },

@@ -581,4 +581,31 @@ export async function getAllTradeableStoreProducts({ limit = 50 } = {}) {
   }));
 }
 
+export async function seedDatabase(sessions, listings, demands) {
+  if (!dbAvailable) return { success: false, error: 'Database not available' };
+
+  try {
+    // 1. Sessions
+    if (sessions?.length) {
+      await supabase.from('sessions').upsert(sessions, { onConflict: 'id' });
+    }
+
+    // 2. Listings
+    if (listings?.length) {
+      await supabase.from('listings').upsert(listings, { onConflict: 'mock_key' });
+    }
+
+    // 3. Demands
+    if (demands?.length) {
+      // Demands don't have a mock_key yet, so we just insert them (safe for demo)
+      await supabase.from('demands').insert(demands);
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('seedDatabase error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
 export default supabase;

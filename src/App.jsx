@@ -53,7 +53,10 @@ function App() {
       {appState === 'agent' && (
         <div className="app-layout">
           <main className="main-content">
-            <ConnectAgentScreen onConnect={() => handleSetAppState('sync')} />
+            <ConnectAgentScreen onConnect={() => {
+              localStorage.setItem('ipeXchange_agentConnected', 'true');
+              handleSetAppState('sync');
+            }} />
           </main>
         </div>
       )}

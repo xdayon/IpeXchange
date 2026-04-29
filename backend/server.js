@@ -25,7 +25,9 @@ import {
   getStores,
   getStoreProducts,
   getAllTradeableStoreProducts,
+  seedDatabase,
 } from './lib/supabase.js';
+import { MOCK_SESSIONS, MOCK_LISTINGS, MOCK_DEMANDS } from './lib/mockData.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -163,17 +165,23 @@ app.post('/api/listings', async (req, res) => {
 
 // ─── Get listings ──────────────────────────────────────────────────────────────
 
-app.get('/api/listings', async (req, res) => {
-  const { category, limit } = req.query;
+app.get('/api/discover', async (req, res) => {
+  const { category, subcategory, tags } = req.query;
   try {
-    const listings = await getListings({
-      category: category || null,
-      limit: parseInt(limit) || 50,
-    });
-    res.json({ listings });
-  } catch (err) {
-    console.error('GET /api/listings error:', err);
-    res.status(500).json({ error: 'Failed to load listings' });
+    const listings = await getListings({ category, subcategory, tags });
+    console.log(`[Diagnostic] /api/discover: category=${category}, subcategory=${subcategory}, found ${listings.length} listings`);
+    
+    // For "All", we also fetch trending items (high frequency intents)
+    let trending = [];
+    if (!category || category === 'All') {
+      trending = await getHotIntents();
+      console.log(`[Diagnostic] trending found: ${trending.length}`);
+    }
+
+    res.json({ listings, trending });
+  } catch (error) {
+    console.error('Discover API error:', error);
+    res.status(500).json({ error: 'Failed to fetch items' });
   }
 });
 
@@ -372,21 +380,16 @@ app.post('/api/transactions', async (req, res) => {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.post('/api/admin/seed', async (req, res) => {
-  if (!process.env.DATABASE_URL) {
-    return res.status(500).json({ error: 'DATABASE_URL not configured' });
-  }
-
-  const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
   try {
-    const sqlFile = path.join(__dirname, 'add_mock_listings.sql');
-    const query = fs.readFileSync(sqlFile, 'utf8');
-    await sql.unsafe(query);
-    res.json({ success: true, message: 'Mock data seeded successfully' });
+    const result = await seedDatabase(MOCK_SESSIONS, MOCK_LISTINGS, MOCK_DEMANDS);
+    if (result.success) {
+      res.json({ success: true, message: 'Mock data seeded successfully via Supabase client' });
+    } else {
+      res.status(500).json({ error: result.error });
+    }
   } catch (err) {
     console.error('Seed error:', err);
     res.status(500).json({ error: err.message });
-  } finally {
-    await sql.end();
   }
 });
 

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Bot, Brain, Database, ShieldCheck, Settings, Activity, Power, Image as ImageIcon } from 'lucide-react';
-import personalAgentImg from '../assets/personal_agent.png';
+import personalAgentImg from '../assets/agent_bot.svg';
 import ConnectAgentScreen from './ConnectAgentScreen';
 
 const MEMORIES = [

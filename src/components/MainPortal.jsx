@@ -29,8 +29,8 @@ const MyListingsPage    = lazy(() => import('./MyListingsPage'));
 const StoreDetailPage   = lazy(() => import('./StoreDetailPage'));
 const ListingDetailPage = lazy(() => import('./ListingDetailPage'));
 
-// Chat drawer — lazy since it's hidden by default
-const ChatDrawer        = lazy(() => import('./ChatDrawer'));
+// Agent Command Center — lazy loaded
+const AgentCommandCenter = lazy(() => import('./AgentCommandCenter'));
 
 // ─── Navigation config ────────────────────────────────────────────────────────
 const NAV_TABS = [
@@ -300,13 +300,13 @@ const MainPortal = () => {
             aria-label="Chat with Core AI"
           >
             <div className="fab-glow-ring" />
-            <MessageCircle size={28} />
-            <span className="chat-fab-label">Chat with Core</span>
+            <Bot size={28} />
+            <span className="chat-fab-label">Command Center</span>
           </button>
 
-          {/* Global Chat Drawer — lazy loaded */}
+          {/* Global Agent Command Center — lazy loaded */}
           <Suspense fallback={null}>
-            <ChatDrawer
+            <AgentCommandCenter
               isOpen={chatOpen}
               onClose={closeChat}
               onNavigate={chatNavigate}
