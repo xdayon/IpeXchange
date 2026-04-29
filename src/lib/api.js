@@ -150,3 +150,14 @@ export async function recordTransaction({ listingId, buyerWallet, sellerWallet, 
     return null;
   }
 }
+
+export async function fetchCityGraphData() {
+  try {
+    const res = await fetch(`${API_URL}/city-graph`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error('fetchCityGraphData error:', err);
+    return { entities: [], edges: [] };
+  }
+}

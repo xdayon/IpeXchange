@@ -185,12 +185,19 @@ export const MOCK_LISTINGS = [
 ];
 
 export const MOCK_DEMANDS = [
-  { session_id: 'test-session-id', description: 'Looking for web design and development consulting', category: 'Services', accepts_trade: true, is_mock: true },
-  { session_id: 'bia-tech-id',      description: 'I want fresh artisan sourdough bread', category: 'Products', accepts_trade: true, is_mock: true },
-  { session_id: 'bread-co-id',      description: 'Need an electric bike for deliveries', category: 'Products', accepts_trade: true, is_mock: true },
-  { session_id: 'skyview-lab-id',   description: 'I want reiki energy healing', category: 'Services', accepts_trade: true, is_mock: true },
-  { session_id: 'marina-h-id',      description: 'Looking for Python and AI training', category: 'Knowledge', accepts_trade: true, is_mock: true },
-  { session_id: 'code-lab-id',      description: 'Need a drone for aerial shots', category: 'Products', accepts_trade: true, is_mock: true },
-  { session_id: 'green-roots-id',   description: 'I want pure bracatinga honey', category: 'Products', accepts_trade: true, is_mock: true },
-  { session_id: 'ipe-farm-id',      description: 'Looking for a solar panel kit', category: 'Products', accepts_trade: true, is_mock: true }
+  { session_id: 'test-session-id', description: 'Looking for web design and development consulting', category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-test-web-dev' },
+  { session_id: 'bia-tech-id',      description: 'I want fresh artisan sourdough bread',              category: 'Products', accepts_trade: true, is_mock: true, mock_key: 'demand-bia-bread' },
+  { session_id: 'bread-co-id',      description: 'Need an electric bike for deliveries',              category: 'Products', accepts_trade: true, is_mock: true, mock_key: 'demand-bread-bike' },
+  { session_id: 'luna-photo-id',    description: 'I want graphic design for my portfolio',            category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-luna-design' },
+  { session_id: 'studio-pixel-id',  description: 'Looking for a kayak to explore the coast',          category: 'Products', accepts_trade: true, is_mock: true, mock_key: 'demand-pixel-kayak' },
+  { session_id: 'trailco-id',       description: 'I want photography for my brand',                   category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-trail-photo' },
+  { session_id: 'marina-h-id',      description: 'Looking for Python and AI training',                category: 'Knowledge', accepts_trade: true, is_mock: true, mock_key: 'demand-marina-python' },
+  { session_id: 'code-lab-id',      description: 'I want a sound healing session',                    category: 'Knowledge', accepts_trade: true, is_mock: true, mock_key: 'demand-code-sound' },
+  { session_id: 'sound-lab-id',     description: 'I want reiki and energy healing',                   category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-sound-reiki' },
+  { session_id: 'fitcoach-id',      description: 'I want a no-code app building workshop',            category: 'Knowledge', accepts_trade: true, is_mock: true, mock_key: 'demand-fit-nocode' },
+  { session_id: 'inner-spaces-id',  description: 'I want personal training and fitness coaching',     category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-inner-fit' },
+  { session_id: 'code-lab-id',      description: 'I need a MacBook for development work',             category: 'Products', accepts_trade: true, is_mock: true, mock_key: 'demand-code-macbook' },
+  { session_id: 'green-roots-id',   description: 'I want permaculture and farming knowledge',         category: 'Knowledge', accepts_trade: true, is_mock: true, mock_key: 'demand-green-perma' },
+  { session_id: 'balance-studio-id', description: 'I want yoga teacher training',                     category: 'Knowledge', accepts_trade: true, is_mock: true, mock_key: 'demand-balance-yoga' },
+  { session_id: 'skyview-lab-id',   description: 'I want acupuncture and body work',                  category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-sky-acupuncture' }
 ];

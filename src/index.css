@@ -4120,3 +4120,50 @@ input, textarea {
     padding: 10px;
   }
 }
+
+/* ─── City Graph Animations ─────────────────────────────────────────────── */
+
+@keyframes city-graph-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.25); }
+}
+
+@keyframes city-graph-flow {
+  from { stroke-dashoffset: 24; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes city-graph-zone {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.7; }
+}
+
+@keyframes dashboard-scan {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 0.4; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+/* Override Leaflet tooltip for city graph */
+.city-graph-tooltip .leaflet-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.city-graph-tooltip.leaflet-tooltip::before {
+  display: none;
+}
+
+/* Zoom controls dark theme */
+.leaflet-control-zoom a {
+  background: rgba(4, 25, 43, 0.92) !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+.leaflet-control-zoom a:hover {
+  color: #fff !important;
+  background: rgba(56, 189, 248, 0.15) !important;
+}

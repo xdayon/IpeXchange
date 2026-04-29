@@ -4,7 +4,7 @@ import { mockDemands } from '../data/mockData';
 import { fetchDiscoverItems } from '../lib/api';
 
 // Lazy-load Leaflet so it doesn't block the initial render
-const CityMap = lazy(() => import('./CityMap'));
+const CityGraphMap = lazy(() => import('./CityGraph/CityGraphMap'));
 
 const StatCard = ({ icon: Icon, color, title, value, subtext }) => (
   <div className="glass-panel" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -81,7 +81,7 @@ const HomePage = () => {
         {/* Map takes up most of the space */}
         <div className="home-map-area">
           <Suspense fallback={<div style={{ width:'100%', height:'100%', background:'#0B1421' }} />}>
-            <CityMap activeCategory={null} />
+            <CityGraphMap />
           </Suspense>
         </div>
 

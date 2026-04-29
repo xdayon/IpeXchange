@@ -26,6 +26,7 @@ import {
   getStoreProducts,
   getAllTradeableStoreProducts,
   seedDatabase,
+  getCityGraphData,
 } from './lib/supabase.js';
 import { MOCK_SESSIONS, MOCK_LISTINGS, MOCK_DEMANDS } from './lib/mockData.js';
 
@@ -233,6 +234,20 @@ app.get('/api/discover', async (req, res) => {
   }
 });
 
+// ─── City Graph ──────────────────────────────────────────────────────────────
+
+app.get('/api/city-graph', async (req, res) => {
+  try {
+    const { listings, users, stores, transactions, demands } = await getCityGraphData();
+    const { buildCityGraphPayload } = await import('./lib/cityGraphBuilder.js');
+    const payload = buildCityGraphPayload({ listings, users, stores, transactions, demands });
+    res.json(payload);
+  } catch (err) {
+    console.error('City graph error:', err);
+    res.status(500).json({ entities: [], edges: [] });
+  }
+});
+
 // ─── Session history ──────────────────────────────────────────────────────────
 
 app.get('/api/history/:sessionId', async (req, res) => {
@@ -375,10 +390,31 @@ app.post('/api/admin/seed', async (req, res) => {
   }
 });
 
+// ─── Auto-Seed ──────────────────────────────────────────────────────────────
+async function ensureMockData() {
+  try {
+    const listings = await getListings({ limit: 1 });
+    if (!listings || listings.length === 0) {
+      console.log('⚠️  No listings found — auto-seeding mock data...');
+      const result = await seedDatabase(MOCK_SESSIONS, MOCK_LISTINGS, MOCK_DEMANDS);
+      if (result.success) {
+        console.log('✅ Mock data auto-seeded on startup.');
+      } else {
+        console.warn('⚠️  Auto-seed failed:', result.error);
+      }
+    } else {
+      console.log(`ℹ️  Discovery has ${listings.length}+ active listing(s). No seed needed.`);
+    }
+  } catch (err) {
+    console.warn('⚠️  ensureMockData check failed:', err.message);
+  }
+}
+
 // ─── Start ────────────────────────────────────────────────────────────────────
 
 app.listen(PORT, () => {
   console.log(`🌿 Xchange Core API running on port ${PORT}`);
   console.log(`   Gemini: ${process.env.GEMINI_API_KEY ? '✅ configured' : '❌ missing GEMINI_API_KEY'}`);
   console.log(`   Supabase: ${process.env.SUPABASE_URL ? '✅ configured' : '❌ missing SUPABASE_URL'}`);
+  ensureMockData();
 });

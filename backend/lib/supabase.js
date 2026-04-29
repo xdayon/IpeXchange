@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { MOCK_LISTINGS } from './mockData.js';
 
 // ─── User Management ──────────────────────────────────────────────────────────
 
@@ -10,7 +11,7 @@ const inMemory = {
   sessions: {},
   messages: {},   // sessionId -> []
   intents: [],
-  listings: [],
+  listings: [...MOCK_LISTINGS],
   demands: [],
   cycles: [],
 };
@@ -597,14 +598,57 @@ export async function seedDatabase(sessions, listings, demands) {
 
     // 3. Demands
     if (demands?.length) {
-      // Demands don't have a mock_key yet, so we just insert them (safe for demo)
-      await supabase.from('demands').insert(demands);
+      // Use upsert with mock_key to avoid duplicates during re-seeds
+      await supabase.from('demands').upsert(demands, { onConflict: 'mock_key', ignoreDuplicates: true });
     }
 
     return { success: true };
   } catch (err) {
     console.error('seedDatabase error:', err);
     return { success: false, error: err.message };
+  }
+}
+
+export async function getCityGraphData() {
+  if (!dbAvailable) {
+    return { listings: [], users: [], stores: [], transactions: [], demands: [] };
+  }
+  try {
+    const [listingsRes, usersRes, storesRes, txRes, demandsRes] = await Promise.all([
+      supabase
+        .from('listings')
+        .select('id, title, description, category, subcategory, price_fiat, accepts_trade, trade_wants, provider_name, image_url, is_mock, mock_key, location_lat, location_lng, session_id')
+        .eq('active', true)
+        .limit(80),
+      supabase
+        .from('users')
+        .select('id, display_name, wallet_address, ipe_rep_score, location_lat, location_lng')
+        .limit(40),
+      supabase
+        .from('stores')
+        .select('id, name, description, category, location_lat, location_lng, is_mock, session_id')
+        .limit(30),
+      supabase
+        .from('transactions')
+        .select('id, listing_id, buyer_wallet, seller_wallet, is_trade, created_at')
+        .order('created_at', { ascending: false })
+        .limit(60),
+      supabase
+        .from('demands')
+        .select('id, session_id, description, category, is_mock')
+        .eq('is_mock', false)
+        .limit(40),
+    ]);
+    return {
+      listings: listingsRes.data || [],
+      users: usersRes.data || [],
+      stores: storesRes.data || [],
+      transactions: txRes.data || [],
+      demands: demandsRes.data || [],
+    };
+  } catch (err) {
+    console.error('getCityGraphData error:', err);
+    return { listings: [], users: [], stores: [], transactions: [], demands: [] };
   }
 }
 
