@@ -124,4 +124,4 @@ The application should now be running at `http://localhost:5173`.
 Contributions are welcome! If you're interested in building the future of community-driven economies, please feel free to submit a Pull Request or open an Issue.
 
 ## 📄 License
-This project is licensed under the MIT License.
+This project is licensed under the GNU General Public License (GPL) v3.0.
