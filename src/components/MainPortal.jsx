@@ -27,6 +27,7 @@ const InvestmentDetail  = lazy(() => import('./InvestmentDetail'));
 const MyPurchasesPage   = lazy(() => import('./MyPurchasesPage'));
 const MyListingsPage    = lazy(() => import('./MyListingsPage'));
 const StoreDetailPage   = lazy(() => import('./StoreDetailPage'));
+const ListingDetailPage = lazy(() => import('./ListingDetailPage'));
 
 // Chat drawer — lazy since it's hidden by default
 const ChatDrawer        = lazy(() => import('./ChatDrawer'));
@@ -48,7 +49,7 @@ const NAV_ICONS = [
 ];
 
 const PAGES         = ['profile', 'wallet', 'agent', 'circular', 'config', 'notifications'];
-const OVERLAY_PAGES = ['checkout', 'investment-detail', 'my-purchases', 'my-listings', 'store-detail'];
+const OVERLAY_PAGES = ['checkout', 'listing-detail', 'investment-detail', 'my-purchases', 'my-listings', 'store-detail'];
 
 // ─── Minimal page skeleton shown while lazy chunks load ───────────────────────
 const PageSkeleton = () => (
@@ -164,6 +165,18 @@ const MainPortal = () => {
               store={navParams.store}
               onBack={handleBack}
               onXchange={(listing) => handleNavigate('checkout', { listing, sourceTab: 'store-detail' })}
+            />
+          </Suspense>
+        </main>
+      )}
+
+      {tab === 'listing-detail' && navParams?.listing && (
+        <main className="main-content" style={{ paddingTop: 0 }}>
+          <Suspense fallback={<PageSkeleton />}>
+            <ListingDetailPage
+              listing={navParams.listing}
+              onBack={handleBack}
+              onXchange={(listing) => handleNavigate('checkout', { listing, sourceTab: 'listing-detail' })}
             />
           </Suspense>
         </main>

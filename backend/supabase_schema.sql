@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   seller_wallet TEXT,
   amount_fiat NUMERIC,
   amount_crypto NUMERIC,
-  currency TEXT DEFAULT 'BRL',
+  currency TEXT DEFAULT 'USD',
   is_trade BOOLEAN DEFAULT false,
   trade_description TEXT,
   rating_by_buyer INT CHECK (rating_by_buyer BETWEEN 1 AND 5),
@@ -143,15 +143,15 @@ CREATE INDEX IF NOT EXISTS idx_demands_embedding ON demands USING hnsw (embeddin
 INSERT INTO sessions (id) VALUES ('test-session-id'), ('bia-tech-id'), ('bread-co-id') ON CONFLICT DO NOTHING;
 
 -- Seed Listings (is_mock = true)
-INSERT INTO listings (session_id, title, description, category, price_fiat, accepts_trade, provider_name, image_url, active, ai_generated, is_mock) VALUES
-  ('test-session-id', 'Electric Bike', 'Electric Bike in great condition, urban mobility.', 'Products', 850, true, 'You', 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  ('bia-tech-id', 'Web Development Consulting', '10h of Web Design and Development consulting.', 'Services', 500, true, 'Bia Tech', 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  ('bread-co-id', 'Artisan Sourdough Subscription', 'Fresh sourdough bread delivered weekly for a month.', 'Products', 50, true, 'Bread & Co', 'https://images.unsplash.com/photo-1586444248902-2f64eddc13df?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  (NULL, 'MacBook Pro M1 14"', 'MacBook Pro M1 14 polegadas, excelente estado.', 'Products', 1200, false, 'Alex M.', 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  (NULL, 'Bracatinga Honey 500g', 'Mel de bracatinga artesanal, colhido localmente.', 'Products', 12, true, 'Ipê Farm', 'https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  (NULL, 'Yoga at the Park', 'Aulas de yoga ao ar livre. Todas as manhãs.', 'Services', 15, false, 'FitJurerê', 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  (NULL, 'Legal Advice: DAO Gov', 'Consultoria jurídica especializada em DAOs.', 'Services', 100, true, 'Ipê Law', 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=400&h=300', true, false, true)
-ON CONFLICT DO NOTHING;
+INSERT INTO listings (session_id, title, description, category, price_fiat, accepts_trade, provider_name, image_url, active, ai_generated, is_mock, mock_key) VALUES
+  ('test-session-id', 'Electric Bike', 'Electric Bike in great condition, urban mobility.', 'Products', 850, true, 'You', 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'electric-bike'),
+  ('bia-tech-id', 'Web Development Consulting', '10h of Web Design and Development consulting.', 'Services', 500, true, 'Bia Tech', 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'web-development-consulting'),
+  ('bread-co-id', 'Artisan Sourdough Subscription', 'Fresh sourdough bread delivered weekly for a month.', 'Products', 45, true, 'Bread & Co', 'https://images.unsplash.com/photo-1586444248902-2f64eddc13df?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'artisan-sourdough-subscription'),
+  (NULL, 'MacBook Pro M1 14"', 'MacBook Pro M1 14 polegadas, excelente estado.', 'Products', 1200, false, 'Alex M.', 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'macbook-pro-m1-14'),
+  (NULL, 'Bracatinga Honey 500g', 'Mel de bracatinga artesanal, colhido localmente.', 'Products', 12, true, 'Ipê Farm', 'https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'bracatinga-honey-500g'),
+  (NULL, 'Yoga at the Park', 'Aulas de yoga ao ar livre. Todas as manhãs.', 'Services', 75, false, 'FitCity', 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'yoga-at-the-park'),
+  (NULL, 'Legal Advice: DAO Gov', 'Consultoria jurídica especializada em DAOs.', 'Services', 200, true, 'Ipê Law', 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'legal-advice-dao-gov')
+ON CONFLICT (mock_key) DO NOTHING;
 
 -- Seed Demands to form the 3-hop cycle (is_mock = true)
 INSERT INTO demands (session_id, description, category, accepts_trade, is_mock) VALUES

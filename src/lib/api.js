@@ -28,6 +28,21 @@ export async function sendChatMessage(sessionId, message, isAudio = false, audio
   }
 }
 
+export async function publishListing(sessionId, listing) {
+  try {
+    const response = await fetch(`${API_URL}/listings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, listing }),
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error('publishListing error:', error);
+    return null;
+  }
+}
+
 export async function fetchSessionHistory(sessionId) {
   try {
     const response = await fetch(`${API_URL}/history/${sessionId}`);
@@ -40,9 +55,14 @@ export async function fetchSessionHistory(sessionId) {
   }
 }
 
-export async function fetchDiscoverItems() {
+export async function fetchDiscoverItems({ category, subcategory, tags } = {}) {
   try {
-    const response = await fetch(`${API_URL}/discover`);
+    const params = new URLSearchParams();
+    if (category && category !== 'All') params.set('category', category);
+    if (subcategory) params.set('subcategory', subcategory);
+    if (tags && tags.length > 0) params.set('tags', tags.join(','));
+    const url = `${API_URL}/discover${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Discover fetch failed');
     return await response.json();
   } catch (error) {
@@ -56,6 +76,16 @@ export async function pingHealth() {
     await fetch(`${API_URL}/health`);
   } catch (error) {
     // Ignore, just a keepalive ping
+  }
+}
+
+export async function seedMockData() {
+  try {
+    const res = await fetch(`${API_URL}/admin/seed`, { method: 'POST' });
+    return await res.json();
+  } catch (err) {
+    console.error('seedMockData error:', err);
+    return { error: err.message };
   }
 }
 

@@ -2,6 +2,10 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import postgres from 'postgres';
 import { chat, extractIntent, extractListing, generateEmbedding, suggestPrice } from './lib/gemini.js';
 import {
   upsertSession,
@@ -18,6 +22,9 @@ import {
   getUserProfile,
   getUserTransactions,
   recordTransaction,
+  getStores,
+  getStoreProducts,
+  getAllTradeableStoreProducts,
 } from './lib/supabase.js';
 
 const app = express();
@@ -82,12 +89,10 @@ app.post('/api/chat', async (req, res) => {
 
     await saveMessage({ sessionId, role: 'agent', content: response.text });
 
-    // ── Async: Extract intent + handle sell flow ──────────────────────────────
+    // ── Async: Extract intent & Demand (Analytics) ───────────────────────────
     if (message?.trim()) {
       extractIntent(message).then(async (intent) => {
         if (!intent || intent.intentType === 'none') return;
-
-        // Save intent for analytics / hot trends
         await saveIntent({
           sessionId,
           intentType: intent.intentType,
@@ -95,29 +100,16 @@ app.post('/api/chat', async (req, res) => {
           category: intent.category,
           confidence: intent.confidence,
         });
-
-        // If it's a buy/trade intent, also save as demand for the matching engine
         if (['buy', 'trade', 'learn'].includes(intent.intentType) && intent.item) {
           const embedding = await generateEmbedding(`${intent.item} ${intent.category || ''}`);
-          await createDemand({
-            sessionId,
-            description: `${intent.intentType}: ${intent.item}`,
-            category: intent.category,
-            embedding,
-          });
+          await createDemand({ sessionId, description: `${intent.intentType}: ${intent.item}`, category: intent.category, embedding });
         }
+      }).catch(err => console.error('Async intent error:', err.message));
+    }
 
-        // If sell intent detected and Core flagged listing as ready, extract and publish
-        if (intent.intentType === 'sell' && response.listingReady) {
-          const listing = await extractListing(message);
-          if (listing && listing.title) {
-            const embeddingText = `${listing.title} ${listing.description || ''} ${listing.category || ''}`;
-            const embedding = await generateEmbedding(embeddingText);
-            await createListing({ sessionId, listing, embedding, walletAddress });
-            console.log(`📦 New listing created via chat: "${listing.title}" (session: ${sessionId}, wallet: ${walletAddress || 'anon'})`);
-          }
-        }
-      }).catch(err => console.error('Async intent/listing error:', err.message));
+    let listingDraft = null;
+    if (response.listingReady) {
+      listingDraft = await extractListing(message || displayMessage);
     }
 
     return res.json({
@@ -125,6 +117,7 @@ app.post('/api/chat', async (req, res) => {
       cta: response.cta,
       rateLimited: response.rateLimited,
       listingReady: response.listingReady,
+      listingDraft,
     });
   } catch (err) {
     console.error('Chat error:', err);
@@ -215,9 +208,15 @@ app.get('/api/search', async (req, res) => {
 // ─── Discover ─────────────────────────────────────────────────────────────────
 
 app.get('/api/discover', async (req, res) => {
+  const { category, subcategory, tags } = req.query;
   try {
     const [listings, hotIntents] = await Promise.all([
-      getListings({ limit: 30 }),
+      getListings({
+        limit: 50,
+        category: category || null,
+        subcategory: subcategory || null,
+        tags: tags ? tags.split(',') : null,
+      }),
       getHotIntents(),
     ]);
 
@@ -266,6 +265,43 @@ app.get('/api/cycles/:sessionId', async (req, res) => {
   } catch (err) {
     console.error('GET /api/cycles error:', err);
     res.status(500).json({ error: 'Failed to load trade cycles' });
+  }
+});
+
+// ─── Stores ───────────────────────────────────────────────────────────────────
+
+// List all stores (optionally filtered by category)
+app.get('/api/stores', async (req, res) => {
+  const { category } = req.query;
+  try {
+    const stores = await getStores({ category: category || null });
+    res.json({ stores });
+  } catch (err) {
+    console.error('GET /api/stores error:', err);
+    res.status(500).json({ error: 'Failed to load stores' });
+  }
+});
+
+// Get products for a specific store
+app.get('/api/stores/:storeId/products', async (req, res) => {
+  const { storeId } = req.params;
+  try {
+    const products = await getStoreProducts(storeId);
+    res.json({ products });
+  } catch (err) {
+    console.error('GET /api/stores/:storeId/products error:', err);
+    res.status(500).json({ error: 'Failed to load store products' });
+  }
+});
+
+// All store products that accept trade (used by discover + multi-hop context)
+app.get('/api/stores/tradeable', async (req, res) => {
+  try {
+    const products = await getAllTradeableStoreProducts({ limit: 50 });
+    res.json({ products });
+  } catch (err) {
+    console.error('GET /api/stores/tradeable error:', err);
+    res.status(500).json({ error: 'Failed to load tradeable store products' });
   }
 });
 
@@ -329,6 +365,28 @@ app.post('/api/transactions', async (req, res) => {
   } catch (err) {
     console.error('POST /api/transactions error:', err);
     return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// ─── Admin: Seed mock data ───────────────────────────────────────────────────
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+app.post('/api/admin/seed', async (req, res) => {
+  if (!process.env.DATABASE_URL) {
+    return res.status(500).json({ error: 'DATABASE_URL not configured' });
+  }
+
+  const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
+  try {
+    const sqlFile = path.join(__dirname, 'add_mock_listings.sql');
+    const query = fs.readFileSync(sqlFile, 'utf8');
+    await sql.unsafe(query);
+    res.json({ success: true, message: 'Mock data seeded successfully' });
+  } catch (err) {
+    console.error('Seed error:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    await sql.end();
   }
 });
 

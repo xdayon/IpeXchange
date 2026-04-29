@@ -1,5 +1,60 @@
 import React, { useState } from 'react';
-import { Settings, Shield, Bell, Bot, Database, Eye, Globe, Sliders, Smartphone, Key, Network } from 'lucide-react';
+import { Settings, Shield, Bell, Bot, Database, Eye, Globe, Sliders, Smartphone, Key, Network, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { seedMockData } from '../lib/api';
+
+const AdminDebugSection = () => {
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  const handleSeed = async () => {
+    setLoading(true);
+    setStatus(null);
+    const result = await seedMockData();
+    if (result.success) {
+      setStatus({ type: 'success', text: 'Network successfully seeded with Ipê mock data.' });
+    } else {
+      setStatus({ type: 'error', text: result.error || 'Failed to seed network.' });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <ConfigSection title="Admin & Debug" icon={Sliders}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+          Force sync the local network with fresh mock listings, sessions, and circular trade cycles. 
+          <strong style={{ color: 'var(--accent-lime)' }}> Safe to re-run.</strong>
+        </p>
+        <button 
+          onClick={handleSeed}
+          disabled={loading}
+          style={{ 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            padding: '12px', borderRadius: 10, background: 'rgba(180, 244, 74, 0.1)',
+            border: '1px solid rgba(180, 244, 74, 0.3)', color: '#B4F44A',
+            fontWeight: 700, cursor: 'pointer', fontSize: 14, transition: 'all 0.2s'
+          }}
+        >
+          {loading ? <RefreshCw size={18} className="spin-animation" /> : <Database size={18} />}
+          {loading ? 'Seeding City Network...' : 'Seed Mock City Data'}
+        </button>
+
+        {status && (
+          <div style={{ 
+            display: 'flex', alignItems: 'center', gap: 8, padding: '12px', borderRadius: 8, 
+            background: status.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+            border: `1px solid ${status.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+            color: status.type === 'success' ? '#22c55e' : '#ef4444',
+            fontSize: 13
+          }}>
+            {status.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+            {status.text}
+          </div>
+        )}
+      </div>
+    </ConfigSection>
+  );
+};
 
 const ConfigSection = ({ title, icon: Icon, children }) => (
   <div className="glass-panel" style={{ padding: '24px 28px', marginBottom: 24 }}>
@@ -143,7 +198,7 @@ const ConfigPage = () => {
             <Database size={20} style={{ color: 'var(--text-secondary)' }} />
             <div>
               <p style={{ fontSize: 14, fontWeight: 600 }}>City Graph Node</p>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Connected to Jurerê (Latency: 12ms)</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Connected to Ipê City (Latency: 12ms)</p>
             </div>
           </div>
           <button style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6, background: 'rgba(255,255,255,0.1)' }}>Change Node</button>
@@ -159,6 +214,8 @@ const ConfigPage = () => {
           <button style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6, background: 'rgba(244,63,94,0.1)', color: '#F43F5E', border: '1px solid rgba(244,63,94,0.3)' }}>Regenerate Keys</button>
         </div>
       </ConfigSection>
+
+      <AdminDebugSection />
       
       <div style={{ textAlign: 'center', marginTop: 40, marginBottom: 20 }}>
         <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Ipê Xchange Core v1.4.2 — Build 8f7a91</p>

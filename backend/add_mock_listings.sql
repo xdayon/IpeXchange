@@ -2,7 +2,7 @@
 -- IpêXchange — Rich Mock Data Seed (Safe to re-run)
 -- Run this in Supabase SQL Editor to populate the city with
 -- diverse listings across all categories.
--- ON CONFLICT DO NOTHING means it's idempotent.
+-- ON CONFLICT (mock_key) DO NOTHING means it's idempotent.
 -- ============================================================
 
 -- ─── Extra Sessions ───────────────────────────────────────────────────────────
@@ -26,105 +26,75 @@ INSERT INTO sessions (id) VALUES
 ON CONFLICT DO NOTHING;
 
 -- ─── Products ────────────────────────────────────────────────────────────────
-INSERT INTO listings (session_id, title, description, category, condition, price_fiat, accepts_trade, trade_wants, provider_name, image_url, active, ai_generated, is_mock) VALUES
-
-  -- Existing (safe re-insert)
-  ('test-session-id', 'Electric Bike', 'Urban electric bike in great condition, perfect for daily mobility. 48V battery, 25km range, hydraulic brakes.', 'Products', 'good', 850, true, 'Web design or development work', 'Alex M.', 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  ('test-session-id', 'MacBook Pro M1 14"', 'MacBook Pro M1 14-inch, 16GB RAM, 512GB SSD. Used 1 year. Battery at 92%. Excellent condition. Includes original charger.', 'Products', 'like_new', 1200, false, null, 'Alex M.', 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  ('ipe-farm-id', 'Bracatinga Honey 500g', '100% pure Bracatinga honeydew, hand-harvested from our local sanctuary. Cold-extracted, no additives.', 'Products', 'new', 12, true, 'Seeds, plants, or organic goods', 'Ipê Farm', 'https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  ('bread-co-id', 'Artisan Sourdough Subscription', 'Fresh sourdough delivered weekly for a month. 100% natural fermentation, no additives. 4 loaves total.', 'Products', 'new', 50, true, 'Fresh produce or fermented foods', 'Bread & Co', 'https://images.unsplash.com/photo-1586444248902-2f64eddc13df?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  -- New Products
-  ('skyview-lab-id', 'DJI Mini 4 Pro Drone', 'DJI Mini 4 Pro with 2 batteries and carrying case. 4K/60fps, 34min flight time. Less than 10 flights.', 'Products', 'like_new', 550, true, 'Photography gear or tech equipment', 'SkyView Lab', 'https://images.unsplash.com/photo-1508614999368-9260051292e5?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('trailco-id', 'Touring Kayak + Gear', 'Single touring kayak 4.2m with paddle, life vest and dry bag. Great for coastal exploration. Ideal trade for fitness equipment.', 'Products', 'good', 400, true, 'Mountain bike or fitness equipment', 'TrailCo', 'https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('fitcoach-id', 'Road Bike (Cannondale)', 'Cannondale CAAD12 road bike, size M, full Shimano 105 groupset. Recently serviced, new tires and chain.', 'Products', 'good', 680, true, 'Yoga or wellness sessions', 'FitCoach', 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('green-roots-id', 'Solar Panel Kit 200W', 'Complete off-grid solar kit: 200W panel, 20A charge controller, cables and mounting brackets. Perfect for van or tiny house.', 'Products', 'new', 320, true, 'Construction materials or tools', 'Green Roots', 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('community-id', 'La Marzocco Espresso Machine', 'La Marzocco Linea Mini — the gold standard for home espresso. Single group, recently serviced. Includes grinder.', 'Products', 'good', 2800, false, null, 'Café Ipê', 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('ipe-farm-id', 'Organic Seed Pack (30 varieties)', 'Curated selection of 30 heirloom vegetable and herb seeds, all open-pollinated and organic. Grown at our permaculture site.', 'Products', 'new', 25, true, 'Fermented foods or kombucha', 'Ipê Farm', 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('studio-pixel-id', 'iPad Pro M2 12.9"', 'iPad Pro M2 12.9" with Apple Pencil 2 and Magic Keyboard. Perfect for design, illustration or note-taking. 256GB WiFi.', 'Products', 'like_new', 950, true, 'Design work or creative services', 'Studio Pixel', 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('luna-photo-id', 'Film Camera Kit (Pentax K1000)', 'Classic Pentax K1000 fully manual camera with 50mm f/2 lens and 3 rolls of Kodak Gold 200. Fully functional, just serviced.', 'Products', 'good', 180, true, 'Photography session or prints', 'Luna Foto', 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('community-id', 'Electric Standing Desk', 'Motorized standing desk, 160x80cm, dual-motor, adjustable height 65-130cm. Excellent for home office. Walnut top.', 'Products', 'like_new', 380, true, 'Ergonomic chair or office setup help', 'Ipê Workspace', 'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('community-id', 'Fermentation Starter Kit', 'Complete kit for making kombucha, kefir and sourdough. Includes SCOBY, grains, jar, airlock and full guide.', 'Products', 'new', 45, true, 'Organic produce or cooking class', 'Ferment Lab', 'https://images.unsplash.com/photo-1601984843624-f5b5f1069f48?auto=format&fit=crop&q=80&w=400&h=300', true, false, true)
-
-ON CONFLICT DO NOTHING;
-
--- ─── Services ─────────────────────────────────────────────────────────────────
-INSERT INTO listings (session_id, title, description, category, price_fiat, accepts_trade, trade_wants, provider_name, image_url, active, ai_generated, is_mock) VALUES
+INSERT INTO listings (session_id, title, description, category, condition, price_fiat, accepts_trade, trade_wants, provider_name, image_url, active, ai_generated, is_mock, mock_key) VALUES
 
   -- Existing
-  ('bia-tech-id', 'Web Development Consulting', '10h package of Web Design and Development consulting. React, Next.js, Node.js. Portfolio available.', 'Services', 500, true, 'Electronic equipment or quality food', 'Bia Tech', 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  (NULL, 'Yoga at the Park', 'Morning yoga sessions at Central Park. All levels welcome. Vinyasa + Yin combo. 5-class package.', 'Services', 75, false, null, 'FitCity', 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-  (NULL, 'Legal Advice: DAO & Web3', 'Legal consulting specialized in DAOs, smart contracts and tokenization. First session free. 2h package.', 'Services', 200, true, 'Tech services or design work', 'Ipê Law', 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
+  ('test-session-id', 'Electric Bike', 'Urban electric bike in great condition, perfect for daily mobility. 48V battery, 25km range, hydraulic brakes.', 'Products', 'good', 850, true, 'Web design or development work', 'Alex M.', 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'electric-bike'),
+  ('test-session-id', 'MacBook Pro M1 14"', 'MacBook Pro M1 14-inch, 16GB RAM, 512GB SSD. Used 1 year. Battery at 92%. Excellent condition. Includes original charger.', 'Products', 'like_new', 1200, false, null, 'Alex M.', 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'macbook-pro-m1-14'),
+  ('ipe-farm-id', 'Bracatinga Honey 500g', '100% pure Bracatinga honeydew, hand-harvested from our local sanctuary. Cold-extracted, no additives.', 'Products', 'new', 12, true, 'Seeds, plants, or organic goods', 'Ipê Farm', 'https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'bracatinga-honey-500g'),
+  ('bread-co-id', 'Artisan Sourdough Subscription', 'Fresh sourdough delivered weekly for a month. 100% natural fermentation, no additives. 4 loaves total.', 'Products', 'new', 45, true, 'Fresh produce or fermented foods', 'Bread & Co', 'https://images.unsplash.com/photo-1586444248902-2f64eddc13df?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'artisan-sourdough-subscription'),
+
+  -- New Products
+  ('skyview-lab-id', 'DJI Mini 4 Pro Drone', 'DJI Mini 4 Pro with 2 batteries and carrying case. 4K/60fps, 34min flight time. Less than 10 flights.', 'Products', 'like_new', 550, true, 'Photography gear or tech equipment', 'SkyView Lab', 'https://images.unsplash.com/photo-1508614999368-9260051292e5?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'dji-mini-4-pro-drone'),
+  ('trailco-id', 'Touring Kayak + Gear', 'Single touring kayak 4.2m with paddle, life vest and dry bag. Great for coastal exploration. Ideal trade for fitness equipment.', 'Products', 'good', 400, true, 'Mountain bike or fitness equipment', 'TrailCo', 'https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'touring-kayak-gear'),
+  ('fitcoach-id', 'Road Bike (Cannondale)', 'Cannondale CAAD12 road bike, size M, full Shimano 105 groupset. Recently serviced, new tires and chain.', 'Products', 'good', 680, true, 'Yoga or wellness sessions', 'FitCoach', 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'road-bike-cannondale'),
+  ('green-roots-id', 'Solar Panel Kit 200W', 'Complete off-grid solar kit: 200W panel, 20A charge controller, cables and mounting brackets. Perfect for van or tiny house.', 'Products', 'new', 320, true, 'Construction materials or tools', 'Green Roots', 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'solar-panel-kit-200w'),
+  ('community-id', 'La Marzocco Espresso Machine', 'La Marzocco Linea Mini — the gold standard for home espresso. Single group, recently serviced. Includes grinder.', 'Products', 'good', 2800, false, null, 'Café Ipê', 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'la-marzocco-espresso-machine'),
+  ('ipe-farm-id', 'Organic Seed Pack (30 varieties)', 'Curated selection of 30 heirloom vegetable and herb seeds, all open-pollinated and organic. Grown at our permaculture site.', 'Products', 'new', 25, true, 'Fermented foods or kombucha', 'Ipê Farm', 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'organic-seed-pack-30-varieties'),
+  ('studio-pixel-id', 'iPad Pro M2 12.9"', 'iPad Pro M2 12.9" with Apple Pencil 2 and Magic Keyboard. Perfect for design, illustration or note-taking. 256GB WiFi.', 'Products', 'like_new', 950, true, 'Design work or creative services', 'Studio Pixel', 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'ipad-pro-m2-12-9'),
+  ('luna-photo-id', 'Film Camera Kit (Pentax K1000)', 'Classic Pentax K1000 fully manual camera with 50mm f/2 lens and 3 rolls of Kodak Gold 200. Fully functional, just serviced.', 'Products', 'good', 180, true, 'Photography session or prints', 'Luna Foto', 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'film-camera-kit-pentax-k1000'),
+  ('community-id', 'Electric Standing Desk', 'Motorized standing desk, 160x80cm, dual-motor, adjustable height 65-130cm. Excellent for home office. Walnut top.', 'Products', 'like_new', 380, true, 'Ergonomic chair or office setup help', 'Ipê Workspace', 'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'electric-standing-desk'),
+  ('community-id', 'Fermentation Starter Kit', 'Complete kit for making kombucha, kefir and sourdough. Includes SCOBY, grains, jar, airlock and full guide.', 'Products', 'new', 45, true, 'Organic produce or cooking class', 'Ferment Lab', 'https://images.unsplash.com/photo-1601984843624-f5b5f1069f48?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'fermentation-starter-kit')
+
+ON CONFLICT (mock_key) DO NOTHING;
+
+-- ─── Services ─────────────────────────────────────────────────────────────────
+INSERT INTO listings (session_id, title, description, category, price_fiat, accepts_trade, trade_wants, provider_name, image_url, active, ai_generated, is_mock, mock_key) VALUES
+
+  -- Existing
+  ('bia-tech-id', 'Web Development Consulting', '10h package of Web Design and Development consulting. React, Next.js, Node.js. Portfolio available.', 'Services', 500, true, 'Electronic equipment or quality food', 'Bia Tech', 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'web-development-consulting'),
+  (NULL, 'Yoga at the Park', 'Morning yoga sessions at Central Park. All levels welcome. Vinyasa + Yin combo. 5-class package.', 'Services', 75, false, null, 'FitCity', 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'yoga-at-the-park'),
+  (NULL, 'Legal Advice: DAO & Web3', 'Legal consulting specialized in DAOs, smart contracts and tokenization. First session free. 2h package.', 'Services', 200, true, 'Tech services or design work', 'Ipê Law', 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'legal-advice-dao-web3'),
 
   -- New Services
-  ('marina-h-id', 'Reiki & Energy Healing', 'Full Reiki session (60 min) for energy balancing, stress relief and inner alignment. Peaceful space with aromatherapy and sound bowl.', 'Services', 60, true, 'Yoga classes or organic food', 'Marina H.', 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
+  ('marina-h-id', 'Reiki & Energy Healing', 'Full Reiki session (60 min) for energy balancing, stress relief and inner alignment. Peaceful space with aromatherapy and sound bowl.', 'Services', 60, true, 'Yoga classes or organic food', 'Marina H.', 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'reiki-energy-healing'),
+  ('fitcoach-id', 'Personal Training (5 sessions)', 'Customized 5-session personal training program. Strength, mobility and conditioning. All fitness levels. Outdoor or indoor.', 'Services', 200, true, 'Nutrition coaching or supplements', 'FitCoach', 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'personal-training-5-sessions'),
+  ('studio-pixel-id', 'Graphic Design & Branding', 'Complete visual identity: logo, color palette, typography, social media kit. 2 revision rounds included. Delivery in 7 days.', 'Services', 350, true, 'Web development or photography', 'Studio Pixel', 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'graphic-design-branding'),
+  ('green-roots-id', 'Permaculture Consultation', 'On-site permaculture consultation for your garden or land. Zone mapping, plant guild design, water management. 3h visit.', 'Services', 120, true, 'Seeds, tools or organic inputs', 'Green Roots', 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'permaculture-consultation'),
+  ('luna-photo-id', 'Photography & Video (Half Day)', 'Professional photography and video for events, portraits, products or architecture. 4-hour session, 50 edited photos + 1 short video.', 'Services', 480, true, 'Design work or social media management', 'Luna Foto', 'https://images.unsplash.com/photo-1520390138845-fd2d229dd553?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'photography-video-half-day'),
+  ('balance-studio-id', 'Acupuncture Session', 'Traditional acupuncture session (60 min) for pain relief, stress, sleep improvement or immunity boost. Licensed practitioner with 12 years of experience.', 'Services', 85, true, 'Massage or sound healing session', 'Balance Studio', 'https://images.unsplash.com/photo-1554244933-d876deb6b2ff?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'acupuncture-session'),
+  ('community-id', 'Home Repair & Handyman', 'General home repairs: plumbing, electrical, painting, furniture assembly, door locks. Hourly rate. Same-day availability most days.', 'Services', 55, false, null, 'FixIt City', 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'home-repair-handyman'),
+  ('community-id', 'Nutritional Coaching (4 weeks)', '4-week personalized nutrition program. Initial assessment, meal plan, weekly check-ins and adjustment. Online or in-person.', 'Services', 160, true, 'Fitness coaching or wellness sessions', 'NutriCity', 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'nutritional-coaching-4-weeks'),
+  ('community-id', 'Massage Therapy (Deep Tissue)', 'Professional deep tissue massage, 75 minutes. Tension release, athletic recovery or relaxation. Home visits available in Ipê City.', 'Services', 90, true, 'Yoga, acupuncture or healing sessions', 'BodyWork Ipê', 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'massage-therapy-deep-tissue')
 
-  ('fitcoach-id', 'Personal Training (5 sessions)', 'Customized 5-session personal training program. Strength, mobility and conditioning. All fitness levels. Outdoor or indoor.', 'Services', 200, true, 'Nutrition coaching or supplements', 'FitCoach', 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('studio-pixel-id', 'Graphic Design & Branding', 'Complete visual identity: logo, color palette, typography, social media kit. 2 revision rounds included. Delivery in 7 days.', 'Services', 350, true, 'Web development or photography', 'Studio Pixel', 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('green-roots-id', 'Permaculture Consultation', 'On-site permaculture consultation for your garden or land. Zone mapping, plant guild design, water management. 3h visit.', 'Services', 120, true, 'Seeds, tools or organic inputs', 'Green Roots', 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('luna-photo-id', 'Photography & Video (Half Day)', 'Professional photography and video for events, portraits, products or architecture. 4-hour session, 50 edited photos + 1 short video.', 'Services', 480, true, 'Design work or social media management', 'Luna Foto', 'https://images.unsplash.com/photo-1520390138845-fd2d229dd553?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('balance-studio-id', 'Acupuncture Session', 'Traditional acupuncture session (60 min) for pain relief, stress, sleep improvement or immunity boost. Licensed practitioner with 12 years of experience.', 'Services', 85, true, 'Massage or sound healing session', 'Balance Studio', 'https://images.unsplash.com/photo-1554244933-d876deb6b2ff?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('community-id', 'Home Repair & Handyman', 'General home repairs: plumbing, electrical, painting, furniture assembly, door locks. Hourly rate. Same-day availability most days.', 'Services', 55, false, null, 'FixIt City', 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('community-id', 'Nutritional Coaching (4 weeks)', '4-week personalized nutrition program. Initial assessment, meal plan, weekly check-ins and adjustment. Online or in-person.', 'Services', 160, true, 'Fitness coaching or wellness sessions', 'NutriCity', 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('community-id', 'Massage Therapy (Deep Tissue)', 'Professional deep tissue massage, 75 minutes. Tension release, athletic recovery or relaxation. Home visits available in Ipê City.', 'Services', 90, true, 'Yoga, acupuncture or healing sessions', 'BodyWork Ipê', 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=400&h=300', true, false, true)
-
-ON CONFLICT DO NOTHING;
+ON CONFLICT (mock_key) DO NOTHING;
 
 -- ─── Knowledge ────────────────────────────────────────────────────────────────
-INSERT INTO listings (session_id, title, description, category, price_fiat, accepts_trade, trade_wants, provider_name, image_url, active, ai_generated, is_mock) VALUES
+INSERT INTO listings (session_id, title, description, category, price_fiat, accepts_trade, trade_wants, provider_name, image_url, active, ai_generated, is_mock, mock_key) VALUES
 
-  ('code-lab-id', 'Python & AI Workshop (2 days)', 'Hands-on 2-day workshop: Python fundamentals → AI/ML basics → building your first model. Small group (max 8 people). All materials included.', 'Knowledge', 120, true, 'Design, photography or content creation', 'Code Lab', 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
+  ('code-lab-id', 'Python & AI Workshop (2 days)', 'Hands-on 2-day workshop: Python fundamentals → AI/ML basics → building your first model. Small group (max 8 people). All materials included.', 'Knowledge', 120, true, 'Design, photography or content creation', 'Code Lab', 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'python-ai-workshop-2-days'),
+  ('community-id', 'Web3 & Crypto Fundamentals', 'Learn the essentials: wallets, DeFi, NFTs, DAOs and the Ipê ecosystem. 3 online sessions of 90 min. Perfect for newcomers to crypto.', 'Knowledge', 75, true, 'Tech consulting or app development', 'Crypto Club', 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'web3-crypto-fundamentals'),
+  ('bread-co-id', 'Sourdough Baking Masterclass', 'Learn to make your own sourdough starter and bake bakery-quality bread at home. 4-hour hands-on session. All ingredients provided. Take your starter home.', 'Knowledge', 55, true, 'Fresh produce or cooking equipment', 'Bread & Co', 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'sourdough-baking-masterclass'),
+  ('inner-spaces-id', 'Meditation & Mindfulness (8 weeks)', '8-week structured mindfulness program. Daily practices, guided meditations, group sessions and 1:1 check-ins. MBSR-based curriculum.', 'Knowledge', 180, true, 'Yoga, sound healing or retreat access', 'Inner Spaces', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'meditation-mindfulness-8-weeks'),
+  ('green-roots-id', 'Urban Farming Workshop (Weekend)', 'Weekend intensive: soil science, composting, raised beds, vertical gardens, seed saving. Includes take-home seedling kit and resources.', 'Knowledge', 85, true, 'Tools, soil or organic inputs', 'Green Roots', 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'urban-farming-workshop-weekend'),
+  ('sound-lab-id', 'Sound Healing Journey (Group)', 'Group sound bath with crystal bowls, Tibetan bowls, gongs and chimes. 75-minute journey for deep relaxation and nervous system reset. Max 12 people.', 'Knowledge', 45, true, 'Yoga, meditation or breathwork class', 'Sound Lab', 'https://images.unsplash.com/photo-1544783985-0af069aecd5b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'sound-healing-journey-group'),
+  ('community-id', 'Spanish Conversation Club', 'Weekly Spanish conversation circles for intermediate speakers. Casual, practical, fun. 4 sessions per month. Native speaker facilitator.', 'Knowledge', 40, true, 'Language exchange or cultural events', 'Lingua Hub', 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'spanish-conversation-club'),
+  ('luna-photo-id', 'Phone Photography Masterclass', '3-hour workshop on how to take stunning photos with your smartphone. Composition, lighting, editing apps. Small group, lots of practice.', 'Knowledge', 60, true, 'Design course or creative workshop', 'Luna Foto', 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'phone-photography-masterclass'),
+  ('code-lab-id', 'No-Code App Building (Bubble/Webflow)', 'Build a real web app without code using Bubble and Webflow. 1-day workshop, you leave with a working MVP. Beginner-friendly.', 'Knowledge', 95, true, 'Tech mentoring or product strategy', 'Code Lab', 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'no-code-app-building-bubble-webflow')
 
-  ('community-id', 'Web3 & Crypto Fundamentals', 'Learn the essentials: wallets, DeFi, NFTs, DAOs and the Ipê ecosystem. 3 online sessions of 90 min. Perfect for newcomers to crypto.', 'Knowledge', 75, true, 'Tech consulting or app development', 'Crypto Club', 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('bread-co-id', 'Sourdough Baking Masterclass', 'Learn to make your own sourdough starter and bake bakery-quality bread at home. 4-hour hands-on session. All ingredients provided. Take your starter home.', 'Knowledge', 55, true, 'Fresh produce or cooking equipment', 'Bread & Co', 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('inner-spaces-id', 'Meditation & Mindfulness (8 weeks)', '8-week structured mindfulness program. Daily practices, guided meditations, group sessions and 1:1 check-ins. MBSR-based curriculum.', 'Knowledge', 180, true, 'Yoga, sound healing or retreat access', 'Inner Spaces', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('green-roots-id', 'Urban Farming Workshop (Weekend)', 'Weekend intensive: soil science, composting, raised beds, vertical gardens, seed saving. Includes take-home seedling kit and resources.', 'Knowledge', 85, true, 'Tools, soil or organic inputs', 'Green Roots', 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('sound-lab-id', 'Sound Healing Journey (Group)', 'Group sound bath with crystal bowls, Tibetan bowls, gongs and chimes. 75-minute journey for deep relaxation and nervous system reset. Max 12 people.', 'Knowledge', 45, true, 'Yoga, meditation or breathwork class', 'Sound Lab', 'https://images.unsplash.com/photo-1544783985-0af069aecd5b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('community-id', 'Spanish Conversation Club', 'Weekly Spanish conversation circles for intermediate speakers. Casual, practical, fun. 4 sessions per month. Native speaker facilitator.', 'Knowledge', 40, true, 'Language exchange or cultural events', 'Lingua Hub', 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('luna-photo-id', 'Phone Photography Masterclass', '3-hour workshop on how to take stunning photos with your smartphone. Composition, lighting, editing apps. Small group, lots of practice.', 'Knowledge', 60, true, 'Design course or creative workshop', 'Luna Foto', 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('code-lab-id', 'No-Code App Building (Bubble/Webflow)', 'Build a real web app without code using Bubble and Webflow. 1-day workshop, you leave with a working MVP. Beginner-friendly.', 'Knowledge', 95, true, 'Tech mentoring or product strategy', 'Code Lab', 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?auto=format&fit=crop&q=80&w=400&h=300', true, false, true)
-
-ON CONFLICT DO NOTHING;
+ON CONFLICT (mock_key) DO NOTHING;
 
 -- ─── Donations ────────────────────────────────────────────────────────────────
-INSERT INTO listings (session_id, title, description, category, price_fiat, accepts_trade, provider_name, image_url, active, ai_generated, is_mock) VALUES
+INSERT INTO listings (session_id, title, description, category, price_fiat, accepts_trade, provider_name, image_url, active, ai_generated, is_mock, mock_key) VALUES
 
-  ('community-id', 'Box of Books (Mixed genres)', 'Curated selection of 20 books: fiction, philosophy, science, self-development. Excellent condition. Pick up at Ipê City Hub.', 'Donations', 0, false, 'Book Exchange', 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
+  ('community-id', 'Box of Books (Mixed genres)', 'Curated selection of 20 books: fiction, philosophy, science, self-development. Excellent condition. Pick up at Ipê City Hub.', 'Donations', 0, false, 'Book Exchange', 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'box-of-books-mixed-genres'),
+  ('community-id', 'Baby Clothes (0–12 months)', 'Full set of baby clothes, 0 to 12 months. Clean, washed, organized by size. Mix of brands. Passing forward with love.', 'Donations', 0, false, 'Family Circle', 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'baby-clothes-0-12-months'),
+  ('green-roots-id', 'Garden Tool Collection', 'Set of 8 garden tools: trowels, pruners, fork, hoe, gloves. Used but in good working condition. For anyone starting a garden.', 'Donations', 0, false, 'Ipê Farm', 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'garden-tool-collection'),
+  ('community-id', 'Weekly Community Lunch', 'Every Sunday we cook a large plant-based meal and share. Free for all Ipê City residents. Bring a dish to contribute if you can.', 'Donations', 0, false, 'Community Kitchen', 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'weekly-community-lunch'),
+  ('community-id', 'Leftover Building Materials', 'Assorted construction and renovation materials: tiles, wood boards, paint cans, screws, brackets. Free for community projects.', 'Donations', 0, false, 'Build Together', 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'leftover-building-materials'),
+  ('inner-spaces-id', 'Free Guided Meditation (Weekly)', 'Free 30-min guided meditation every Tuesday morning at the park. Suitable for all levels. No sign-up required.', 'Donations', 0, false, 'Inner Spaces', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=400&h=300', true, false, true, 'free-guided-meditation-weekly')
 
-  ('community-id', 'Baby Clothes (0–12 months)', 'Full set of baby clothes, 0 to 12 months. Clean, washed, organized by size. Mix of brands. Passing forward with love.', 'Donations', 0, false, 'Family Circle', 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('green-roots-id', 'Garden Tool Collection', 'Set of 8 garden tools: trowels, pruners, fork, hoe, gloves. Used but in good working condition. For anyone starting a garden.', 'Donations', 0, false, 'Ipê Farm', 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('community-id', 'Weekly Community Lunch', 'Every Sunday we cook a large plant-based meal and share. Free for all Ipê City residents. Bring a dish to contribute if you can.', 'Donations', 0, false, 'Community Kitchen', 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('community-id', 'Leftover Building Materials', 'Assorted construction and renovation materials: tiles, wood boards, paint cans, screws, brackets. Free for community projects.', 'Donations', 0, false, 'Build Together', 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=400&h=300', true, false, true),
-
-  ('inner-spaces-id', 'Free Guided Meditation (Weekly)', 'Free 30-min guided meditation every Tuesday morning at the park. Suitable for all levels. No sign-up required.', 'Donations', 0, false, 'Inner Spaces', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=400&h=300', true, false, true)
-
-ON CONFLICT DO NOTHING;
+ON CONFLICT (mock_key) DO NOTHING;
 
 
 -- ─── Multi-hop demands for new cycles ─────────────────────────────────────────

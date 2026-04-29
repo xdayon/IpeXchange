@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Mic, Send, X, ShieldCheck, Activity, ArrowRight, Zap, Square, PackageCheck } from 'lucide-react';
+import { Mic, Send, X, ShieldCheck, Activity, ArrowRight, Zap, Square, PackageCheck, Loader2 } from 'lucide-react';
 import xchangeCoreImg from '../assets/xchange_core.png';
-import { sendChatMessage, fetchSessionHistory } from '../lib/api';
+import { sendChatMessage, fetchSessionHistory, publishListing } from '../lib/api';
 import { useUser } from '../lib/UserContext';
 
 const QUICK_ACTIONS = [
@@ -32,6 +32,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
   const [isTyping, setIsTyping]       = useState(false);
   const [canStop, setCanStop]         = useState(false);
   const [recSeconds, setRecSeconds]   = useState(0);
+  const [publishing, setPublishing]   = useState(null);
 
   const messagesEndRef   = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -70,7 +71,6 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
     if (isOpen && sessionId) loadHistory();
   }, [isOpen, sessionId]);
 
-  // Focus input when drawer opens
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 300);
@@ -83,6 +83,7 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
     setIsTyping(false);
     if (history.length === 0) {
       setMessages([{
+        id: 'welcome',
         role: 'agent',
         content: `Hello! I'm **Xchange Core** — your AI guide to Ipê City's economy. Want to buy, sell, trade, or learn something? Type or tap the mic to speak!`,
         cta: null,
@@ -99,17 +100,20 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
       ? `🎤 Voice message${audioDuration ? ` · ${formatDuration(audioDuration)}` : ''}`
       : text;
 
-    setMessages(prev => [...prev, { role: 'user', content: displayContent, cta: null, isAudio }]);
+    const userMsgId = Date.now().toString();
+    setMessages(prev => [...prev, { id: userMsgId, role: 'user', content: displayContent, cta: null, isAudio }]);
     setInputText('');
     setIsTyping(true);
 
     try {
       const response = await sendChatMessage(sessionId, text, isAudio, audioBase64, mimeType, walletAddress);
       setMessages(prev => [...prev, {
+        id: Date.now().toString(),
         role: 'agent',
         content: response.text,
         cta: response.cta,
         listingReady: response.listingReady,
+        listingDraft: response.listingDraft,
       }]);
     } catch {
       setMessages(prev => [...prev, {
@@ -121,6 +125,17 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
       setIsTyping(false);
     }
   }, [sessionId, walletAddress]);
+
+  const handlePublish = async (msgId, draft) => {
+    setPublishing(msgId);
+    const result = await publishListing(sessionId, draft);
+    if (result) {
+      setMessages(prev => prev.map(m => 
+        m.id === msgId ? { ...m, listingDraft: null, listingPublished: true } : m
+      ));
+    }
+    setPublishing(null);
+  };
 
   const startRecording = async () => {
     try {
@@ -254,16 +269,40 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
                   dangerouslySetInnerHTML={{ __html: formatText(msg.content) }}
                 />
 
+                {msg.role === 'agent' && msg.listingDraft && (
+                  <div className="listing-draft-card glass-panel" style={{ marginTop: 12, padding: 16, border: '1px solid var(--accent-lime)' }}>
+                    <p style={{ fontSize: 10, color: 'var(--accent-lime)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 8, letterSpacing: 1 }}>
+                      ✨ Listing Draft Ready
+                    </p>
+                    <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{msg.listingDraft.title}</h4>
+                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                      Category: {msg.listingDraft.category} {msg.listingDraft.subcategory ? `· ${msg.listingDraft.subcategory}` : ''}
+                    </p>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button 
+                        className="btn-primary" 
+                        style={{ flex: 1, padding: '8px 12px', fontSize: 13 }}
+                        onClick={() => handlePublish(msg.id, msg.listingDraft)}
+                        disabled={publishing === msg.id}
+                      >
+                        {publishing === msg.id ? <Loader2 size={14} className="spin-animation" /> : <PackageCheck size={14} />}
+                        Confirm Publish
+                      </button>
+                      <button className="btn-secondary" style={{ padding: '8px 12px', fontSize: 13 }}>Edit</button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Listing published confirmation */}
-                {msg.role === 'agent' && msg.listingReady && (
-                  <div className="listing-published-banner">
+                {msg.role === 'agent' && (msg.listingReady || msg.listingPublished) && (
+                  <div className="listing-published-banner" style={{ marginTop: 12 }}>
                     <PackageCheck size={14} />
                     Listing published to the marketplace!
                     <button
                       className="listing-published-link"
                       onClick={() => handleCTA({ tab: 'discover' })}
                     >
-                      Ver &rarr;
+                      View &rarr;
                     </button>
                   </div>
                 )}

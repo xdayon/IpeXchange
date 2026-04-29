@@ -42,7 +42,7 @@ const HomePage = () => {
           Ipê City <span className="text-gradient-cyan">Marketplace</span>
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-          <StatCard icon={TrendingUp} color="#B4F44A" title="Volume 24h" value="R$8.2k" subtext="+12%" />
+          <StatCard icon={TrendingUp} color="#B4F44A" title="Volume 24h" value="$8.2k" subtext="+12%" />
           <StatCard icon={Users} color="#38BDF8" title="Active Citizens" value="1,240" subtext="Ipê City" />
           <StatCard icon={Store} color="#818CF8" title="On-Chain Stores" value="48" subtext="Operating" />
           <StatCard icon={Network} color="#F59E0B" title="Connected Intents" value="156" subtext="Today" />
@@ -61,7 +61,7 @@ const HomePage = () => {
         {/* Live Activity Feed sidebar */}
         <aside className="activity-feed" style={{ display: 'flex', flexDirection: 'column' }}>
           <h4 className="feed-title" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', margin: 0 }}>
-            <span className="live-dot" /> Atividade em Ipê City
+            <span className="live-dot" /> Live Activity in Ipê City
           </h4>
           <ul className="feed-list" style={{ overflowY: 'auto', flex: 1, padding: '16px 0' }}>
             {LIVE_FEED.map((item, i) => (
@@ -142,7 +142,7 @@ const HomePage = () => {
         <Zap size={24} color="#B4F44A" />
         <div>
           <p style={{ fontSize: 15, fontWeight: 600 }}>Core Tip</p>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>Alta demanda por serviços de tecnologia em Ipê City hoje. Converse com o Core para anunciar um serviço com preço premium.</p>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>High demand for tech services in Ipê City today. Chat with Core to list a service at a premium price.</p>
         </div>
       </div>
 

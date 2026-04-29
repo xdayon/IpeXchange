@@ -14,7 +14,7 @@ const PAYMENT_METHODS = [
     id: 'fiat',
     icon: CreditCard,
     label: 'Fiat / PIX',
-    sublabel: 'BRL · Instant transfer',
+    sublabel: 'USD · Instant transfer',
     color: '#38BDF8',
     badge: 'Most used',
   },
@@ -230,7 +230,7 @@ const StepPayment = ({ listing, onNext }) => {
 
       <button className="checkout-cta" onClick={() => onNext(selected)}>
         <Lock size={16} />
-        Confirm Method · {selected === 'fiat' ? 'PIX / Fiat' : selected === 'crypto' ? 'USDC On-Chain' : 'Trade / Barter'}
+        Confirm Method · {selected === 'fiat' ? 'USD / Card' : selected === 'crypto' ? 'USDC On-Chain' : 'Trade / Barter'}
         <ArrowRight size={18} />
       </button>
     </div>

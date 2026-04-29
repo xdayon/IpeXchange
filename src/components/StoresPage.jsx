@@ -1,32 +1,40 @@
-import React, { useState } from 'react';
-import { Store, Coffee, Wrench, Film, ShoppingBag, Heart, Leaf, ShieldCheck, Star, MapPin, ExternalLink, Fingerprint } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Store, Coffee, Wrench, Film, ShoppingBag, Heart, Leaf, ShieldCheck, Star, MapPin, ExternalLink, Fingerprint, RefreshCw } from 'lucide-react';
+
+const ICON_MAP = {
+  Coffee, Wrench, Film, ShoppingBag, Heart, Leaf, ShieldCheck,
+};
 
 const CATEGORIES = ['All', 'Food & Drink', 'Services', 'Health', 'Commerce', 'Entertainment'];
 
-const STORES = [
-  { id: 's1', name: 'Ipê Bakery', category: 'Food & Drink', icon: Coffee, iconColor: '#F59E0B', iconBg: 'rgba(245,158,11,0.12)', owner: 'marina.ipecity.eth', address: 'Av. dos Búzios, 210 – Ipê City', rating: 4.9, reviews: 142, tags: ['Artisan Bread', 'Organic', 'Specialty Coffee'], reputationScore: 98, onChain: true, description: 'Artisan bakery with 100% organic ingredients. Accepts crypto and trade.' },
-  { id: 's2', name: 'Ipê City Motors', category: 'Services', icon: Wrench, iconColor: '#38BDF8', iconBg: 'rgba(56,189,248,0.12)', owner: 'carlostech.ipecity.eth', address: 'Rua das Gaivotas, 48 – Ipê City', rating: 4.7, reviews: 89, tags: ['Mechanic', 'EVs', 'Customization'], reputationScore: 94, onChain: true, description: 'Workshop specialized in electric vehicles and customization. On-chain diagnostic reports.' },
-  { id: 's3', name: 'Ipê Cinema', category: 'Entertainment', icon: Film, iconColor: '#818CF8', iconBg: 'rgba(129,140,248,0.12)', owner: 'ipehub.ipecity.eth', address: 'Av. das Rendeiras, 1500 – Ipê City', rating: 4.8, reviews: 317, tags: ['4K Dolby', 'Events', 'Art & Culture'], reputationScore: 99, onChain: true, description: 'Community cinema with 4K Dolby Atmos. NFT tickets.' },
-  { id: 's4', name: 'Organic Market', category: 'Commerce', icon: Leaf, iconColor: '#B4F44A', iconBg: 'rgba(180,244,74,0.10)', owner: 'sitioipe.ipecity.eth', address: 'Rua das Ostras, 32 – Ipê City', rating: 4.9, reviews: 205, tags: ['Produce', 'Bulk', 'Delivery'], reputationScore: 97, onChain: true, description: 'Local organic products with blockchain traceability.' },
-  { id: 's5', name: 'Ipê Health Clinic', category: 'Health', icon: Heart, iconColor: '#F43F5E', iconBg: 'rgba(244,63,94,0.10)', owner: 'drsarah.ipecity.eth', address: 'Av. dos Dourados, 78 – Ipê City', rating: 5.0, reviews: 61, tags: ['General Clinic', 'Physiotherapy', 'Nutrition'], reputationScore: 100, onChain: true, description: 'Digital health records secured on-chain.' },
-  { id: 's6', name: 'Studio Creative', category: 'Services', icon: ShoppingBag, iconColor: '#F472B6', iconBg: 'rgba(244,114,182,0.10)', owner: 'designhaus.ipecity.eth', address: 'Av. dos Búzios, 840 – Ipê City', rating: 4.6, reviews: 43, tags: ['Graphic Design', 'Branding', 'Web3 Assets'], reputationScore: 89, onChain: false, description: 'Design specialized in Web3 visual identity, NFTs and branding.' },
-  { id: 's7', name: 'Ipê City Surf Shop', category: 'Commerce', icon: ShoppingBag, iconColor: '#10B981', iconBg: 'rgba(16,185,129,0.12)', owner: 'surfpoint.ipecity.eth', address: 'Av. dos Búzios, 1200 – Ipê City', rating: 4.8, reviews: 156, tags: ['Surf Gear', 'Rental', 'Clothing'], reputationScore: 96, onChain: true, description: 'Everything for your surf. Boards, accessories and the best beachwear brands.' },
-  { id: 's8', name: 'Wine & Cheese Ipê', category: 'Food & Drink', icon: Coffee, iconColor: '#9333EA', iconBg: 'rgba(147,51,234,0.12)', owner: 'vinicius.ipecity.eth', address: 'Rua das Amoras, 15 – Ipê City', rating: 4.9, reviews: 74, tags: ['Wines', 'Cheese', 'Tasting'], reputationScore: 95, onChain: true, description: 'Exclusive selection of national and imported wines, paired with artisan cheeses.' },
-  { id: 's9', name: 'Ipê Tech Store', category: 'Commerce', icon: ShieldCheck, iconColor: '#38BDF8', iconBg: 'rgba(56,189,248,0.12)', owner: 'alexm.ipecity.eth', address: 'Open Shopping Ipê City', rating: 4.7, reviews: 210, tags: ['Gadgets', 'Hardware Wallets', 'Setup'], reputationScore: 93, onChain: true, description: 'Your tech store in Ipê City. Focused on hardware for Web3 enthusiasts.' },
-  { id: 's10', name: 'Bio Market', category: 'Health', icon: Leaf, iconColor: '#10B981', iconBg: 'rgba(16,185,129,0.10)', owner: 'carla.ipecity.eth', address: 'Av. das Rendeiras, 450', rating: 4.8, reviews: 92, tags: ['Supplements', 'Gluten Free', 'Vegan'], reputationScore: 94, onChain: true, description: 'Healthy food and natural supplementation for high performance.' },
+// Fallback hardcoded stores (shown while API loads or if DB not set up)
+const FALLBACK_STORES = [
+  { id: 'a1000000-0000-0000-0000-000000000001', name: 'Ipê Bakery',         category: 'Food & Drink',  icon_key: 'Coffee',      icon_color: '#F59E0B', icon_bg: 'rgba(245,158,11,0.12)',   owner_ens: 'marina.ipecity.eth',     address: 'Av. dos Búzios, 210 – Ipê City',     rating: 4.9, review_count: 142, tags: ['Artisan Bread','Organic','Specialty Coffee'], reputation_score: 98, on_chain: true,  description: 'Artisan bakery with 100% organic ingredients. Accepts crypto and trade.' },
+  { id: 'a1000000-0000-0000-0000-000000000002', name: 'Ipê City Motors',    category: 'Services',      icon_key: 'Wrench',      icon_color: '#38BDF8', icon_bg: 'rgba(56,189,248,0.12)',   owner_ens: 'carlostech.ipecity.eth', address: 'Rua das Gaivotas, 48 – Ipê City',    rating: 4.7, review_count: 89,  tags: ['Mechanic','EVs','Customization'],           reputation_score: 94, on_chain: true,  description: 'Workshop specialized in electric vehicles and customization. On-chain diagnostic reports.' },
+  { id: 'a1000000-0000-0000-0000-000000000003', name: 'Ipê Cinema',         category: 'Entertainment', icon_key: 'Film',        icon_color: '#818CF8', icon_bg: 'rgba(129,140,248,0.12)', owner_ens: 'ipehub.ipecity.eth',     address: 'Av. das Rendeiras, 1500 – Ipê City', rating: 4.8, review_count: 317, tags: ['4K Dolby','Events','Art & Culture'],        reputation_score: 99, on_chain: true,  description: 'Community cinema with 4K Dolby Atmos. NFT tickets.' },
+  { id: 'a1000000-0000-0000-0000-000000000004', name: 'Organic Market',     category: 'Commerce',      icon_key: 'Leaf',        icon_color: '#B4F44A', icon_bg: 'rgba(180,244,74,0.10)',   owner_ens: 'sitioipe.ipecity.eth',   address: 'Rua das Ostras, 32 – Ipê City',       rating: 4.9, review_count: 205, tags: ['Produce','Bulk','Delivery'],                reputation_score: 97, on_chain: true,  description: 'Local organic products with blockchain traceability.' },
+  { id: 'a1000000-0000-0000-0000-000000000005', name: 'Ipê Health Clinic',  category: 'Health',        icon_key: 'Heart',       icon_color: '#F43F5E', icon_bg: 'rgba(244,63,94,0.10)',    owner_ens: 'drsarah.ipecity.eth',    address: 'Av. dos Dourados, 78 – Ipê City',    rating: 5.0, review_count: 61,  tags: ['General Clinic','Physiotherapy','Nutrition'],reputation_score:100, on_chain: true,  description: 'Digital health records secured on-chain.' },
+  { id: 'a1000000-0000-0000-0000-000000000006', name: 'Studio Creative',    category: 'Services',      icon_key: 'ShoppingBag', icon_color: '#F472B6', icon_bg: 'rgba(244,114,182,0.10)', owner_ens: 'designhaus.ipecity.eth', address: 'Av. dos Búzios, 840 – Ipê City',     rating: 4.6, review_count: 43,  tags: ['Graphic Design','Branding','Web3 Assets'],  reputation_score: 89, on_chain: false, description: 'Design specialized in Web3 visual identity, NFTs and branding.' },
+  { id: 'a1000000-0000-0000-0000-000000000007', name: 'Ipê City Surf Shop', category: 'Commerce',      icon_key: 'ShoppingBag', icon_color: '#10B981', icon_bg: 'rgba(16,185,129,0.12)',   owner_ens: 'surfpoint.ipecity.eth',  address: 'Av. dos Búzios, 1200 – Ipê City',   rating: 4.8, review_count: 156, tags: ['Surf Gear','Rental','Clothing'],             reputation_score: 96, on_chain: true,  description: 'Everything for your surf. Boards, accessories and the best beachwear brands.' },
+  { id: 'a1000000-0000-0000-0000-000000000008', name: 'Wine & Cheese Ipê',  category: 'Food & Drink',  icon_key: 'Coffee',      icon_color: '#9333EA', icon_bg: 'rgba(147,51,234,0.12)',   owner_ens: 'vinicius.ipecity.eth',   address: 'Rua das Amoras, 15 – Ipê City',      rating: 4.9, review_count: 74,  tags: ['Wines','Cheese','Tasting'],                 reputation_score: 95, on_chain: true,  description: 'Exclusive selection of national and imported wines, paired with artisan cheeses.' },
+  { id: 'a1000000-0000-0000-0000-000000000009', name: 'Ipê Tech Store',     category: 'Commerce',      icon_key: 'ShieldCheck', icon_color: '#38BDF8', icon_bg: 'rgba(56,189,248,0.12)',   owner_ens: 'alexm.ipecity.eth',      address: 'Open Shopping Ipê City',             rating: 4.7, review_count: 210, tags: ['Gadgets','Hardware Wallets','Setup'],        reputation_score: 93, on_chain: true,  description: 'Your tech store in Ipê City. Focused on hardware for Web3 enthusiasts.' },
+  { id: 'a1000000-0000-0000-0000-000000000010', name: 'Bio Market',         category: 'Health',        icon_key: 'Leaf',        icon_color: '#10B981', icon_bg: 'rgba(16,185,129,0.10)',   owner_ens: 'carla.ipecity.eth',      address: 'Av. das Rendeiras, 450',             rating: 4.8, review_count: 92,  tags: ['Supplements','Gluten Free','Vegan'],         reputation_score: 94, on_chain: true,  description: 'Healthy food and natural supplementation for high performance.' },
 ];
+
+let API_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+if (API_URL.startsWith('http') && !API_URL.endsWith('/api')) API_URL += '/api';
 
 const repColor = (s) => s >= 95 ? '#B4F44A' : s >= 85 ? '#38BDF8' : '#F59E0B';
 const repLabel = (s) => s >= 95 ? 'Elite' : s >= 85 ? 'Trusted' : 'Verified';
 
 const StoreCard = ({ store, onView }) => {
-  const Icon = store.icon;
-  const c = repColor(store.reputationScore);
+  const Icon = ICON_MAP[store.icon_key] || Store;
+  const c = repColor(store.reputation_score);
   return (
     <div className="glass-panel store-card">
       <div className="store-card-header">
-        <div className="store-icon-wrap" style={{ background: store.iconBg }}>
-          <Icon size={28} style={{ color: store.iconColor }} />
+        <div className="store-icon-wrap" style={{ background: store.icon_bg }}>
+          <Icon size={28} style={{ color: store.icon_color }} />
         </div>
         <div className="store-card-meta">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
@@ -36,11 +44,11 @@ const StoreCard = ({ store, onView }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <Star size={12} style={{ color: '#F59E0B', fill: '#F59E0B' }} />
             <span style={{ fontSize: 13, fontWeight: 600 }}>{store.rating}</span>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>({store.reviews})</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>({store.review_count})</span>
           </div>
         </div>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px', borderRadius: 100, fontSize: 11, fontWeight: 700, border: `1px solid ${c}40`, background: `${c}10`, color: c, whiteSpace: 'nowrap' }}>
-          <ShieldCheck size={10} /> {repLabel(store.reputationScore)} {store.reputationScore}
+          <ShieldCheck size={10} /> {repLabel(store.reputation_score)} {store.reputation_score}
         </span>
       </div>
 
@@ -52,14 +60,14 @@ const StoreCard = ({ store, onView }) => {
       </div>
 
       <div className="store-tags">
-        {store.tags.map(tag => <span key={tag} className="store-tag">{tag}</span>)}
-        {store.onChain && <span className="store-tag onchain-tag">⬡ On-Chain</span>}
+        {(store.tags || []).map(tag => <span key={tag} className="store-tag">{tag}</span>)}
+        {store.on_chain && <span className="store-tag onchain-tag">⬡ On-Chain</span>}
       </div>
 
       <div className="store-card-footer">
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <Fingerprint size={12} style={{ color: 'var(--text-secondary)' }} />
-          <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{store.owner}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{store.owner_ens}</span>
         </div>
         <button
           onClick={() => onView && onView(store)}
@@ -76,11 +84,35 @@ const StoreCard = ({ store, onView }) => {
 
 const StoresPage = ({ onNavigate }) => {
   const [cat, setCat] = useState('All');
-  const filtered = cat === 'All' ? STORES : STORES.filter(s => s.category === cat);
+  const [stores, setStores] = useState(FALLBACK_STORES);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const res = await fetch(`${API_URL}/stores`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.stores && data.stores.length > 0) {
+            setStores(data.stores);
+          }
+          // If API returns empty, fallback stays
+        }
+      } catch (err) {
+        console.warn('Stores API unavailable, using local fallback');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStores();
+  }, []);
+
+  const filtered = cat === 'All' ? stores : stores.filter(s => s.category === cat);
 
   const handleView = (store) => {
     if (onNavigate) onNavigate('store-detail', { store });
   };
+
   return (
     <div className="inner-page container">
       <div style={{ marginBottom: 28 }}>
@@ -89,7 +121,8 @@ const StoresPage = ({ onNavigate }) => {
             <h2 style={{ fontSize: 28, marginBottom: 6 }}>Ipê City <span className="text-gradient-lime">Stores</span></h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Verified physical establishments — all linked to the owner's Ipê Passport.</p>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            {loading && <RefreshCw size={14} style={{ color: 'var(--text-secondary)', animation: 'spin 1s linear infinite' }} />}
             <span className="badge" style={{ background: 'rgba(180,244,74,0.08)', borderColor: 'rgba(180,244,74,0.25)', color: '#B4F44A', display: 'flex', alignItems: 'center', gap: 5 }}><ShieldCheck size={12} /> Reputation Score</span>
             <span className="badge" style={{ background: 'rgba(56,189,248,0.08)', borderColor: 'rgba(56,189,248,0.25)', color: '#38BDF8', display: 'flex', alignItems: 'center', gap: 5 }}>⬡ On-Chain</span>
           </div>

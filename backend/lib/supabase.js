@@ -151,46 +151,64 @@ export async function getHotIntents() {
 
 // ─── Listings ─────────────────────────────────────────────────────────────────
 // Helper to format DB rows to frontend format
-function mapListingToFrontend(row) {
-  const acceptedPayments = [];
-  if (row.price_fiat > 0) acceptedPayments.push('fiat');
-  if (row.price_crypto > 0) acceptedPayments.push('crypto');
-  if (row.accepts_trade) acceptedPayments.push('trade');
-  if (acceptedPayments.length === 0) acceptedPayments.push('free');
+function buildPaymentTypes(l) {
+  const types = [];
+  if (l.price_fiat > 0) types.push('fiat');
+  if (l.price_crypto > 0) types.push('crypto');
+  if (l.accepts_trade) types.push('trade');
+  return types.length > 0 ? types : ['free'];
+}
 
-  let priceStr = 'Free';
-  if (row.price_fiat > 0) priceStr = `R$${row.price_fiat}`;
-
+function mapListingToFrontend(l) {
   return {
-    ...row,
-    provider: row.provider_name || 'Anonymous',
-    image: row.image_url || 'https://images.unsplash.com/photo-1555661530-68c8e98db4e6?auto=format&fit=crop&q=80&w=400&h=300',
-    price: priceStr,
-    acceptedPayments,
+    id: l.id,
+    title: l.title,
+    description: l.description,
+    category: l.category,
+    subcategory: l.subcategory || null,
+    tags: l.tags || [],
+    condition: l.condition,
+    price: l.price_fiat != null ? `$${Number(l.price_fiat).toFixed(0)}` : null,
+    price_fiat: l.price_fiat,
+    price_crypto: l.price_crypto,
+    acceptedPayments: buildPaymentTypes(l),
+    provider: l.provider_name || 'Anonymous',
+    image: l.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&q=80&w=400&h=300',
+    is_mock: l.is_mock || false,
+    availability: l.availability || null,
+    location_label: l.location_label || 'Ipê City',
+    quantity: l.quantity || 1,
+    unit: l.unit || null,
+    duration_minutes: l.duration_minutes || null,
+    is_remote: l.is_remote || false,
     isPublic: true,
   };
 }
-export async function getListings({ category = null, limit = 50 } = {}) {
+
+export async function getListings({ category = null, subcategory = null, tags = null, limit = 50 } = {}) {
   if (!dbAvailable) {
-    // Return in-memory listings if any, otherwise return empty
     return inMemory.listings;
   }
 
-  let query = supabase
-    .from('listings')
-    .select('id, title, description, category, condition, price_fiat, price_crypto, accepts_trade, trade_wants, provider_name, image_url, active, is_mock, created_at')
-    .eq('active', true)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  try {
+    let query = supabase
+      .from('listings')
+      .select('id, title, description, category, subcategory, tags, condition, price_fiat, price_crypto, accepts_trade, trade_wants, provider_name, image_url, active, is_mock, availability, location_label, quantity, unit, duration_minutes, is_remote, created_at')
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
-  if (category) query = query.eq('category', category);
+    if (category && category !== 'All') query = query.eq('category', category);
+    if (subcategory) query = query.eq('subcategory', subcategory);
+    if (tags && tags.length > 0) query = query.overlaps('tags', tags);
 
-  const { data, error } = await query;
-  if (error) {
-    console.error('getListings error:', error.message);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map(mapListingToFrontend);
+  } catch (error) {
+    console.error('getListings error:', error);
     return [];
   }
-  return (data || []).map(mapListingToFrontend);
 }
 
 export async function createListing({ sessionId, listing, embedding = null }) {
@@ -477,6 +495,90 @@ export async function recordTransaction({ listingId, buyerWallet, sellerWallet, 
     return null;
   }
   return data;
+}
+
+// ─── Stores ───────────────────────────────────────────────────────────────────
+
+/**
+ * Returns all active stores, optionally filtered by category.
+ */
+export async function getStores({ category = null } = {}) {
+  if (!dbAvailable) return [];
+
+  let query = supabase
+    .from('stores')
+    .select('id, session_id, name, category, description, address, on_chain, reputation_score, icon_key, icon_color, icon_bg, owner_ens, rating, review_count, tags, is_mock')
+    .eq('active', true)
+    .order('reputation_score', { ascending: false });
+
+  if (category && category !== 'All') query = query.eq('category', category);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('getStores error:', error.message);
+    return [];
+  }
+  return data || [];
+}
+
+/**
+ * Returns all active products for a given store.
+ * Includes price_fiat for value-balance engine.
+ */
+export async function getStoreProducts(storeId) {
+  if (!dbAvailable || !storeId) return [];
+
+  const { data, error } = await supabase
+    .from('store_products')
+    .select('id, store_id, name, type, description, price_fiat, price_label, image_url, payments, accepts_trade, is_mock')
+    .eq('store_id', storeId)
+    .eq('active', true)
+    .order('price_fiat', { ascending: true });
+
+  if (error) {
+    console.error('getStoreProducts error:', error.message);
+    return [];
+  }
+
+  return (data || []).map(p => ({
+    ...p,
+    // Normalize price_label: use stored label or build from price_fiat
+    price: p.price_label || (p.price_fiat > 0 ? `$${p.price_fiat}` : 'Free'),
+    payments: p.payments || ['fiat'],
+    desc: p.description,
+    image: p.image_url,
+  }));
+}
+
+/**
+ * Returns all store products that accept trade, across all stores.
+ * Used by the Multi-Hop engine context and Discover page.
+ */
+export async function getAllTradeableStoreProducts({ limit = 50 } = {}) {
+  if (!dbAvailable) return [];
+
+  const { data, error } = await supabase
+    .from('store_products')
+    .select('id, store_id, name, type, description, price_fiat, price_label, image_url, payments, accepts_trade, is_mock, stores(name, category, reputation_score)')
+    .eq('active', true)
+    .eq('accepts_trade', true)
+    .order('price_fiat', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('getAllTradeableStoreProducts error:', error.message);
+    return [];
+  }
+
+  return (data || []).map(p => ({
+    ...p,
+    provider: p.stores?.name || 'Store',
+    category: p.stores?.category || 'Commerce',
+    price: p.price_label || (p.price_fiat > 0 ? `$${p.price_fiat}` : 'Free'),
+    acceptedPayments: p.payments || ['fiat'],
+    image: p.image_url,
+    sourceType: 'store_product',
+  }));
 }
 
 export default supabase;

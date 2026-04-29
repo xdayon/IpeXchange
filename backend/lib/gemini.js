@@ -52,17 +52,24 @@ Return ONLY valid JSON, no markdown, no explanation:
 {
   "title": "concise listing title (max 60 chars)",
   "description": "full description with key details mentioned",
-  "category": "Products|Services|Knowledge|Donations",
-  "condition": "new|like_new|good|fair|for_parts|null (null for services, courses, therapy, knowledge)",
+  "category": "Products|Services|Knowledge|Donations|Real Estate|Vehicles|Food & Drink|Events|Jobs",
+  "subcategory": "specific subcategory if clear, or null",
+  "tags": ["array", "of", "3-5", "tags"],
+  "condition": "new|like_new|good|fair|for_parts|null",
   "price_fiat": number or null,
-  "price_crypto": number or null,
   "accepts_trade": boolean,
   "trade_wants": "what they want in trade, or null",
-  "provider_name": "seller/provider name if mentioned, or null",
+  "location_label": "specific neighborhood or place mentioned, or null",
+  "is_remote": boolean,
   "confidence": 0.0-1.0
 }
-Category mapping: therapy/yoga/wellness/massage → Services | courses/workshops/mentorship → Knowledge | physical goods/equipment → Products | free/gift → Donations
-If information is missing or unclear, set confidence below 0.8 and use null for missing fields.`;
+Category mapping:
+- Real Estate: houses, apartments, rooms, land
+- Vehicles: cars, bikes, boats, parts
+- Food & Drink: organic, meals, beverages, sourdough
+- Events: tickets, concerts, workshops (if date-specific)
+- Jobs: hiring, looking for work, freelance gigs
+If information is missing, use null. For tags, use keywords from the item and its use.`;
 
 // ─── Main Chat ────────────────────────────────────────────────────────────────
 
