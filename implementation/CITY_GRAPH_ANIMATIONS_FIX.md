@@ -1,3 +1,93 @@
+# City Graph — Fix: Animações, Conexões e Raios
+
+**Objetivo:** Restaurar as conexões animadas (edges com dots em movimento), os raios de zonas de safety, os labels de sensores de ambiente, e o sistema de highlight de hover/seleção.
+
+---
+
+## Diagnóstico: Por Que Sumiu Tudo
+
+O código está estruturalmente correto — os dados chegam do backend, as funções de desenho existem e estão bem escritas. O problema é um **bug de timing do React**: as funções de desenho rodam no momento errado (sem dados) e nunca são chamadas de novo quando os dados chegam.
+
+### A Cadeia do Problema
+
+**1. Fetch assíncrono:** Os dados (`entities`, `edges`) chegam do servidor DEPOIS que o componente monta. No momento do mount, os estados são `[]`.
+
+**2. `useCallback` com deps erradas:** As três funções principais têm dependências que não incluem `entities` ou `edges`:
+
+```js
+// redrawEdges — deps: [redrawOverlays], onde redrawOverlays tem []
+// → Nunca muda, roda UMA VEZ no mount, com edges = []
+const redrawEdges = useCallback(() => { ... }, [redrawOverlays]);
+
+// rebuildMarkers — deps: [activeLayers, selectedId]
+// → Só muda quando o usuário clica em layers/markers, não quando dados chegam
+const rebuildMarkers = useCallback(() => { ... }, [activeLayers, selectedId]);
+
+// redrawHighlights — deps: []
+// → Idem, roda uma vez no mount
+const redrawHighlights = useCallback(() => { ... }, []);
+```
+
+**3. Os effects disparam uma vez, sem dados:**
+
+```js
+useEffect(() => { rebuildMarkers(); }, [rebuildMarkers]);  // roda no mount: entities = []
+useEffect(() => { redrawEdges(); }, [redrawEdges]);        // roda no mount: edges = []
+useEffect(() => { redrawHighlights(); }, [...]);           // idem
+```
+
+**4. Quando os dados chegam:** `setEntities(...)` e `setEdges(...)` mudam o estado React. `entitiesRef.current` e `edgesRef.current` são atualizados (linhas 147-148 no componente). Mas **nenhum dos três effects re-dispara** porque `activeLayers`, `selectedId`, e `redrawOverlays` não mudaram.
+
+**Resultado:** Os nós aparecem (porque `rebuildMarkers` depende de `activeLayers` que tem valor correto desde o início), mas edges, dots animados, safety zones e environment sensors nunca são desenhados.
+
+Wait — os nós só aparecem porque o componente re-renderiza por causa do `setLoading(false)` e nessa re-renderização `rebuildMarkers` não muda... então na verdade os nós também não deveriam aparecer pelo mesmo motivo.
+
+**Explicação dos nós visíveis:** Os nós aparecem porque `activeLayers` é inicializado com todos os layers no primeiro render, e o `useEffect(() => { rebuildMarkers() }, [rebuildMarkers])` roda no mount. Nesse momento, `entitiesRef.current` JÁ tem dados se a fetch for rápida o suficiente (menos de um frame). Se for lenta, os nós também não aparecem até o usuário interagir com um layer toggle.
+
+**O problema adicional de `startDotAnimation`:** É uma função regular (não `useCallback`/`useRef`). O handler `zoomend` captura a instância do primeiro render. Essa instância é estável (só usa refs internamente), mas se `animDotsRef.current` estiver vazio quando `zoomend` disparar (porque `redrawEdges` nunca rodou com dados), `startDotAnimation` retorna imediatamente.
+
+---
+
+## A Solução
+
+**Um único effect consolidado que dispara quando os dados chegam ou o estado visual muda.**
+
+Em vez de três effects separados com deps incorretas, usar um único:
+
+```js
+useEffect(() => {
+  if (!mapRef.current || !edgeLayerRef.current || entities.length === 0) return;
+  rebuildMarkersStable();
+  redrawEdgesStable();
+  redrawHighlightsStable();
+}, [entities, edges, activeLayers, selectedId, hoveredId]);
+```
+
+Para isso funcionar, as funções precisam ser **estáveis** (não recriadas a cada render) e ler tudo de refs. Converter de `useCallback` para `useRef` com atualização síncrona.
+
+---
+
+## Arquivos a Modificar
+
+```
+src/components/CityGraph/CityGraphMap.jsx   ← REESCREVER (fix de triggers)
+```
+
+Somente este arquivo. Backend e demais componentes estão corretos.
+
+---
+
+## Step 1 — Reescrever `src/components/CityGraph/CityGraphMap.jsx`
+
+Substituir o arquivo completo pelo código abaixo. As mudanças em relação à versão atual:
+
+1. Funções `rebuildMarkers`, `redrawEdges`, `redrawHighlights`, `redrawOverlays` convertidas de `useCallback` para **funções normais** que são atualizadas em um `useRef` a cada render
+2. `startDotAnimation` e `stopDotAnimation` convertidas para `useRef` estável
+3. Um único `useEffect` consolidado que dispara quando `entities`, `edges`, `activeLayers`, `selectedId` ou `hoveredId` mudam
+4. `activeLayers.has()` substituído por `activeLayersRef.current.has()` onde necessário (stale closure fix)
+5. `startDotAnimation` chamada com `useCallback` da ref em vez de função solta
+
+```jsx
 // src/components/CityGraph/CityGraphMap.jsx
 import { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
@@ -583,3 +673,41 @@ export default function CityGraphMap() {
     </div>
   );
 }
+```
+
+---
+
+## O Que Mudou vs. Versão Anterior
+
+| Aspecto | Antes (quebrado) | Depois (fix) |
+|---------|-----------------|--------------|
+| Draw trigger | 3 `useEffect` separados com deps estáticas | 1 `useEffect` com `[entities, edges, activeLayers, selectedId, hoveredId]` |
+| `rebuildMarkers` | `useCallback([activeLayers, selectedId])` — roda quando layer muda | Função pura, lê `activeLayersRef.current` — roda quando qualquer dado muda |
+| `redrawEdges` | `useCallback([redrawOverlays])` — roda UMA VEZ no mount | Função pura lendo de refs — roda junto com o effect consolidado |
+| `redrawOverlays` | `useCallback([])` — roda UMA VEZ no mount (sem dados) | Função pura — roda dentro do effect consolidado |
+| `redrawHighlights` | `useCallback([])` — roda UMA VEZ no mount | Função pura — roda dentro do effect consolidado |
+| `startDotAnimation` | Função regular solta, capturada em closures antigas | `useRef` estável (`startAnimRef`) — sempre a mesma referência |
+| `stopDotAnimation` | Não existia como função separada | `useRef` estável (`stopAnimRef`) |
+| Quando edges aparecem | Nunca (dados chegam depois do único disparo) | Assim que `setEdges(data)` é chamado |
+| Quando zones aparecem | Nunca | Assim que `setEntities(data)` é chamado |
+| Quando env labels aparecem | Nunca | Idem |
+| Hover highlight | Funcionava apenas se dados já estivessem carregados E layers mudassem | Dispara corretamente em `hoveredId` change |
+
+---
+
+## Checklist de Validação
+
+Após executar, verificar na ordem:
+
+- [ ] Mapa carrega com loading spinner
+- [ ] Spinner some e ~122 nodes aparecem
+- [ ] Dots animados visíveis fluindo entre nodes (cyan e lime alternados)
+- [ ] Safety zones: dois círculos dashed vermelhos aparecem no mapa quando layer Safety está ativa
+- [ ] Environment sensors: labels flutuantes (`28 AQI`, `52dB`, `26°C`, etc.) aparecem quando layer Environment está ativa
+- [ ] Hover sobre qualquer node: conexões dashed aparecem em branco/cyan
+- [ ] Click num node: painel de detalhes abre com as conexões listadas
+- [ ] Click num node conectado no painel: câmera move e aquele node fica selecionado
+- [ ] Toggle de layer Safety OFF → circles somem; ON → voltam
+- [ ] Toggle de layer Environment OFF → labels somem; ON → voltam
+- [ ] Zoom in/out: dots não "pulam" ou desaparecem (pausa/retoma animação)
+- [ ] Os dots continuam animando após zoom (startAnimRef dispara no zoomend)
