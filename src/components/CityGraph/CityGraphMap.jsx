@@ -2,90 +2,152 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import jurereMap from '../../data/jurere-map.json';
 import { fetchCityGraphData } from '../../lib/api';
-import { LAYER_META, LAYER_COLOR, latLonToSvg, MAP_WIDTH, MAP_HEIGHT } from '../../lib/cityGraphAdapter';
+import { LAYER_META, LAYER_COLOR } from '../../lib/cityGraphAdapter';
 import { EntityDetailPanel } from './EntityDetailPanel';
 import { LayerToggle } from './LayerToggle';
 
-// Jurerê bounding box for Leaflet
-const BOUNDS_SW = [-27.4518, -48.5135];
-const BOUNDS_NE = [-27.4334, -48.4905];
-const CENTER = [-27.43934, -48.50254];
+const SW = [-27.4518, -48.5135];
+const NE = [-27.4334, -48.4905];
+const MAP_CENTER = [-27.43934, -48.50254];
+const SVG_BOUNDS = L.latLngBounds(SW, NE);
+const MAP_WIDTH = 1000;
+const MAP_HEIGHT = 760;
 
-// ─── Marker HTML ──────────────────────────────────────────────────────────────
+// IDs das venues principais (receberão tratamento especial de marker)
+const VENUE_IDS = new Set(['venue-founder-haus', 'venue-ai-haus', 'venue-privacy-haus']);
+const MAIN_VENUE_ID = 'venue-founder-haus';
+const VENUE_GOLD = '#FFC857';
 
-function markerHtml(entity, color, isSelected) {
-  const size = isSelected ? 20 : 14;
-  const haloSize = isSelected ? 36 : 26;
-  const pulse = isSelected ? 'style="animation: city-graph-pulse 2s infinite;"' : '';
-  return `
-    <div style="position:relative;width:${haloSize}px;height:${haloSize}px;display:flex;align-items:center;justify-content:center;">
-      <div ${pulse} style="
-        position:absolute;width:${haloSize}px;height:${haloSize}px;
-        border-radius:50%;background:${color}22;
-        border:1.5px solid ${color}55;
-        transition:all 0.2s;
-      "></div>
-      <div style="
-        width:${size}px;height:${size}px;border-radius:50%;
-        background:${color};
-        box-shadow:0 0 ${isSelected ? 12 : 6}px ${color}88;
-        border:2px solid ${color}dd;
-        transition:all 0.2s;
-        z-index:1;
-      "></div>
-    </div>
-  `;
-}
+// ─── Geo helpers ─────────────────────────────────────────────────────────────
 
-// ─── Bezier path utilities ────────────────────────────────────────────────────
-
-function bezierControlPoint(p1, p2, curvature = 0.3) {
-  const mx = (p1.x + p2.x) / 2;
-  const my = (p1.y + p2.y) / 2;
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  if (len < 1) return { x: mx, y: my };
-  return {
-    x: mx - dy * curvature,
-    y: my + dx * curvature,
-  };
-}
-
-function sampleBezier(t, p0, cp, p1) {
-  const u = 1 - t;
-  return {
-    x: u * u * p0.x + 2 * u * t * cp.x + t * t * p1.x,
-    y: u * u * p0.y + 2 * u * t * cp.y + t * t * p1.y,
-  };
-}
-
-function svgToLatLon(svgPt) {
+function latLonToSvg(loc) {
   const BBOX = { minLat: -27.4518, maxLat: -27.4334, minLon: -48.5135, maxLon: -48.4905 };
-  const lon = (svgPt.x / MAP_WIDTH) * (BBOX.maxLon - BBOX.minLon) + BBOX.minLon;
-  const lat = BBOX.maxLat - (svgPt.y / MAP_HEIGHT) * (BBOX.maxLat - BBOX.minLat);
-  return [lat, lon];
+  return {
+    x: ((loc.lon - BBOX.minLon) / (BBOX.maxLon - BBOX.minLon)) * MAP_WIDTH,
+    y: ((BBOX.maxLat - loc.lat) / (BBOX.maxLat - BBOX.minLat)) * MAP_HEIGHT,
+  };
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// Bezier control point: slight perpendicular offset for curve
+function bezierCP(from, to) {
+  const mx = (from.lng + to.lng) / 2;
+  const my = (from.lat + to.lat) / 2;
+  const dx = to.lng - from.lng;
+  const dy = to.lat - from.lat;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const offset = Math.min(0.0012, len * 0.18);
+  return { lng: mx + (-dy / len) * offset, lat: my + (dx / len) * offset };
+}
+
+// Sample bezier curve into array of LatLng points
+function sampleBezier(from, to, steps = 24) {
+  const cp = bezierCP(from, to);
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const u = 1 - t;
+    pts.push([
+      u * u * from.lat + 2 * u * t * cp.lat + t * t * to.lat,
+      u * u * from.lng + 2 * u * t * cp.lng + t * t * to.lng,
+    ]);
+  }
+  return pts;
+}
+
+// Interpolate a position along a sampled path
+function interpolatePath(path, progress) {
+  const p = Math.max(0, Math.min(0.9999, progress));
+  const scaled = p * (path.length - 1);
+  const idx = Math.floor(scaled);
+  const frac = scaled - idx;
+  const [lat1, lng1] = path[idx];
+  const [lat2, lng2] = path[Math.min(idx + 1, path.length - 1)];
+  return [lat1 + (lat2 - lat1) * frac, lng1 + (lng2 - lng1) * frac];
+}
+
+// ─── Marker HTML builders ─────────────────────────────────────────────────────
+
+function markerHtml(color, isSelected, isVenue, isMainVenue, label) {
+  if (isMainVenue) {
+    const size = isSelected ? 44 : 36;
+    return `<div style="position:relative;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:0;border-radius:50%;background:${VENUE_GOLD};opacity:0.15;box-shadow:0 0 30px ${VENUE_GOLD}80,0 0 60px ${VENUE_GOLD}30"></div>
+      <div style="width:14px;height:14px;border-radius:50%;background:${VENUE_GOLD};box-shadow:0 0 14px ${VENUE_GOLD}"></div>
+      ${label ? `<div style="position:absolute;bottom:${size + 6}px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:12px;font-weight:700;color:white;background:rgba(4,25,43,0.92);padding:3px 10px;border-radius:8px;border:1px solid ${VENUE_GOLD}60;pointer-events:none">${label}</div>` : ''}
+    </div>`;
+  }
+  if (isVenue) {
+    const size = isSelected ? 32 : 28;
+    return `<div style="position:relative;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:0;border-radius:50%;background:${VENUE_GOLD};opacity:0.12;box-shadow:0 0 20px ${VENUE_GOLD}60"></div>
+      <div style="width:10px;height:10px;border-radius:50%;background:${VENUE_GOLD};box-shadow:0 0 10px ${VENUE_GOLD}"></div>
+      ${label ? `<div style="position:absolute;bottom:${size + 5}px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;font-weight:600;color:white;background:rgba(4,25,43,0.90);padding:2px 7px;border-radius:7px;border:1px solid ${VENUE_GOLD}40;pointer-events:none">${label}</div>` : ''}
+    </div>`;
+  }
+  const size = isSelected ? 22 : 16;
+  const dot = isSelected ? 8 : 5;
+  return `<div style="position:relative;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center">
+    <div style="position:absolute;inset:0;border-radius:50%;background:${color};opacity:0.12;box-shadow:0 0 ${isSelected ? 14 : 6}px ${color}"></div>
+    <div style="width:${dot}px;height:${dot}px;border-radius:50%;background:${color};box-shadow:0 0 5px ${color}80"></div>
+    ${(isSelected && label) ? `<div style="position:absolute;bottom:${size + 4}px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;font-weight:600;color:white;background:rgba(4,25,43,0.9);padding:2px 6px;border-radius:6px;border:1px solid ${color}40;pointer-events:none">${label}</div>` : ''}
+  </div>`;
+}
+
+// Rich tooltip HTML matching original design
+function tooltipHtml(entity, color, layerLabel) {
+  return `<div style="display:flex;gap:10px;align-items:flex-start;min-width:200px;max-width:260px">
+    <div style="width:36px;height:36px;border-radius:8px;background:${color}22;border:1px solid ${color}30;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;font-weight:700;color:${color}">${entity.label.charAt(0)}</div>
+    <div style="min-width:0;flex:1">
+      <div style="font-size:13px;font-weight:600;color:white;line-height:1.3">${entity.label}</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+        <span style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0"></span>
+        <span style="font-size:10px;color:${color};text-transform:uppercase;letter-spacing:0.08em;font-weight:600">${layerLabel}</span>
+      </div>
+      <div style="font-size:11px;line-height:1.5;color:rgba(255,255,255,0.55);margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${entity.description || ''}</div>
+    </div>
+  </div>`;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CityGraphMap() {
+  const containerRef = useRef(null);
   const mapRef = useRef(null);
-  const leafletRef = useRef(null);
-  const svgOverlayRef = useRef(null);
-  const markersRef = useRef({});
+  const markersRef = useRef(new Map());
+  const layerGroupsRef = useRef(new Map());
+  const edgeLayerRef = useRef(null);
+  const edgeHighlightLayerRef = useRef(null);
+  const overlayLayerRef = useRef(null);
+  const animDotsRef = useRef([]);
   const animFrameRef = useRef(null);
-  const dotsRef = useRef([]);
-  const edgePathsRef = useRef([]);
+  const animBaseTimeRef = useRef(0);
+  const animPausedAtRef = useRef(null);
+  const animPausedTotalRef = useRef(0);
 
   const [entities, setEntities] = useState([]);
   const [edges, setEdges] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
-  const [activeLayers, setActiveLayers] = useState(new Set(['commerce', 'identity']));
+  const [hoveredId, setHoveredId] = useState(null);
+  const [activeLayers, setActiveLayers] = useState(
+    new Set(LAYER_META.map(l => l.id))
+  );
   const [loading, setLoading] = useState(true);
 
-  // ── Load data ──────────────────────────────────────────────────────────────
+  // Keep refs in sync for use inside callbacks
+  const activeLayersRef = useRef(activeLayers);
+  const selectedIdRef = useRef(selectedId);
+  const hoveredIdRef = useRef(hoveredId);
+  const entitiesRef = useRef(entities);
+  const edgesRef = useRef(edges);
+  activeLayersRef.current = activeLayers;
+  selectedIdRef.current = selectedId;
+  hoveredIdRef.current = hoveredId;
+  entitiesRef.current = entities;
+  edgesRef.current = edges;
+
+  // ── Fetch data ───────────────────────────────────────────────────────────
   useEffect(() => {
     fetchCityGraphData().then(data => {
       setEntities(data.entities || []);
@@ -94,152 +156,345 @@ export default function CityGraphMap() {
     });
   }, []);
 
-  // ── Init Leaflet map ───────────────────────────────────────────────────────
+  // ── Init Leaflet ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!mapRef.current || leafletRef.current) return;
+    if (!containerRef.current || mapRef.current) return;
 
-    const map = L.map(mapRef.current, {
-      center: CENTER,
+    const map = L.map(containerRef.current, {
+      center: MAP_CENTER,
       zoom: 15,
-      minZoom: 14,
-      maxZoom: 17,
+      minZoom: 13,
+      maxZoom: 18,
       zoomControl: false,
-      scrollWheelZoom: false,
       attributionControl: false,
+      maxBounds: SVG_BOUNDS.pad(0.5),
     });
 
+    // Tile layer with the exact filter from the original
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
-      maxZoom: 17,
+      maxZoom: 18,
     }).addTo(map);
 
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    // Apply tile pane filter — makes the base map darker and slightly teal-shifted
+    const tilePane = map.getPane('tilePane');
+    if (tilePane) {
+      tilePane.style.filter = 'brightness(0.45) hue-rotate(-10deg) saturate(1.4)';
+    }
 
-    leafletRef.current = map;
+    // ── Jurere map SVG overlay (roads, coastline, water, green areas) ──────
+    const roadSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    roadSvg.setAttribute('viewBox', `0 0 ${jurereMap.width} ${jurereMap.height}`);
+    roadSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
+    const svgLayers = [
+      { paths: jurereMap.green,      stroke: 'rgba(162,215,41,0.28)',   width: '10' },
+      { paths: jurereMap.water,      stroke: 'rgba(122,231,255,0.42)',  width: '8' },
+      { paths: jurereMap.roadsMinor, stroke: 'rgba(58,165,255,0.20)',   width: '2.1' },
+      { paths: jurereMap.roadsMajor, stroke: 'rgba(122,231,255,0.50)',  width: '3.3' },
+      { paths: jurereMap.coastline,  stroke: 'rgba(162,215,41,0.88)',   width: '5' },
+    ];
+
+    for (const layer of svgLayers) {
+      for (const d of layer.paths) {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', layer.stroke);
+        path.setAttribute('stroke-width', layer.width);
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        roadSvg.appendChild(path);
+      }
+    }
+
+    L.svgOverlay(roadSvg, SVG_BOUNDS, { interactive: false, pane: 'overlayPane' }).addTo(map);
+
+    // ── Layer groups for entities ──────────────────────────────────────────
+    edgeLayerRef.current = L.layerGroup().addTo(map);
+    edgeHighlightLayerRef.current = L.layerGroup().addTo(map);
+    overlayLayerRef.current = L.layerGroup().addTo(map);
+
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    // Pause/resume dot animation during zoom (prevents visual glitches)
+    map.on('zoomstart', () => {
+      if (animPausedAtRef.current != null) return;
+      animPausedAtRef.current = performance.now();
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    });
+    map.on('zoomend', () => {
+      if (animPausedAtRef.current != null) {
+        animPausedTotalRef.current += performance.now() - animPausedAtRef.current;
+        animPausedAtRef.current = null;
+      }
+      startDotAnimation();
+    });
+
+    mapRef.current = map;
     return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       map.remove();
-      leafletRef.current = null;
+      mapRef.current = null;
     };
   }, []);
 
-  // ── Render markers & edges ─────────────────────────────────────────────────
-  useEffect(() => {
-    const map = leafletRef.current;
-    if (!map || entities.length === 0) return;
-
-    // Clear old markers
-    Object.values(markersRef.current).forEach(m => m.remove());
-    markersRef.current = {};
-
-    // Cancel previous animation
+  // ── Dot animation ─────────────────────────────────────────────────────────
+  function startDotAnimation() {
+    if (!animDotsRef.current.length) return;
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    dotsRef.current.forEach(d => d.remove());
-    dotsRef.current = [];
-    edgePathsRef.current = [];
+    const now = performance.now();
+    if (animBaseTimeRef.current === 0) animBaseTimeRef.current = now;
 
-    // Remove old SVG overlay
-    if (svgOverlayRef.current) {
-      svgOverlayRef.current.remove();
-      svgOverlayRef.current = null;
+    const tick = () => {
+      const t = performance.now();
+      const elapsed = t - animBaseTimeRef.current - animPausedTotalRef.current;
+      for (const dot of animDotsRef.current) {
+        const progress = ((elapsed + dot.offsetMs) % dot.durationMs) / dot.durationMs;
+        const pos = interpolatePath(dot.path, progress);
+        dot.marker.setLatLng(pos);
+      }
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+    animFrameRef.current = requestAnimationFrame(tick);
+  }
+
+  // ── Build markers ─────────────────────────────────────────────────────────
+  const rebuildMarkers = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    for (const [, group] of layerGroupsRef.current) {
+      group.clearLayers();
+      map.removeLayer(group);
+    }
+    layerGroupsRef.current.clear();
+    markersRef.current.clear();
+
+    for (const layerMeta of LAYER_META) {
+      const group = L.layerGroup();
+      layerGroupsRef.current.set(layerMeta.id, group);
+      if (!activeLayers.has(layerMeta.id)) continue;
+
+      const layerEntities = entitiesRef.current.filter(e => e.layer === layerMeta.id);
+
+      for (const entity of layerEntities) {
+        // Safety zones are drawn as circles in the overlay, not markers
+        if (entity.isSafetyZone) continue;
+        // Environment sensors shown as label overlays, not click markers
+        if (entity.layer === 'environment') continue;
+
+        const isSelected = selectedIdRef.current === entity.id;
+        const isVenue = VENUE_IDS.has(entity.id);
+        const isMain = entity.id === MAIN_VENUE_ID;
+        const showLabel = isSelected || isVenue;
+        const size = isMain ? (isSelected ? 44 : 36) : isVenue ? (isSelected ? 32 : 28) : (isSelected ? 22 : 16);
+
+        const icon = L.divIcon({
+          html: markerHtml(layerMeta.color, isSelected, isVenue, isMain, showLabel ? entity.label : undefined),
+          className: 'city-graph-marker-wrapper',
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2],
+        });
+
+        const marker = L.marker([entity.location.lat, entity.location.lon], {
+          icon,
+          zIndexOffset: isVenue ? 1000 : 0,
+        });
+
+        marker.on('click', () => setSelectedId(prev => prev === entity.id ? null : entity.id));
+        marker.on('mouseover', () => setHoveredId(entity.id));
+        marker.on('mouseout', () => setHoveredId(null));
+
+        marker.bindTooltip(tooltipHtml(entity, layerMeta.color, layerMeta.label), {
+          className: 'city-graph-tooltip',
+          direction: 'top',
+          offset: [0, -(size / 2 + 4)],
+        });
+
+        marker.addTo(group);
+        markersRef.current.set(entity.id, marker);
+      }
+      group.addTo(map);
+    }
+  }, [activeLayers, selectedId]);
+
+  // ── Draw static overlays (safety zones, environment sensors) ─────────────
+  const redrawOverlays = useCallback(() => {
+    const overlayLayer = overlayLayerRef.current;
+    const map = mapRef.current;
+    if (!overlayLayer || !map) return;
+    overlayLayer.clearLayers();
+
+    // Safety zones as dashed circles
+    if (activeLayersRef.current.has('safety')) {
+      for (const entity of entitiesRef.current.filter(e => e.isSafetyZone)) {
+        L.circle([entity.location.lat, entity.location.lon], {
+          radius: entity.zoneRadiusMeters || 80,
+          color: 'rgba(255,107,107,0.25)',
+          weight: 1.5,
+          dashArray: '6 4',
+          fillColor: 'rgba(255,107,107,0.07)',
+          fillOpacity: 0.07,
+          interactive: false,
+          bubblingMouseEvents: false,
+        }).addTo(overlayLayer);
+      }
     }
 
-    // Create SVG overlay for edges
-    const bounds = L.latLngBounds(BOUNDS_SW, BOUNDS_NE);
-    const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svgEl.setAttribute('viewBox', `0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`);
-    svgEl.style.overflow = 'visible';
+    // Environment sensors as soft glow + label
+    if (activeLayersRef.current.has('environment')) {
+      for (const entity of entitiesRef.current.filter(e => e.layer === 'environment')) {
+        L.circle([entity.location.lat, entity.location.lon], {
+          radius: 35,
+          stroke: false,
+          fillColor: '#4ECDC4',
+          fillOpacity: 0.1,
+          interactive: false,
+          bubblingMouseEvents: false,
+        }).addTo(overlayLayer);
 
-    // Render edges as bezier paths
-    const entityMap = Object.fromEntries(entities.map(e => [e.id, e]));
-    const validEdges = edges.filter(edge => entityMap[edge.source] && entityMap[edge.target]);
+        if (entity.value != null) {
+          L.marker([entity.location.lat, entity.location.lon], {
+            interactive: false,
+            keyboard: false,
+            zIndexOffset: 50,
+            icon: L.divIcon({
+              className: 'city-graph-marker-wrapper',
+              html: `<div style="transform:translateY(3px);text-align:center;color:#4ECDC4;font-size:9px;font-weight:600;opacity:0.8;white-space:nowrap">${entity.value}${entity.unit || ''}</div>`,
+              iconSize: [42, 16],
+              iconAnchor: [21, 8],
+            }),
+          }).addTo(overlayLayer);
+        }
+      }
+    }
+  }, []);
 
-    validEdges.forEach(edge => {
+  // ── Draw edges ────────────────────────────────────────────────────────────
+  const redrawEdges = useCallback(() => {
+    const edgeLayer = edgeLayerRef.current;
+    if (!edgeLayer) return;
+
+    edgeLayer.clearLayers();
+    animDotsRef.current = [];
+    animBaseTimeRef.current = 0;
+    animPausedAtRef.current = null;
+    animPausedTotalRef.current = 0;
+
+    redrawOverlays();
+
+    const entityMap = Object.fromEntries(entitiesRef.current.map(e => [e.id, e]));
+
+    const validEdges = edgesRef.current.filter(edge => {
       const src = entityMap[edge.source];
       const tgt = entityMap[edge.target];
-      if (!activeLayers.has(src.layer) && !activeLayers.has(tgt.layer)) return;
-
-      const p0 = latLonToSvg(src.location);
-      const p1 = latLonToSvg(tgt.location);
-      const cp = bezierControlPoint(p0, p1);
-
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      const d = `M${p0.x},${p0.y} Q${cp.x},${cp.y} ${p1.x},${p1.y}`;
-      path.setAttribute('d', d);
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', LAYER_COLOR[src.layer] || '#38BDF8');
-      path.setAttribute('stroke-width', '1');
-      path.setAttribute('stroke-opacity', '0.35');
-      path.setAttribute('stroke-dasharray', '6 4');
-      path.style.animation = 'city-graph-flow 1.8s linear infinite';
-      svgEl.appendChild(path);
-      edgePathsRef.current.push({ path, p0, cp, p1, color: LAYER_COLOR[src.layer] || '#38BDF8' });
+      if (!src || !tgt) return false;
+      if (!activeLayersRef.current.has(src.layer)) return false;
+      if (!activeLayersRef.current.has(tgt.layer)) return false;
+      return true;
     });
 
-    const overlay = L.svgOverlay(svgEl, bounds, { opacity: 1, interactive: false });
-    overlay.addTo(map);
-    svgOverlayRef.current = overlay;
+    const edgesWithPaths = [];
 
-    // Render entity markers
-    const visibleEntities = entities.filter(e => activeLayers.has(e.layer));
-    visibleEntities.forEach(entity => {
-      const color = LAYER_COLOR[entity.layer] || '#38BDF8';
-      const isSelected = entity.id === selectedId;
-      const icon = L.divIcon({
-        html: markerHtml(entity, color, isSelected),
-        className: '',
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
-      });
-      const marker = L.marker([entity.location.lat, entity.location.lon], { icon })
-        .addTo(map)
-        .on('click', () => setSelectedId(id => id === entity.id ? null : entity.id));
+    for (const edge of validEdges) {
+      const src = entityMap[edge.source];
+      const tgt = entityMap[edge.target];
+      const from = { lat: src.location.lat, lng: src.location.lon };
+      const to = { lat: tgt.location.lat, lng: tgt.location.lon };
+      const path = sampleBezier(from, to);
 
-      // Tooltip
-      marker.bindTooltip(`
-        <div style="font-size:12px;font-weight:600;color:#fff;background:rgba(4,25,43,0.95);padding:6px 10px;border-radius:8px;border:1px solid ${color}44;backdrop-filter:blur(8px);">
-          <span style="color:${color};margin-right:6px;">●</span>${entity.label}
-          <div style="font-size:10px;color:#94a3b8;margin-top:2px;">${entity.layer.charAt(0).toUpperCase() + entity.layer.slice(1)}</div>
-        </div>
-      `, { className: 'city-graph-tooltip', direction: 'top', offset: [0, -12] });
+      // Base line — very subtle white
+      L.polyline(path, {
+        color: 'rgba(255,255,255,0.10)',
+        weight: 0.8,
+        interactive: false,
+        smoothFactor: 1,
+        bubblingMouseEvents: false,
+      }).addTo(edgeLayer);
 
-      markersRef.current[entity.id] = marker;
-    });
-
-    // Animate dots along edges
-    const activeDots = edgePathsRef.current.map(ep => {
-      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      dot.setAttribute('r', '3');
-      dot.setAttribute('fill', ep.color);
-      dot.setAttribute('opacity', '0.9');
-      svgEl.appendChild(dot);
-      return { dot, ...ep, t: Math.random() };
-    });
-    dotsRef.current = activeDots.map(d => d.dot);
-
-    let lastTime = null;
-    function animateDots(ts) {
-      if (!lastTime) lastTime = ts;
-      const dt = (ts - lastTime) / 1000;
-      lastTime = ts;
-      activeDots.forEach(dotData => {
-        dotData.t = (dotData.t + dt * 0.15) % 1;
-        const pos = sampleBezier(dotData.t, dotData.p0, dotData.cp, dotData.p1);
-        dotData.dot.setAttribute('cx', pos.x);
-        dotData.dot.setAttribute('cy', pos.y);
-      });
-      animFrameRef.current = requestAnimationFrame(animateDots);
-    }
-    if (activeDots.length > 0) {
-      animFrameRef.current = requestAnimationFrame(animateDots);
+      const hash = edge.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+      edgesWithPaths.push({ path, hash });
     }
 
-    return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
-  }, [entities, edges, activeLayers, selectedId]);
+    // Animated dots (halo + core) for ~2/3 of edges
+    for (const { path, hash } of edgesWithPaths) {
+      if (hash % 3 === 0) continue; // skip 1/3 for visual breathing room
 
-  // ── Layer toggle ───────────────────────────────────────────────────────────
+      const isAqua = hash % 2 === 0;
+      const durationMs = (4.5 + (hash % 11) * 0.5) * 1000;
+      const offsetMs = (hash % 16) * 500;
+
+      const haloColor = isAqua ? 'rgba(122,231,255,0.12)' : 'rgba(162,215,41,0.10)';
+      const coreColor = isAqua ? 'rgba(122,231,255,0.50)' : 'rgba(162,215,41,0.40)';
+
+      const halo = L.circleMarker(path[0], {
+        radius: 5, stroke: false, fillOpacity: 1,
+        fillColor: haloColor, interactive: false, bubblingMouseEvents: false,
+      }).addTo(edgeLayer);
+
+      const core = L.circleMarker(path[0], {
+        radius: 2, stroke: false, fillOpacity: 1,
+        fillColor: coreColor, interactive: false, bubblingMouseEvents: false,
+      }).addTo(edgeLayer);
+
+      animDotsRef.current.push(
+        { marker: halo, path, durationMs, offsetMs },
+        { marker: core, path, durationMs, offsetMs }
+      );
+    }
+
+    if (animDotsRef.current.length > 0) startDotAnimation();
+  }, [redrawOverlays]);
+
+  // ── Highlight selected/hovered entity connections ─────────────────────────
+  const redrawHighlights = useCallback(() => {
+    const hlLayer = edgeHighlightLayerRef.current;
+    if (!hlLayer) return;
+    hlLayer.clearLayers();
+
+    const entityMap = Object.fromEntries(entitiesRef.current.map(e => [e.id, e]));
+
+    const toHighlight = [];
+    if (selectedIdRef.current) toHighlight.push({ id: selectedIdRef.current, sticky: true });
+    if (hoveredIdRef.current && hoveredIdRef.current !== selectedIdRef.current) {
+      toHighlight.push({ id: hoveredIdRef.current, sticky: false });
+    }
+
+    for (const { id, sticky } of toHighlight) {
+      const entity = entityMap[id];
+      if (!entity || !activeLayersRef.current.has(entity.layer)) continue;
+
+      const connectedEdges = edgesRef.current.filter(e => e.source === id || e.target === id);
+
+      for (const edge of connectedEdges) {
+        const otherId = edge.source === id ? edge.target : edge.source;
+        const other = entityMap[otherId];
+        if (!other || !activeLayersRef.current.has(other.layer)) continue;
+
+        const from = { lat: entity.location.lat, lng: entity.location.lon };
+        const to = { lat: other.location.lat, lng: other.location.lon };
+        const path = sampleBezier(from, to);
+
+        L.polyline(path, {
+          color: sticky ? 'rgba(255,255,255,0.38)' : 'rgba(122,231,255,0.30)',
+          weight: sticky ? 1.3 : 1,
+          dashArray: '6 4',
+          interactive: false,
+          smoothFactor: 1,
+          bubblingMouseEvents: false,
+        }).addTo(hlLayer);
+      }
+    }
+  }, []);
+
+  // ── Effects ───────────────────────────────────────────────────────────────
+  useEffect(() => { rebuildMarkers(); }, [rebuildMarkers]);
+  useEffect(() => { redrawEdges(); }, [redrawEdges]);
+  useEffect(() => { redrawHighlights(); }, [redrawHighlights, selectedId, hoveredId]);
+
+  // ── Layer toggle ──────────────────────────────────────────────────────────
   const handleLayerToggle = useCallback((layerId) => {
     setActiveLayers(prev => {
       const next = new Set(prev);
@@ -250,7 +505,7 @@ export default function CityGraphMap() {
 
   const handleToggleAll = useCallback(() => {
     setActiveLayers(prev =>
-      prev.size === LAYER_META.length
+      prev.size >= LAYER_META.length
         ? new Set(['commerce', 'identity'])
         : new Set(LAYER_META.map(l => l.id))
     );
@@ -259,31 +514,55 @@ export default function CityGraphMap() {
   const selectedEntity = entities.find(e => e.id === selectedId) || null;
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative', background: '#0B1421' }}>
+    <div className="city-graph-map-wrapper">
+      {/* Visual overlay layers — order matters (z-index 500–502) */}
+      <div className="city-graph-map-grid" />
+      <div className="city-graph-map-scanline" />
+      <div className="city-graph-map-tint" />
+
+      {/* Leaflet container (z-index below overlays) */}
+      <div
+        ref={containerRef}
+        className="city-graph-leaflet-map"
+        style={{ position: 'absolute', inset: 0, zIndex: 1 }}
+      />
+
       {/* Badge */}
-      <div style={{ position: 'absolute', top: 16, left: 60, zIndex: 1000 }}>
-        <span className="badge">CITY GRAPH • JURERÊ LIVE</span>
+      <div style={{ position: 'absolute', top: 12, left: 16, zIndex: 600, pointerEvents: 'none' }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          border: '1px solid rgba(122,231,255,0.18)',
+          background: 'rgba(7,37,61,0.78)',
+          borderRadius: 9999, padding: '5px 14px',
+          color: 'rgba(239,242,241,0.84)', fontSize: 11,
+          fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase',
+        }}>
+          City Graph · Live
+        </div>
       </div>
 
-      {/* Layer Toggle */}
-      <div style={{ position: 'absolute', top: 56, left: 16, zIndex: 1000 }}>
+      {/* Layer toggle */}
+      <div style={{ position: 'absolute', top: 56, left: 16, zIndex: 600 }}>
         <LayerToggle
           activeLayers={activeLayers}
           onToggle={handleLayerToggle}
           onToggleAll={handleToggleAll}
-          entityCount={entities.length}
+          entityCount={entities.filter(e => activeLayers.has(e.layer)).length}
         />
       </div>
 
-      {/* Loading state */}
+      {/* Loading */}
       {loading && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, background: 'rgba(11,20,33,0.7)' }}>
-          <span style={{ color: '#38BDF8', fontSize: 14 }}>Loading city graph…</span>
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 700,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(3,21,38,0.75)',
+        }}>
+          <span style={{ color: '#7AE7FF', fontSize: 13, letterSpacing: '0.08em' }}>
+            Loading city graph…
+          </span>
         </div>
       )}
-
-      {/* Map container */}
-      <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
 
       {/* Detail panel */}
       {selectedEntity && (

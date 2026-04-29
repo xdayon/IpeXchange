@@ -4121,49 +4121,130 @@ input, textarea {
   }
 }
 
-/* ─── City Graph Animations ─────────────────────────────────────────────── */
+/* ─── City Graph: Visual Classes (port from ipe-city-graph) ──────────────── */
 
 @keyframes city-graph-pulse {
-  0%, 100% { opacity: 0.7; transform: scale(1); }
-  50%       { opacity: 1;   transform: scale(1.25); }
-}
-
-@keyframes city-graph-flow {
-  from { stroke-dashoffset: 24; }
-  to   { stroke-dashoffset: 0; }
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
 }
 
 @keyframes city-graph-zone {
-  0%, 100% { opacity: 0.4; }
-  50%       { opacity: 0.7; }
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 0.8; }
+}
+
+@keyframes city-graph-flow {
+  0%   { stroke-dashoffset: 20; }
+  100% { stroke-dashoffset: 0; }
 }
 
 @keyframes dashboard-scan {
-  0%   { transform: translateY(-100%); opacity: 0; }
-  10%  { opacity: 0.4; }
-  90%  { opacity: 0.4; }
-  100% { transform: translateY(100vh); opacity: 0; }
+  0%   { transform: translateY(-180%); }
+  100% { transform: translateY(420%); }
 }
 
-/* Override Leaflet tooltip for city graph */
-.city-graph-tooltip .leaflet-tooltip {
-  background: transparent !important;
+/* Map wrapper with exact dimensions from original */
+.city-graph-map-wrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #031526;
+}
+
+/* Animated grid overlay */
+.city-graph-map-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(122, 231, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122, 231, 255, 0.07) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.88), transparent 90%);
+}
+
+/* Horizontal scanning line */
+.city-graph-map-scanline {
+  position: absolute;
+  inset: 0;
+  z-index: 501;
+  height: 24px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(122, 231, 255, 0), rgba(122, 231, 255, 0.12), rgba(122, 231, 255, 0));
+  animation: dashboard-scan 8s linear infinite;
+  opacity: 0.4;
+}
+
+/* Color tint gradients */
+.city-graph-map-tint {
+  position: absolute;
+  inset: 0;
+  z-index: 502;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(122, 231, 255, 0.16), transparent 26%),
+    radial-gradient(circle at 78% 74%, rgba(162, 215, 41, 0.16), transparent 24%),
+    linear-gradient(135deg, rgba(2, 38, 66, 0.1), rgba(58, 165, 255, 0.06) 52%, rgba(162, 215, 41, 0.06)),
+    linear-gradient(180deg, rgba(1, 17, 31, 0.08), rgba(1, 17, 31, 0.28));
+}
+
+/* Leaflet container background */
+.city-graph-leaflet-map,
+.city-graph-leaflet-map .leaflet-container {
+  background: #031526 !important;
+}
+
+/* Marker wrapper — reset Leaflet defaults */
+.city-graph-marker-wrapper {
   border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
+  background: none !important;
 }
 
-.city-graph-tooltip.leaflet-tooltip::before {
+/* Rich tooltip */
+.city-graph-tooltip {
+  max-width: 260px !important;
+  padding: 10px 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0.65rem !important;
+  background: rgba(4, 25, 43, 0.94) !important;
+  color: white !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(16px);
+}
+
+.city-graph-tooltip .leaflet-tooltip-tip {
   display: none;
 }
 
-/* Zoom controls dark theme */
-.leaflet-control-zoom a {
-  background: rgba(4, 25, 43, 0.92) !important;
-  color: #94a3b8 !important;
-  border-color: rgba(255,255,255,0.1) !important;
+/* Leaflet zoom controls — dark style */
+.city-graph-leaflet-map .leaflet-control-zoom {
+  z-index: 600 !important;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0.9rem !important;
 }
-.leaflet-control-zoom a:hover {
-  color: #fff !important;
-  background: rgba(56, 189, 248, 0.15) !important;
+
+.city-graph-leaflet-map .leaflet-control-zoom a {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(4, 25, 43, 0.85) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(12px);
+}
+
+.city-graph-leaflet-map .leaflet-control-zoom a:hover {
+  background: rgba(4, 25, 43, 0.95) !important;
+  color: white !important;
+}
+
+/* Safety zone pulse */
+.city-graph-zone-pulse {
+  animation: city-graph-zone 4s ease-in-out infinite;
+}
+
+/* Pin pulse */
+.city-graph-pin-pulse {
+  animation: city-graph-pulse 2.4s ease-in-out infinite;
 }
