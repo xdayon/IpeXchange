@@ -4,9 +4,11 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import jurereMap from '../../data/jurere-map.json';
 import { fetchCityGraphData } from '../../lib/api';
-import { LAYER_META, LAYER_COLOR } from '../../lib/cityGraphAdapter';
+import { LAYER_META } from '../../lib/cityGraphAdapter';
 import { EntityDetailPanel } from './EntityDetailPanel';
 import { LayerToggle } from './LayerToggle';
+import { SimEngine } from './SimEngine';
+import { ActivityFeed } from './ActivityFeed';
 
 const SW = [-27.4518, -48.5135];
 const NE = [-27.4334, -48.4905];
@@ -104,21 +106,27 @@ export default function CityGraphMap() {
   const markersRef = useRef(new Map());
   const layerGroupsRef = useRef(new Map());
   const edgeLayerRef = useRef(null);
+  const simLayerRef = useRef(null);
   const edgeHighlightLayerRef = useRef(null);
   const overlayLayerRef = useRef(null);
 
   // ── Animation refs ────────────────────────────────────────────────────────
   const animDotsRef = useRef([]);
+  const simDotsRef = useRef([]);
   const animFrameRef = useRef(null);
   const animBaseTimeRef = useRef(0);
   const animPausedAtRef = useRef(null);
   const animPausedTotalRef = useRef(0);
+
+  // ── SimEngine ref ─────────────────────────────────────────────────────────
+  const simEngineRef = useRef(null);
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [entities, setEntities] = useState([]);
   const [edges, setEdges] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
+  const [activities, setActivities] = useState([]);
   const [activeLayers, setActiveLayers] = useState(
     new Set(LAYER_META.map(l => l.id))
   );
@@ -137,7 +145,6 @@ export default function CityGraphMap() {
   edgesRef.current = edges;
 
   // ── Animation: stable ref functions ──────────────────────────────────────
-  // Using refs so the zoomend handler always calls the latest version
   const stopAnimRef = useRef(() => {
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current);
@@ -146,7 +153,6 @@ export default function CityGraphMap() {
   });
 
   const startAnimRef = useRef(() => {
-    if (!animDotsRef.current.length) return;
     stopAnimRef.current();
     const now = performance.now();
     if (animBaseTimeRef.current === 0) animBaseTimeRef.current = now;
@@ -155,15 +161,65 @@ export default function CityGraphMap() {
       animPausedAtRef.current = null;
     }
     const tick = () => {
-      const elapsed = performance.now() - animBaseTimeRef.current - animPausedTotalRef.current;
+      const currentNow = performance.now();
+      const elapsed = currentNow - animBaseTimeRef.current - animPausedTotalRef.current;
+      
+      // Animate static dots
       for (const dot of animDotsRef.current) {
         const progress = ((elapsed + dot.offsetMs) % dot.durationMs) / dot.durationMs;
         dot.marker.setLatLng(interpolatePath(dot.path, progress));
       }
+
+      // Animate sim dots
+      for (const dot of simDotsRef.current) {
+        const age = currentNow - dot.startedAt;
+        if (age >= dot.durationMs) {
+          dot.marker.remove();
+          continue;
+        }
+        const progress = age / dot.durationMs;
+        dot.marker.setLatLng(interpolatePath(dot.path, progress));
+      }
+      simDotsRef.current = simDotsRef.current.filter(
+        d => currentNow - d.startedAt < d.durationMs
+      );
+
       animFrameRef.current = requestAnimationFrame(tick);
     };
     animFrameRef.current = requestAnimationFrame(tick);
   });
+
+  // ── SimEngine Callbacks ───────────────────────────────────────────────────
+  const handleSimEdge = useCallback(({ source, target, color, durationMs }) => {
+    const simLayer = simLayerRef.current;
+    if (!simLayer || !mapRef.current) return;
+    if (!activeLayersRef.current.has(source.layer)) return;
+    if (!activeLayersRef.current.has(target.layer)) return;
+
+    const from = { lat: source.location.lat, lng: source.location.lon };
+    const to = { lat: target.location.lat, lng: target.location.lon };
+    const path = sampleBezier(from, to);
+
+    const halo = L.circleMarker(path[0], {
+      radius: 6, stroke: false, fillOpacity: 0.9,
+      fillColor: color + '33', interactive: false, bubblingMouseEvents: false,
+    }).addTo(simLayer);
+
+    const core = L.circleMarker(path[0], {
+      radius: 2.5, stroke: false, fillOpacity: 1,
+      fillColor: color, interactive: false, bubblingMouseEvents: false,
+    }).addTo(simLayer);
+
+    const startedAt = performance.now();
+    simDotsRef.current.push(
+      { marker: halo, path, durationMs, startedAt },
+      { marker: core, path, durationMs, startedAt },
+    );
+  }, []);
+
+  const handleActivity = useCallback((act) => {
+    setActivities(prev => [...prev.slice(-11), act]);
+  }, []);
 
   // ── Fetch data ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -225,14 +281,13 @@ export default function CityGraphMap() {
 
     L.svgOverlay(roadSvg, SVG_BOUNDS, { interactive: false, pane: 'overlayPane' }).addTo(map);
 
-    // Leaflet layer groups (order matters for z-stacking within Leaflet)
-    edgeLayerRef.current = L.layerGroup().addTo(map);          // bottom: base edge lines
-    overlayLayerRef.current = L.layerGroup().addTo(map);       // middle: zones + env labels
-    edgeHighlightLayerRef.current = L.layerGroup().addTo(map); // top: hover/selected highlights
+    edgeLayerRef.current = L.layerGroup().addTo(map);
+    simLayerRef.current = L.layerGroup().addTo(map);
+    overlayLayerRef.current = L.layerGroup().addTo(map);
+    edgeHighlightLayerRef.current = L.layerGroup().addTo(map);
 
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // Pause animation during zoom to prevent dot glitches
     map.on('zoomstart', () => {
       if (animPausedAtRef.current != null) return;
       animPausedAtRef.current = performance.now();
@@ -242,24 +297,32 @@ export default function CityGraphMap() {
       startAnimRef.current();
     });
 
+    // Init SimEngine
+    const sim = new SimEngine({
+      onSimEdge: handleSimEdge,
+      onActivity: handleActivity,
+      intervalMs: 3200,
+    });
+    simEngineRef.current = sim;
+    sim.start();
+
     mapRef.current = map;
 
     return () => {
+      sim.stop();
       stopAnimRef.current();
       map.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [handleSimEdge, handleActivity]);
 
-  // ── Draw functions (plain functions, always read from refs) ───────────────
+  // ── Draw functions ────────────────────────────────────────────────────────
 
   function drawOverlays() {
     const overlayLayer = overlayLayerRef.current;
-    const map = mapRef.current;
-    if (!overlayLayer || !map) return;
+    if (!overlayLayer) return;
     overlayLayer.clearLayers();
 
-    // Safety zones — dashed circles
     if (activeLayersRef.current.has('safety')) {
       for (const entity of entitiesRef.current.filter(e => e.isSafetyZone)) {
         L.circle([entity.location.lat, entity.location.lon], {
@@ -275,10 +338,8 @@ export default function CityGraphMap() {
       }
     }
 
-    // Environment sensors — soft glow + floating value label
     if (activeLayersRef.current.has('environment')) {
       for (const entity of entitiesRef.current.filter(e => e.layer === 'environment')) {
-        // Soft glow circle
         L.circle([entity.location.lat, entity.location.lon], {
           radius: 30,
           stroke: false,
@@ -288,7 +349,6 @@ export default function CityGraphMap() {
           bubblingMouseEvents: false,
         }).addTo(overlayLayer);
 
-        // Floating value label
         if (entity.value != null) {
           L.marker([entity.location.lat, entity.location.lon], {
             interactive: false,
@@ -337,7 +397,6 @@ export default function CityGraphMap() {
       const to = { lat: tgt.location.lat, lng: tgt.location.lon };
       const path = sampleBezier(from, to);
 
-      // Base line — very subtle white
       L.polyline(path, {
         color: 'rgba(255,255,255,0.10)',
         weight: 0.8,
@@ -350,30 +409,22 @@ export default function CityGraphMap() {
       edgesWithPaths.push({ path, hash, edge });
     }
 
-    // Animated dots: halo + core, cyan or lime, for ~2/3 of edges
     for (const { path, hash } of edgesWithPaths) {
       if (hash % 3 === 0) continue;
-
       const isAqua = hash % 2 === 0;
       const durationMs = (4.5 + (hash % 11) * 0.5) * 1000;
       const offsetMs = (hash % 16) * 500;
 
       const halo = L.circleMarker(path[0], {
-        radius: 5,
-        stroke: false,
-        fillOpacity: 1,
+        radius: 5, stroke: false, fillOpacity: 1,
         fillColor: isAqua ? 'rgba(122,231,255,0.12)' : 'rgba(162,215,41,0.10)',
-        interactive: false,
-        bubblingMouseEvents: false,
+        interactive: false, bubblingMouseEvents: false,
       }).addTo(edgeLayer);
 
       const core = L.circleMarker(path[0], {
-        radius: 2,
-        stroke: false,
-        fillOpacity: 1,
+        radius: 2, stroke: false, fillOpacity: 1,
         fillColor: isAqua ? 'rgba(122,231,255,0.55)' : 'rgba(162,215,41,0.45)',
-        interactive: false,
-        bubblingMouseEvents: false,
+        interactive: false, bubblingMouseEvents: false,
       }).addTo(edgeLayer);
 
       animDotsRef.current.push(
@@ -382,7 +433,7 @@ export default function CityGraphMap() {
       );
     }
 
-    if (animDotsRef.current.length > 0) {
+    if (animDotsRef.current.length > 0 || simDotsRef.current.length > 0) {
       startAnimRef.current();
     }
   }
@@ -403,18 +454,14 @@ export default function CityGraphMap() {
     for (const { id, sticky } of toHighlight) {
       const entity = entityMap[id];
       if (!entity || !activeLayersRef.current.has(entity.layer)) continue;
-
       const connectedEdges = edgesRef.current.filter(e => e.source === id || e.target === id);
-
       for (const edge of connectedEdges) {
         const otherId = edge.source === id ? edge.target : edge.source;
         const other = entityMap[otherId];
         if (!other || !activeLayersRef.current.has(other.layer)) continue;
-
         const from = { lat: entity.location.lat, lng: entity.location.lon };
         const to = { lat: other.location.lat, lng: other.location.lon };
         const path = sampleBezier(from, to);
-
         L.polyline(path, {
           color: sticky ? 'rgba(255,255,255,0.40)' : 'rgba(122,231,255,0.32)',
           weight: sticky ? 1.4 : 1,
@@ -430,7 +477,6 @@ export default function CityGraphMap() {
   function drawMarkers() {
     const map = mapRef.current;
     if (!map) return;
-
     for (const [, group] of layerGroupsRef.current) {
       group.clearLayers();
       map.removeLayer(group);
@@ -441,66 +487,56 @@ export default function CityGraphMap() {
     for (const layerMeta of LAYER_META) {
       const group = L.layerGroup();
       layerGroupsRef.current.set(layerMeta.id, group);
-
       if (!activeLayersRef.current.has(layerMeta.id)) continue;
-
       const layerEntities = entitiesRef.current.filter(e => e.layer === layerMeta.id);
-
       for (const entity of layerEntities) {
-        if (entity.isSafetyZone) continue;    // drawn as L.circle in drawOverlays
-        if (entity.layer === 'environment') continue; // drawn as label in drawOverlays
-
+        if (entity.isSafetyZone || entity.layer === 'environment') continue;
         const isSelected = selectedIdRef.current === entity.id;
         const isVenue = VENUE_IDS.has(entity.id);
         const isMain = entity.id === MAIN_VENUE_ID;
         const showLabel = isSelected || isVenue;
-        const size = isMain
-          ? (isSelected ? 44 : 36)
-          : isVenue
-            ? (isSelected ? 32 : 28)
-            : (isSelected ? 22 : 16);
-
+        const size = isMain ? (isSelected ? 44 : 36) : isVenue ? (isSelected ? 32 : 28) : (isSelected ? 22 : 16);
         const icon = L.divIcon({
           html: markerHtml(layerMeta.color, isSelected, isVenue, isMain, showLabel ? entity.label : undefined),
           className: 'city-graph-marker-wrapper',
           iconSize: [size, size],
           iconAnchor: [size / 2, size / 2],
         });
-
-        const marker = L.marker([entity.location.lat, entity.location.lon], {
-          icon,
-          zIndexOffset: isVenue ? 1000 : 0,
-        });
-
+        const marker = L.marker([entity.location.lat, entity.location.lon], { icon, zIndexOffset: isVenue ? 1000 : 0 });
         marker.on('click', () => setSelectedId(prev => prev === entity.id ? null : entity.id));
         marker.on('mouseover', () => setHoveredId(entity.id));
         marker.on('mouseout', () => setHoveredId(null));
-
-        marker.bindTooltip(
-          tooltipHtml(entity, layerMeta.color, layerMeta.label),
-          { className: 'city-graph-tooltip', direction: 'top', offset: [0, -(size / 2 + 4)] }
-        );
-
+        marker.bindTooltip(tooltipHtml(entity, layerMeta.color, layerMeta.label), { className: 'city-graph-tooltip', direction: 'top', offset: [0, -(size / 2 + 4)] });
         marker.addTo(group);
         markersRef.current.set(entity.id, marker);
       }
-
       group.addTo(map);
     }
   }
 
-  // ── THE CONSOLIDATED EFFECT — the core of the fix ────────────────────────
-  // Runs whenever data or view state changes. Reads everything from refs.
+  // ── SEPARATED EFFECTS ──────────────────────────────────────────────────────
+  
+  // Effect 1: Markers
   useEffect(() => {
-    // Wait for Leaflet to be ready AND for data to arrive
-    if (!mapRef.current || !edgeLayerRef.current) return;
-
+    if (!mapRef.current) return;
     drawMarkers();
-    drawEdges();     // includes drawOverlays() call below
+  }, [entities, activeLayers, selectedId]);
+
+  // Effect 2: Edges + Overlays + SimEngine Update
+  useEffect(() => {
+    if (!mapRef.current || !edgeLayerRef.current) return;
+    drawEdges();
     drawOverlays();
+    if (simEngineRef.current) {
+      simEngineRef.current.setEntities(entitiesRef.current);
+    }
+  }, [entities, edges, activeLayers]);
+
+  // Effect 3: Highlights
+  useEffect(() => {
+    if (!edgeHighlightLayerRef.current) return;
     drawHighlights();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entities, edges, activeLayers, selectedId, hoveredId]);
+  }, [selectedId, hoveredId]);
 
   // ── Layer toggle ──────────────────────────────────────────────────────────
   const handleLayerToggle = useCallback((layerId) => {
@@ -556,6 +592,9 @@ export default function CityGraphMap() {
           entityCount={entities.filter(e => activeLayers.has(e.layer)).length}
         />
       </div>
+
+      {/* Activity Feed */}
+      <ActivityFeed activities={activities} />
 
       {/* Loading overlay */}
       {loading && (

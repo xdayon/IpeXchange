@@ -4248,3 +4248,8 @@ input, textarea {
 .city-graph-pin-pulse {
   animation: city-graph-pulse 2.4s ease-in-out infinite;
 }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
