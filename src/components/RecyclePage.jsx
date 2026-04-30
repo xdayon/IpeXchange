@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Recycle2, Leaf, Coins, Star, ChevronRight, Send, Activity, Trash2, CheckCircle2, Clock } from 'lucide-react';
+import { Recycle, Leaf, Coins, Star, ChevronRight, Send, Activity, Trash2, CheckCircle2, Clock } from 'lucide-react';
 import DataBadge from './DataBadge';
 
 const CITY_STATS = [
@@ -69,7 +69,7 @@ const RecyclePage = () => {
         overflow: 'hidden'
       }}>
         <div style={{ position: 'absolute', top: -40, right: -40, opacity: 0.1 }}>
-          <Recycle2 size={180} color="#B4F44A" />
+          <Recycle size={180} color="#B4F44A" />
         </div>
         
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -170,7 +170,7 @@ const RecyclePage = () => {
               className="checkout-cta" 
               style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #B4F44A, #38BDF8)', color: '#0a0a1a' }}
             >
-              <Recycle2 size={18} /> Submit for Recycling
+              <Recycle size={18} /> Submit for Recycling
             </button>
 
             {submitted && (

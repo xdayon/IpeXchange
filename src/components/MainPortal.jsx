@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import {
   Home, Compass, Store, TrendingUp,
   User, Wallet, Bot, Settings, Bell, Repeat,
-  MessageCircle, ChevronRight, BarChart3, Recycle2
+  MessageCircle, ChevronRight, BarChart3, Recycle
 } from 'lucide-react';
 import { pingHealth } from '../lib/api';
 
@@ -47,7 +47,7 @@ const NAV_TABS = [
 const NAV_ICONS = [
   { id: 'profile',  icon: <User size={20} />,     label: 'Profile' },
   { id: 'wallet',   icon: <Wallet size={20} />,   label: 'Wallet' },
-  { id: 'recycle',  icon: <Recycle2 size={20} />, label: 'Recycle' },
+  { id: 'recycle',  icon: <Recycle size={20} />, label: 'Recycle' },
   { id: 'agent',    icon: <Bot size={20} />,      label: 'Agent' },
   { id: 'config',   icon: <Settings size={20} />, label: 'Config' },
 ];
