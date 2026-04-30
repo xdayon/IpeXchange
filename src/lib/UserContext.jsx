@@ -85,7 +85,10 @@ export function UserProvider({ children }) {
     if (ready && authenticated) {
       syncUser();
     } else if (ready && !authenticated) {
-      setXchangeUser(null);
+      // Don't reset the user if we're in demo mode — the demo useEffect already set DEMO_USER.
+      if (!localStorage.getItem('ipeXchange_demoSession')) {
+        setXchangeUser(null);
+      }
       setInitialized(true);
     }
   }, [ready, authenticated, syncUser]);

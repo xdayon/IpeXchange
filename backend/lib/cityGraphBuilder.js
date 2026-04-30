@@ -30,6 +30,21 @@ const CATEGORY_TO_KIND = {
   Donations: 'marketplace',
 };
 
+// Explicit map coordinates for known stores (matched by Supabase UUID).
+// Prevents stores from landing in random positions via deterministicCoords.
+const KNOWN_STORE_LOCATIONS = {
+  'a1000000-0000-0000-0000-000000000001': { lat: -27.44580, lon: -48.50100 }, // Ipê Bakery
+  'a1000000-0000-0000-0000-000000000002': { lat: -27.44810, lon: -48.50350 }, // Ipê City Motors
+  'a1000000-0000-0000-0000-000000000003': { lat: -27.44200, lon: -48.49680 }, // Ipê Cinema
+  'a1000000-0000-0000-0000-000000000004': { lat: -27.44700, lon: -48.50480 }, // Organic Market
+  'a1000000-0000-0000-0000-000000000005': { lat: -27.44340, lon: -48.50730 }, // Ipê Health Clinic
+  'a1000000-0000-0000-0000-000000000006': { lat: -27.44160, lon: -48.50560 }, // Studio Creative
+  'a1000000-0000-0000-0000-000000000007': { lat: -27.43850, lon: -48.49760 }, // Ipê City Surf Shop
+  'a1000000-0000-0000-0000-000000000008': { lat: -27.44480, lon: -48.49820 }, // Wine & Cheese Ipê
+  'a1000000-0000-0000-0000-000000000009': { lat: -27.44130, lon: -48.50540 }, // Ipê Tech Store
+  'a1000000-0000-0000-0000-000000000010': { lat: -27.44650, lon: -48.50250 }, // Bio Market
+};
+
 function listingToEntity(listing) {
   if (listing.location_privacy) return null;
   const location = (listing.location_lat && listing.location_lng)
@@ -79,7 +94,8 @@ function userToEntity(user) {
 function storeToEntity(store) {
   const location = (store.location_lat && store.location_lng)
     ? { lat: store.location_lat, lon: store.location_lng }
-    : deterministicCoords(store.id);
+    : KNOWN_STORE_LOCATIONS[store.id]
+    || deterministicCoords(store.id);
 
   return {
     id: `store-${store.id}`,
@@ -168,7 +184,7 @@ const STATIC_ENTITIES = [
   // ── Venues (commerce, special gold markers) ────────────────────────────────
   { id: 'venue-founder-haus', layer: 'commerce', label: 'Founder Haus', description: 'The main co-living and co-working hub of Ipê City. Builders, creators, operators gather here.', location: { lat: -27.43890, lon: -48.49985 }, kind: 'venue' },
   { id: 'venue-ai-haus',      layer: 'commerce', label: 'AI Haus',      description: 'ML research and hackathon space. Weekly AI study groups and builders sprint.', location: { lat: -27.43747, lon: -48.50342 }, kind: 'venue' },
-  { id: 'venue-privacy-haus', layer: 'commerce', label: 'Privacy Haus', description: 'ZK and cryptography builders space. Smart contract audits and security research.', location: { lat: -27.44166, lon: -48.50434 }, kind: 'venue' },
+  { id: 'venue-artizen-haus', layer: 'commerce', label: 'Artizen Haus', description: 'ZK, cryptography and regenerative design hub. Smart contract audits, security research and bio-design workshops.', location: { lat: -27.44166, lon: -48.50434 }, kind: 'venue' },
 
   // ── Investment ─────────────────────────────────────────────────────────────
   { id: 'inv-artizen',      layer: 'investment', label: 'Artizen: Regen Hub',    description: 'Grant $5,000 for bio-regenerative infrastructure.',              location: { lat: -27.4445, lon: -48.5062 } },
@@ -213,7 +229,7 @@ const STATIC_EDGES = [
   // Venues ↔ citizens
   { id: 'e-alex-founder',       source: 'citizen-alex',      target: 'venue-founder-haus', relationship: 'uses',       label: 'Resident' },
   { id: 'e-bia-ai-haus',        source: 'citizen-bia',       target: 'venue-ai-haus',      relationship: 'provides',   label: 'Builder' },
-  { id: 'e-marina-privacy',     source: 'citizen-marina',    target: 'venue-privacy-haus', relationship: 'uses',       label: 'Practitioner' },
+  { id: 'e-marina-artizen',     source: 'citizen-marina',    target: 'venue-artizen-haus', relationship: 'uses',       label: 'Practitioner' },
   { id: 'e-code-ai-haus',       source: 'citizen-code',      target: 'venue-ai-haus',      relationship: 'provides',   label: 'Educator' },
   { id: 'e-pixel-founder',      source: 'citizen-pixel',     target: 'venue-founder-haus', relationship: 'provides',   label: 'Creative' },
   // Venues ↔ events
@@ -225,7 +241,7 @@ const STATIC_EDGES = [
   { id: 'e-bread-loan-bread',  source: 'inv-bread-loan', target: 'venue-founder-haus', relationship: 'backed-by', label: 'Backed by' },
   // Citizen ↔ citizen (sister venues connection)
   { id: 'e-founder-aihaus',     source: 'venue-founder-haus',target: 'venue-ai-haus',      relationship: 'sister-venue',label: 'Sister Venue' },
-  { id: 'e-founder-privacy',    source: 'venue-founder-haus',target: 'venue-privacy-haus', relationship: 'sister-venue',label: 'Sister Venue' },
+  { id: 'e-founder-artizen',    source: 'venue-founder-haus',target: 'venue-artizen-haus', relationship: 'sister-venue',label: 'Sister Venue' },
 ];
 
 export function buildCityGraphPayload({ listings, users, stores, transactions, demands }) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, Users, Briefcase, ShieldCheck, Zap, Lock, Star, ChevronRight, ArrowUpRight, X, ExternalLink, Activity } from 'lucide-react';
+import { TrendingUp, Users, Briefcase, ShieldCheck, Zap, Lock, Star, ChevronRight, ArrowUpRight, X, ExternalLink, Activity, Wallet } from 'lucide-react';
 import { MOCK_GRANTS, MOCK_LOANS } from '../data/mockData';
 
 const FILTERS = ['All', 'Investment', 'Partnership', 'Jobs', 'Products', 'Services', 'Donations'];

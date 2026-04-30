@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import {
   Home, Compass, Store, TrendingUp,
   User, Wallet, Bot, Settings, Bell, Repeat,
-  MessageCircle, ChevronRight,
+  MessageCircle, ChevronRight, BarChart3
 } from 'lucide-react';
 import { pingHealth } from '../lib/api';
 
@@ -20,6 +20,7 @@ const AgentPage         = lazy(() => import('./AgentPage'));
 const CircularTradePage = lazy(() => import('./CircularTradePage'));
 const ConfigPage        = lazy(() => import('./ConfigPage'));
 const NotificationsPage = lazy(() => import('./NotificationsPage'));
+const TreasuryPage      = lazy(() => import('./TreasuryPage'));
 
 // Overlay / sub-pages (heaviest — always lazy)
 const XchangeCheckout   = lazy(() => import('./XchangeCheckout'));
@@ -39,6 +40,7 @@ const NAV_TABS = [
   { id: 'stores',     icon: <Store size={16} />,       label: 'Stores' },
   { id: 'investments',icon: <TrendingUp size={16} />,  label: 'Invest' },
   { id: 'circular',   icon: <Repeat size={16} />,      label: 'Multi-Hop' },
+  { id: 'treasury',   icon: <BarChart3 size={16} />,   label: 'Treasury' },
 ];
 
 const NAV_ICONS = [
@@ -280,8 +282,9 @@ const MainPortal = () => {
                 {tab === 'profile'       && <ProfilePage />}
                 {tab === 'wallet'        && <WalletPage onNavigate={handleNavigate} />}
                 {tab === 'agent'         && <AgentPage />}
-                {tab === 'circular'      && <CircularTradePage />}
-                {tab === 'config'        && <ConfigPage />}
+                { tab === 'circular'      && <CircularTradePage /> }
+                { tab === 'treasury'      && <TreasuryPage /> }
+                { tab === 'config'        && <ConfigPage /> }
                 {tab === 'notifications' && <NotificationsPage />}
               </TabBoundary>
             </Suspense>
