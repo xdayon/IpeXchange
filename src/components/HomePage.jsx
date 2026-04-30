@@ -74,6 +74,10 @@ const HomePage = () => {
     }
   }, []);
 
+  const handleRegisterSimEdge = useCallback((fn) => {
+    simEdgeCallbackRef.current = fn;
+  }, []);
+
   const todaysSeed = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
   const shuffled = [...mockDemands].sort((a, b) =>
     (a.id + todaysSeed).localeCompare(b.id + todaysSeed)
@@ -102,7 +106,7 @@ const HomePage = () => {
         <div className="home-map-area">
           <Suspense fallback={<div style={{ width:'100%', height:'100%', background:'#0B1421' }} />}>
             <CityGraphMap 
-              onRegisterSimEdge={(fn) => { simEdgeCallbackRef.current = fn; }} 
+              onRegisterSimEdge={handleRegisterSimEdge} 
               onEntitiesLoad={handleEntitiesLoad}
             />
           </Suspense>

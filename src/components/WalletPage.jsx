@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Bitcoin, Wallet, Link, Check, ShoppingBag, Store, ChevronRight, ShieldCheck, Trash2, Zap } from 'lucide-react';
 import { getPurchases, getMyListings } from '../data/xchangeStore';
+import { DEMO_PURCHASES, DEMO_LISTINGS } from '../data/demoProfile';
 import WalletConnectModal from './WalletConnectModal';
 
 const METHODS = [
@@ -59,8 +60,9 @@ const WalletPage = ({ onNavigate }) => {
   const [listings, setListings] = useState([]);
 
   useEffect(() => {
-    setPurchases(getPurchases());
-    setListings(getMyListings());
+    const isDemo = !!localStorage.getItem('ipeXchange_demoSession');
+    setPurchases(isDemo ? DEMO_PURCHASES : getPurchases());
+    setListings(isDemo ? DEMO_LISTINGS : getMyListings());
   }, []);
 
   const handleConnected = (id, info) => setConnected(prev => ({ ...prev, [id]: info }));

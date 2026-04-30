@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useUser } from '../lib/UserContext';
 import { fetchUserTransactions } from '../lib/api';
+import { DEMO_TRANSACTIONS } from '../data/demoProfile';
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 
@@ -92,6 +93,11 @@ const ProfilePage = () => {
   // Fetch real transactions once we have a wallet
   useEffect(() => {
     if (!walletAddress) return;
+    const isDemo = !!localStorage.getItem('ipeXchange_demoSession');
+    if (isDemo) {
+      setTransactions(DEMO_TRANSACTIONS);
+      return;
+    }
     setTxLoading(true);
     fetchUserTransactions(walletAddress, 10)
       .then(setTransactions)
@@ -110,7 +116,11 @@ const ProfilePage = () => {
   const repLabel     = repScore >= 80 ? 'Elite' : repScore >= 50 ? 'Trusted' : repScore > 0 ? 'Rising' : 'New Member';
 
   // For display: wallet or email identifier
-  const heroName   = email ? email.split('@')[0] : shortWallet || displayName;
+  const heroName = xchangeUser?.display_name
+    ? xchangeUser.display_name.split(' ')[0].toLowerCase()
+    : email
+    ? email.split('@')[0]
+    : shortWallet || 'anon';
   const fullId     = walletAddress || email || '—';
   const isNewUser  = repScore === 0 && totalTx === 0;
 
@@ -316,6 +326,68 @@ const ProfilePage = () => {
           </div>
         )}
       </div>
+
+      {/* ── BADGES ── */}
+      {xchangeUser?.badges?.length > 0 && (
+        <div className="glass-panel" style={{ padding: '28px 32px', marginBottom: 24 }}>
+          <SectionTitle icon={Award}>Badges &amp; Achievements</SectionTitle>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            {xchangeUser.badges.map(badge => (
+              <div key={badge.id} style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 14px', borderRadius: 100,
+                border: `1px solid ${badge.color}40`,
+                background: `${badge.color}0D`,
+              }}>
+                <span style={{ fontSize: 16 }}>{badge.icon}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: badge.color }}>{badge.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── WEB OF TRUST ── */}
+      {xchangeUser?.web_of_trust?.length > 0 && (
+        <div className="glass-panel" style={{ padding: '28px 32px', marginBottom: 24 }}>
+          <SectionTitle icon={Network}>Web of Trust</SectionTitle>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
+            Citizens you have directly traded with or vouched for.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {xchangeUser.web_of_trust.map((contact, i) => (
+              <div key={contact.wallet} style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '14px 0',
+                borderBottom: i < xchangeUser.web_of_trust.length - 1 ? '1px solid var(--border-color)' : 'none',
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: 'rgba(56,189,248,0.12)',
+                  border: '1px solid rgba(56,189,248,0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 14, fontWeight: 700, color: '#38BDF8', flexShrink: 0,
+                }}>
+                  {contact.name.charAt(0)}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{contact.name}</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{contact.wallet}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: '#B4F44A', marginBottom: 2 }}>Rep {contact.rep}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{contact.relation}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(129,140,248,0.06)', border: '1px solid rgba(129,140,248,0.2)' }}>
+            <p style={{ fontSize: 12, color: '#818CF8' }}>
+              🔐 Your web of trust is portable — carry it to Próspera, Zuzalu, or any Ipê protocol city.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── PASSPORT CARD ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
