@@ -31,6 +31,7 @@ const CATEGORY_TO_KIND = {
 };
 
 function listingToEntity(listing) {
+  if (listing.location_privacy) return null;
   const location = (listing.location_lat && listing.location_lng)
     ? { lat: listing.location_lat, lon: listing.location_lng }
     : deterministicCoords(listing.mock_key || listing.id);
@@ -146,6 +147,7 @@ function synthesizeTradeEdges(listings) {
 // These mirror the data from ipe-city-graph's static TypeScript files.
 // They populate infrastructure, governance, safety, environment, and events layers.
 
+const STATIC_ENTITIES = [
   // ── Identity (citizen personas from mock sessions) ─────────────────────────
   { id: 'citizen-alex',       layer: 'identity', label: 'Alex M.',     description: 'Ipê City resident. Offers electric mobility and tech gear.',      location: { lat: -27.44290, lon: -48.49985 } },
   { id: 'citizen-bia',        layer: 'identity', label: 'Bia Tech',    description: 'Full-stack developer. React, Next.js, Node.js. AI automation.',    location: { lat: -27.44810, lon: -48.50120 } },
@@ -229,9 +231,9 @@ const STATIC_EDGES = [
 export function buildCityGraphPayload({ listings, users, stores, transactions, demands }) {
   // DB-derived entities
   const dbEntities = [
-    ...listings.map(listingToEntity),
-    ...users.map(userToEntity),
-    ...stores.map(storeToEntity),
+    ...listings.map(listingToEntity).filter(Boolean),
+    ...users.map(userToEntity).filter(Boolean),
+    ...stores.map(storeToEntity).filter(Boolean),
   ];
 
   // Merge static entities (all layers) — avoiding ID collisions with DB entities

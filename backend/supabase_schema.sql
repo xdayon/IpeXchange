@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS listings (
   image_url TEXT,
   location_lat FLOAT,
   location_lng FLOAT,
+  location_privacy BOOLEAN DEFAULT false,
   active BOOLEAN DEFAULT true,
   ai_generated BOOLEAN DEFAULT true,
   is_mock BOOLEAN DEFAULT false,             -- Hybrid Data Strategy

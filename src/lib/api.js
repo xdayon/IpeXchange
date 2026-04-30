@@ -161,3 +161,22 @@ export async function fetchCityGraphData() {
     return { entities: [], edges: [] };
   }
 }
+
+export async function fetchMyListingsReal(sessionId) {
+  try {
+    const res = await fetch(`${API_URL}/listings/mine?session_id=${encodeURIComponent(sessionId)}`);
+    const data = await res.json();
+    return data.listings || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function toggleListingPrivacy(listingId, sessionId, locationPrivacy) {
+  const res = await fetch(`${API_URL}/listings/${listingId}/privacy`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId, location_privacy: locationPrivacy }),
+  });
+  return res.json();
+}

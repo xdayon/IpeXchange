@@ -373,6 +373,35 @@ app.post('/api/transactions', async (req, res) => {
   }
 });
 
+// ─── Listings by session ──────────────────────────────────────────────────────
+
+app.get('/api/listings/mine', async (req, res) => {
+  const { session_id } = req.query;
+  if (!session_id) return res.status(400).json({ error: 'session_id required' });
+  try {
+    const { getListingsBySession } = await import('./lib/supabase.js');
+    const listings = await getListingsBySession(session_id);
+    res.json({ listings });
+  } catch (err) {
+    console.error('listings/mine error:', err);
+    res.status(500).json({ listings: [] });
+  }
+});
+
+app.patch('/api/listings/:listingId/privacy', async (req, res) => {
+  const { listingId } = req.params;
+  const { session_id, location_privacy } = req.body;
+  if (!session_id) return res.status(400).json({ error: 'session_id required' });
+  try {
+    const { updateListingPrivacy } = await import('./lib/supabase.js');
+    const result = await updateListingPrivacy(listingId, session_id, location_privacy);
+    res.json(result);
+  } catch (err) {
+    console.error('listings/privacy error:', err);
+    res.status(500).json({ error: 'Failed to update privacy' });
+  }
+});
+
 // ─── Admin: Seed mock data ───────────────────────────────────────────────────
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

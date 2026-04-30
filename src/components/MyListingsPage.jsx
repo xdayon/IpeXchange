@@ -3,10 +3,11 @@ import {
   Store, Eye, EyeOff, Zap, PauseCircle, PlayCircle,
   CheckCircle2, Plus, Package, Wrench, Gift,
   BarChart3, MessageSquare, ShieldCheck, Edit3,
-  Clock, TrendingUp, ArrowLeft
+  Clock, TrendingUp, ArrowLeft, MapPin
 } from 'lucide-react';
 import { getMyListings, toggleListingStatus, markListingAsSold } from '../data/xchangeStore';
 import { DEMO_LISTINGS } from '../data/demoProfile';
+import { fetchMyListingsReal, toggleListingPrivacy } from '../lib/api';
 
 const STATUS_CONFIG = {
   active:  { color: '#22c55e', label: 'Active',  icon: PlayCircle  },
@@ -194,6 +195,9 @@ const FILTERS = [
 const MyListingsPage = ({ onNavigate, onBack }) => {
   const [listings, setListings] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [mapListings, setMapListings] = useState([]);
+  const [togglingId, setTogglingId] = useState(null);
+  const sessionId = localStorage.getItem('ipeCoreSessionId');
 
   useEffect(() => {
     const isDemo = !!localStorage.getItem('ipeXchange_demoSession');
@@ -212,6 +216,18 @@ const MyListingsPage = ({ onNavigate, onBack }) => {
   const handleMarkSold = (id) => {
     const updated = markListingAsSold(id);
     setListings(updated);
+  };
+
+  useEffect(() => {
+    if (!sessionId) return;
+    fetchMyListingsReal(sessionId).then(setMapListings);
+  }, [sessionId]);
+
+  const handlePrivacyToggle = async (listing) => {
+    setTogglingId(listing.id);
+    const updated = await toggleListingPrivacy(listing.id, sessionId, !listing.location_privacy);
+    setMapListings(prev => prev.map(l => l.id === listing.id ? { ...l, location_privacy: updated.location_privacy } : l));
+    setTogglingId(null);
   };
 
   return (
@@ -279,6 +295,55 @@ const MyListingsPage = ({ onNavigate, onBack }) => {
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>
               Listings with quality photos and crypto acceptance get <strong style={{ color: '#B4F44A' }}>3.2× more</strong> views in the network. Update your listings to maximize reach.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* City Map Visibility */}
+      {mapListings.length > 0 && (
+        <div style={{ marginTop: 32 }}>
+          <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
+            <MapPin size={18} style={{ marginRight: 8, color: '#38BDF8', verticalAlign: 'middle' }} />
+            City Map Visibility
+          </h3>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+            Control which of your listings appear on the Ipê City live map.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {mapListings.map(listing => (
+              <div
+                key={listing.id}
+                className="glass-panel"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}
+              >
+                <div>
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>{listing.title}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 8 }}>{listing.category}</span>
+                </div>
+                <button
+                  onClick={() => handlePrivacyToggle(listing)}
+                  disabled={togglingId === listing.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
+                    fontSize: 12, fontWeight: 600,
+                    border: listing.location_privacy
+                      ? '1px solid rgba(244,63,94,0.4)'
+                      : '1px solid rgba(34,197,94,0.4)',
+                    background: listing.location_privacy
+                      ? 'rgba(244,63,94,0.1)'
+                      : 'rgba(34,197,94,0.1)',
+                    color: listing.location_privacy ? '#F43F5E' : '#22c55e',
+                    opacity: togglingId === listing.id ? 0.5 : 1,
+                  }}
+                >
+                  {listing.location_privacy
+                    ? <><EyeOff size={12} /> Hidden from map</>
+                    : <><MapPin size={12} /> Visible on map</>
+                  }
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}

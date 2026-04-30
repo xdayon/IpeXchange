@@ -617,7 +617,7 @@ export async function getCityGraphData() {
     const [listingsRes, usersRes, storesRes, txRes, demandsRes] = await Promise.all([
       supabase
         .from('listings')
-        .select('id, title, description, category, subcategory, price_fiat, accepts_trade, trade_wants, provider_name, image_url, is_mock, mock_key, location_lat, location_lng, session_id')
+        .select('id, title, description, category, subcategory, price_fiat, accepts_trade, trade_wants, provider_name, image_url, is_mock, mock_key, location_lat, location_lng, location_privacy, session_id')
         .eq('active', true)
         .limit(80),
       supabase
@@ -650,6 +650,32 @@ export async function getCityGraphData() {
     console.error('getCityGraphData error:', err);
     return { listings: [], users: [], stores: [], transactions: [], demands: [] };
   }
+}
+
+export async function getListingsBySession(sessionId) {
+  if (!dbAvailable || !sessionId) return [];
+  const { data, error } = await supabase
+    .from('listings')
+    .select('id, title, category, active, location_privacy, created_at')
+    .eq('session_id', sessionId)
+    .eq('active', true)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) return [];
+  return data || [];
+}
+
+export async function updateListingPrivacy(listingId, sessionId, locationPrivacy) {
+  if (!dbAvailable) throw new Error('DB not available');
+  const { data, error } = await supabase
+    .from('listings')
+    .update({ location_privacy: locationPrivacy })
+    .eq('id', listingId)
+    .eq('session_id', sessionId)
+    .select('id, location_privacy')
+    .single();
+  if (error) throw error;
+  return data;
 }
 
 export default supabase;
