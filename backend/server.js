@@ -115,7 +115,13 @@ app.post('/api/chat', async (req, res) => {
 
     let listingDraft = null;
     if (response.listingReady) {
-      listingDraft = await extractListing(message || displayMessage);
+      const conversationContext = history
+        .map(m => `${m.role === 'user' ? 'User' : 'Agent'}: ${m.content}`)
+        .join('\n');
+      const fullContext = conversationContext
+        + `\nUser: ${message || displayMessage}`
+        + `\nAgent: ${response.text}`;
+      listingDraft = await extractListing(fullContext);
     }
 
     return res.json({
@@ -134,27 +140,37 @@ app.post('/api/chat', async (req, res) => {
 // ─── Listing creation (explicit publish confirmation from frontend) ────────────
 
 app.post('/api/listings', async (req, res) => {
-  const { sessionId, listing } = req.body;
+  const { sessionId, listing, providerName, walletAddress } = req.body;
 
   if (!sessionId || !listing?.title) {
     return res.status(400).json({ error: 'sessionId and listing.title are required' });
   }
 
   try {
+    // Enrich listing before insert
+    const enrichedListing = {
+      ...listing,
+      provider_name: providerName || listing.provider_name || 'Community Member',
+      // Derive crypto price from fiat if not provided (10% discount for crypto)
+      price_crypto: listing.price_crypto ?? (listing.price_fiat ? Math.round(listing.price_fiat * 0.9 * 100) / 100 : null),
+      accepts_trade: listing.accepts_trade ?? false,
+      image_url: listing.image_url || 'https://images.unsplash.com/photo-1472289065668-ce650ac443d2?auto=format&fit=crop&q=80&w=400&h=300',
+    };
+
     // Generate semantic embedding for this listing
-    const embeddingText = `${listing.title} ${listing.description || ''} ${listing.category || ''}`;
+    const embeddingText = `${enrichedListing.title} ${enrichedListing.description || ''} ${enrichedListing.category || ''}`;
     const embedding = await generateEmbedding(embeddingText);
 
     // Find similar listings for price context
     let priceHint = null;
     if (embedding) {
       const similarListings = await searchListingsBySimilarity(embedding, 5);
-      if (listing.price_fiat && similarListings.length > 0) {
-        priceHint = await suggestPrice(listing.title, similarListings);
+      if (enrichedListing.price_fiat && similarListings.length > 0) {
+        priceHint = await suggestPrice(enrichedListing.title, similarListings);
       }
     }
 
-    const created = await createListing({ sessionId, listing, embedding });
+    const created = await createListing({ sessionId, listing: enrichedListing, embedding });
 
     if (!created) {
       return res.status(500).json({ error: 'Failed to create listing' });

@@ -5,6 +5,7 @@ import { sendChatMessage, fetchSessionHistory, publishListing } from '../lib/api
 import { useUser } from '../lib/UserContext';
 
 const QUICK_ACTIONS = [
+  { label: '📦 Sell something',    prompt: 'I want to sell something' },
   { label: '✨ Daily Insight',    prompt: "Show me what's trending in the city today" },
   { label: '💰 Price an item',    prompt: 'I need help pricing something I want to sell' },
   { label: '🔄 Suggest trades',   prompt: 'What interesting trades do you suggest for me?' },
@@ -128,10 +129,15 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
 
   const handlePublish = async (msgId, draft) => {
     setPublishing(msgId);
-    const result = await publishListing(sessionId, draft);
+    // Enrich draft with user info
+    const enrichedDraft = {
+      ...draft,
+      provider_name: displayName || walletAddress?.slice(0, 8) || 'Community Member',
+    };
+    const result = await publishListing(sessionId, enrichedDraft, walletAddress, displayName);
     if (result) {
       setMessages(prev => prev.map(m => 
-        m.id === msgId ? { ...m, listingDraft: null, listingPublished: true } : m
+        m.id === msgId ? { ...m, listingDraft: null, listingPublished: true, publishedListingId: result.id } : m
       ));
     }
     setPublishing(null);
@@ -269,40 +275,68 @@ const ChatDrawer = ({ isOpen, onClose, onNavigate }) => {
                   dangerouslySetInnerHTML={{ __html: formatText(msg.content) }}
                 />
 
-                {msg.role === 'agent' && msg.listingDraft && (
+                {msg.role === 'agent' && msg.listingDraft && !msg.listingPublished && (
                   <div className="listing-draft-card glass-panel" style={{ marginTop: 12, padding: 16, border: '1px solid var(--accent-lime)' }}>
-                    <p style={{ fontSize: 10, color: 'var(--accent-lime)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 8, letterSpacing: 1 }}>
+                    <p style={{ fontSize: 10, color: 'var(--accent-lime)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 10, letterSpacing: 1 }}>
                       ✨ Listing Draft Ready
                     </p>
-                    <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{msg.listingDraft.title}</h4>
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
-                      Category: {msg.listingDraft.category} {msg.listingDraft.subcategory ? `· ${msg.listingDraft.subcategory}` : ''}
-                    </p>
-                    <div style={{ display: 'flex', gap: 10 }}>
+                    
+                    <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{msg.listingDraft.title}</h4>
+                    
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                      <span className="badge-cyan">{msg.listingDraft.category}</span>
+                      {msg.listingDraft.subcategory && <span className="badge-secondary">{msg.listingDraft.subcategory}</span>}
+                      {msg.listingDraft.condition && <span className="badge-secondary">{msg.listingDraft.condition}</span>}
+                      {msg.listingDraft.price_fiat && <span className="badge-lime">${msg.listingDraft.price_fiat}</span>}
+                      {msg.listingDraft.accepts_trade && <span className="badge-purple">Accepts Trade</span>}
+                    </div>
+                    
+                    {msg.listingDraft.description && (
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10, lineHeight: 1.5 }}>
+                        {msg.listingDraft.description.slice(0, 120)}{msg.listingDraft.description.length > 120 ? '…' : ''}
+                      </p>
+                    )}
+                    
+                    {msg.listingDraft.trade_wants && (
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>
+                        🔄 Wants in trade: {msg.listingDraft.trade_wants}
+                      </p>
+                    )}
+                    
+                    {msg.listingDraft.tags?.length > 0 && (
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
+                        {msg.listingDraft.tags.map(tag => (
+                          <span key={tag} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 100, background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div style={{ display: 'flex', gap: 8 }}>
                       <button 
-                        className="btn-primary" 
-                        style={{ flex: 1, padding: '8px 12px', fontSize: 13 }}
+                        className="checkout-cta" 
+                        style={{ flex: 1, padding: '9px 12px', fontSize: 13 }}
                         onClick={() => handlePublish(msg.id, msg.listingDraft)}
                         disabled={publishing === msg.id}
                       >
                         {publishing === msg.id ? <Loader2 size={14} className="spin-animation" /> : <PackageCheck size={14} />}
-                        Confirm Publish
+                        Publish to Marketplace
                       </button>
-                      <button className="btn-secondary" style={{ padding: '8px 12px', fontSize: 13 }}>Edit</button>
                     </div>
                   </div>
                 )}
 
                 {/* Listing published confirmation */}
-                {msg.role === 'agent' && (msg.listingReady || msg.listingPublished) && (
+                {msg.role === 'agent' && msg.listingPublished && (
                   <div className="listing-published-banner" style={{ marginTop: 12 }}>
                     <PackageCheck size={14} />
-                    Listing published to the marketplace!
+                    Live in the marketplace!
                     <button
                       className="listing-published-link"
                       onClick={() => handleCTA({ tab: 'discover' })}
                     >
-                      View &rarr;
+                      View in Discover →
                     </button>
                   </div>
                 )}

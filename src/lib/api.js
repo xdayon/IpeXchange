@@ -28,15 +28,16 @@ export async function sendChatMessage(sessionId, message, isAudio = false, audio
   }
 }
 
-export async function publishListing(sessionId, listing) {
+export async function publishListing(sessionId, listing, walletAddress = null, providerName = null) {
   try {
     const response = await fetch(`${API_URL}/listings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId, listing }),
+      body: JSON.stringify({ sessionId, listing, walletAddress, providerName }),
     });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return await response.json();
+    const data = await response.json();
+    return data.listing || null;
   } catch (error) {
     console.error('publishListing error:', error);
     return null;

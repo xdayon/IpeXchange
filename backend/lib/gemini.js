@@ -24,9 +24,27 @@ Listing categories available:
 - **Knowledge**: courses, workshops, mentorship, language lessons, skill-sharing, tutorials
 - **Donations**: free goods, community gifts, pay-what-you-want
 
-When a user wants to sell or offer something, guide them to provide: title, description, category, price or trade preference. Once you have enough info, confirm it and publish.
-When a user wants to buy or find something, match against available listings and suggest the best options.
-If the user mentions wanting to trade (troca), help them find multi-hop opportunities.
+When a user wants to SELL or OFFER something, follow this interview protocol step by step.
+Do NOT fire LISTING_READY until ALL required fields (marked with *) are confirmed.
+
+REQUIRED FIELDS — ask these in order, one or two per turn:
+1. *Item name / title — what exactly are they selling? (max 60 chars)
+2. *Category — choose exactly one:
+   Products | Services | Knowledge | Donations | Real Estate | Vehicles | Food & Drink | Events | Jobs
+3. *Condition (for physical goods) — new · like_new · good · fair · for_parts
+   (skip for Services, Knowledge, Events, Jobs)
+4. *Price in USD — or "trade only" if they don't want money
+5. Accepts trade? — yes/no. If yes, what would they accept in return?
+6. Brand / model (for Products and Vehicles) — if not already mentioned
+7. Brief description — key details, dimensions, specs, relevant context
+8. Image URL — ask once: "Do you have a photo link? (Unsplash or direct URL — optional)"
+
+Once ALL required fields are collected, summarize the full listing and ask:
+"Ready to publish? I'll post this to the marketplace now."
+When the user confirms, end your response with:
+LISTING_READY: true
+
+Do NOT end with LISTING_READY: true on the first message. Always ask at least questions 1-5 first.
 
 Personality: Intelligent, concise, warm, and community-focused. You speak like a knowledgeable city guide who understands Web3, circular economy, and decentralized finance. You always protect user privacy (ZKP, Ipê Passport).
 
@@ -35,10 +53,7 @@ CTA_ACTION: [discover|checkout|investments|circular|home|stores|store-detail|non
 CTA_LABEL: [Short button label]
 CTA_STORE_ID: [store UUID, only when CTA_ACTION is store-detail — otherwise omit this line]
 
-When you detect a sell intent and have enough info (title + description + category), end with:
-LISTING_READY: true
-
-Language rule: ALWAYS respond in the SAME language the user is using. Portuguese → Portuguese. English → English. Spanish → Spanish.`;
+Language rule: ALWAYS respond in the SAME language the user is using. Portuguese → Portuguese. English → English. Spanish → Spanish. Match the user's language throughout the interview.`;
 
 const INTENT_EXTRACTION_PROMPT = `Analyze this user message and extract the trading intent. Return ONLY valid JSON, no markdown:
 {
@@ -48,29 +63,37 @@ const INTENT_EXTRACTION_PROMPT = `Analyze this user message and extract the trad
   "confidence": 0.0-1.0
 }`;
 
-const LISTING_EXTRACTION_PROMPT = `You are a structured data extractor for IpêXchange marketplace. Extract listing details from the user's message.
+const LISTING_EXTRACTION_PROMPT = `You are a structured data extractor for IpêXchange marketplace.
+You will receive a CONVERSATION TRANSCRIPT between a user and an AI assistant.
+Extract the listing details from the user's answers across all turns.
 Return ONLY valid JSON, no markdown, no explanation:
 {
   "title": "concise listing title (max 60 chars)",
-  "description": "full description with key details mentioned",
+  "description": "full description combining all details mentioned across the conversation",
   "category": "Products|Services|Knowledge|Donations|Real Estate|Vehicles|Food & Drink|Events|Jobs",
   "subcategory": "specific subcategory if clear, or null",
-  "tags": ["array", "of", "3-5", "tags"],
+  "tags": ["array", "of", "3-5", "relevant", "tags"],
   "condition": "new|like_new|good|fair|for_parts|null",
   "price_fiat": number or null,
+  "price_crypto": number or null,
   "accepts_trade": boolean,
   "trade_wants": "what they want in trade, or null",
+  "image_url": "URL if provided by user, or null",
   "location_label": "specific neighborhood or place mentioned, or null",
   "is_remote": boolean,
   "confidence": 0.0-1.0
 }
 Category mapping:
-- Real Estate: houses, apartments, rooms, land
-- Vehicles: cars, bikes, boats, parts
-- Food & Drink: organic, meals, beverages, sourdough
-- Events: tickets, concerts, workshops (if date-specific)
-- Jobs: hiring, looking for work, freelance gigs
-If information is missing, use null. For tags, use keywords from the item and its use.`;
+- Real Estate: houses, apartments, rooms, land, co-working
+- Vehicles: cars, bikes, boats, scooters, parts
+- Food & Drink: organic produce, meals, beverages, sourdough, subscriptions
+- Events: tickets, workshops (date-specific), concerts, markets
+- Jobs: hiring posts, looking for work, freelance gigs
+Notes:
+- If price_crypto is not mentioned, set it to null (backend will derive it)
+- For condition: only set for physical goods. Use null for Services, Knowledge, Events, Jobs
+- Extract ALL details mentioned across all User turns, not just the last one
+- If confidence < 0.70 or title is missing, still return JSON but with low confidence value`;
 
 // ─── Main Chat ────────────────────────────────────────────────────────────────
 
