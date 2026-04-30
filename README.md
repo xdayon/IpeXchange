@@ -1,10 +1,12 @@
 # IpêXchange 🌳⚡
 
-**The AI-Powered Economic Engine for Smart Communities**
+**An intelligent market for an intelligent city.**
 
-IpêXchange is an intelligent, real-time trading and coordination platform designed for purpose-driven communities. It transforms a local neighborhood into an active, AI-assisted economic network where value moves fluidly through direct trades, multi-party exchanges, and social capital. 
+IpêXchange is an integrated, real-time platform for trade, coordination, and circular economy. It transforms a local neighborhood into an active, AI-assisted economic network where everything is tradeable: from real estate and vehicles to artisan food, professional services, holistic therapies, and knowledge. 
 
-The first deployment targets **Ipê City** in Jurerê, Florianópolis, Brazil, but the architecture is designed to scale to any forward-thinking city or neighborhood seeking a sovereign economic platform.
+Whether you're renting a beachfront studio, trading a surfboard for web design, or buying local sourdough with crypto, IpêXchange unifies the entire city's value into a single, fluid interface.
+
+The first deployment targets **Ipê City** in Jurerê, Florianópolis, Brazil.
 
 ---
 
@@ -26,19 +28,20 @@ Every resident has access to **The Core**: a conversational, multimodal AI (powe
 
 ### 3. The City Graph: A Living Map of Urban Value 🗺️
 IpêXchange renders the city as a dynamic, interactive network graph overlaid on a geographic map (built with Leaflet). 
-Every resident, store, infrastructure node, governance entity, safety zone, and environmental sensor is a live node. Connections pulse with animated data flows, showing trades happening in real time. Layer toggles allow you to inspect the city across seven dimensions:
-*   Identity
-*   Commerce
-*   Infrastructure
-*   Governance
-*   Safety
-*   Environment
-*   Events
+Every resident, store, P2P listing, and event is a live node. Connections pulse with animated data flows, showing trades happening in real time. Layer toggles allow you to inspect the city across its core dimensions:
+*   **Identity**: Digital citizens and their reputation scores.
+*   **Commerce**: A living web of products, services, and trades.
+*   **Events**: Real-time community gatherings and workshops.
 
-### 4. Unified Store + Human Economy 🤝
-Unlike platforms that segregate "peer-to-peer marketplaces" from "local businesses," IpêXchange unifies them. Residents and stores exist within the same trade network, participate in the same multi-hop cycles, and are visible on the same City Graph. The community's economy is treated as one cohesive ecosystem.
+### 4. Integrated Economic Infrastructure 🏦
+IpêXchange isn't just a marketplace; it's a city's economic backbone.
+*   **Treasury Governance**: Automatic tax collection for the city's decentralized treasury, fueling public goods.
+*   **P2P Loans & Investment**: A circular finance layer where residents can fund each other's growth via decentralized loans.
+*   **Recycle Hub**: A built-in circular economy service where citizens exchange unwanted materials for $IPE tokens and reputation.
 
-### 5. On-Chain Identity, Off-Chain Simplicity 🔐
+Unlike platforms that segregate "peer-to-peer marketplaces" from "local businesses," IpêXchange unifies them. Residents and stores exist within the same trade network, participate in the same multi-hop cycles, and are visible on the same City Graph. From speedboats and apartments to coffee and code—everything is part of one cohesive ecosystem.
+
+### 6. On-Chain Identity, Off-Chain Simplicity 🔐
 Authentication is powered by **Privy**, providing residents with a blockchain-backed, portable, and verifiable economic identity without the friction of manually managing crypto wallets. The onboarding experience feels as simple as signing in with an email or social account.
 
 ---
