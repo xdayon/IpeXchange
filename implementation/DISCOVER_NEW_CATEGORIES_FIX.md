@@ -1,20 +1,74 @@
-export const MOCK_SESSIONS = [
-  { id: 'test-session-id' },
-  { id: 'bia-tech-id' },
-  { id: 'bread-co-id' },
-  { id: 'luna-photo-id' },
-  { id: 'fitcoach-id' },
-  { id: 'sound-lab-id' },
-  { id: 'green-roots-id' },
-  { id: 'code-lab-id' },
-  { id: 'ipe-farm-id' },
-  { id: 'marina-h-id' },
-  { id: 'trailco-id' },
-  { id: 'studio-pixel-id' },
-  { id: 'balance-studio-id' },
-  { id: 'inner-spaces-id' },
-  { id: 'skyview-lab-id' },
-  { id: 'community-id' },
+# DISCOVER_NEW_CATEGORIES_FIX
+
+Fix the Discover page not showing new mock data for categories: Real Estate, Vehicles, Food & Drink, Events, and Jobs.
+
+---
+
+## Root Cause (3 layers)
+
+### Layer 1 — Wrong file was edited
+The new mock listings (l33–l50) were added to `src/data/mockData.js`. That file is **not** used by the Discover page. The Discover pipeline is:
+
+```
+DiscoverPage → fetchDiscoverItems() → GET /api/discover → getListings() → Supabase DB
+```
+
+The file that feeds the DB is `backend/lib/mockData.js` (`MOCK_LISTINGS` array). It was never updated.
+
+### Layer 2 — Supabase schema blocks new categories
+`backend/supabase_schema.sql` line 51 has a hard CHECK constraint:
+
+```sql
+category TEXT CHECK (category IN ('Products', 'Services', 'Knowledge', 'Donations'))
+```
+
+Any insert with 'Real Estate', 'Vehicles', 'Food & Drink', 'Events', or 'Jobs' will be **rejected by the DB** even if Layer 1 is fixed.
+
+### Layer 3 — Auto-seed won't re-run
+`ensureMockData()` only seeds when there are **zero** listings. Since the original 10 mock listings exist, auto-seed on restart is a no-op. Re-seed must be triggered manually.
+
+---
+
+## Fix Plan — 3 Steps
+
+---
+
+### Step 1 — Fix the Supabase schema constraint
+
+Run this SQL in the **Supabase SQL Editor** (Dashboard → SQL Editor → New query):
+
+```sql
+-- Drop the old restrictive CHECK constraint
+ALTER TABLE listings
+  DROP CONSTRAINT IF EXISTS listings_category_check;
+
+-- Add expanded CHECK constraint with all 9 categories
+ALTER TABLE listings
+  ADD CONSTRAINT listings_category_check
+  CHECK (category IN (
+    'Products',
+    'Services',
+    'Knowledge',
+    'Donations',
+    'Real Estate',
+    'Vehicles',
+    'Food & Drink',
+    'Events',
+    'Jobs'
+  ));
+```
+
+> **Why**: Without this, the upsert in Step 3 will throw a constraint violation and silently fail (the seed endpoint returns `{ success: false }` but the server continues running).
+
+---
+
+### Step 2 — Add new sessions and listings to `backend/lib/mockData.js`
+
+#### 2a. Add new sessions to `MOCK_SESSIONS`
+
+Append the following entries to the `MOCK_SESSIONS` array in [backend/lib/mockData.js](backend/lib/mockData.js):
+
+```js
   { id: 'founder-haus-id' },
   { id: 'carlos-m-id' },
   { id: 'tech-rent-id' },
@@ -31,174 +85,13 @@ export const MOCK_SESSIONS = [
   { id: 'chef-roberto-id' },
   { id: 'ocean-vibe-id' },
   { id: 'deep-blue-dive-id' },
-];
+```
 
-export const MOCK_LISTINGS = [
-  {
-    session_id: 'test-session-id',
-    title: 'Electric Bike',
-    description: 'Urban electric bike in great condition, perfect for daily mobility. 48V battery, 25km range, hydraulic brakes.',
-    category: 'Products',
-    subcategory: 'Electric',
-    condition: 'good',
-    price_fiat: 850,
-    accepts_trade: true,
-    trade_wants: 'Web design or development work',
-    provider_name: 'Alex M.',
-    image_url: 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&q=80&w=400&h=300',
-    active: true,
-    ai_generated: false,
-    is_mock: true,
-    mock_key: 'electric-bike'
-  },
-  {
-    session_id: 'test-session-id',
-    title: 'MacBook Pro M1 14"',
-    description: 'MacBook Pro M1 14-inch, 16GB RAM, 512GB SSD. Used 1 year. Battery at 92%. Excellent condition. Includes original charger.',
-    category: 'Products',
-    subcategory: 'Electronics',
-    condition: 'like_new',
-    price_fiat: 1200,
-    accepts_trade: false,
-    provider_name: 'Alex M.',
-    image_url: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=400&h=300',
-    active: true,
-    ai_generated: false,
-    is_mock: true,
-    mock_key: 'macbook-pro-m1-14'
-  },
-  {
-    session_id: 'ipe-farm-id',
-    title: 'Bracatinga Honey 500g',
-    description: '100% pure Bracatinga honeydew, hand-harvested from our local sanctuary. Cold-extracted, no additives.',
-    category: 'Products',
-    subcategory: 'Food & Drink',
-    condition: 'new',
-    price_fiat: 12,
-    accepts_trade: true,
-    trade_wants: 'Seeds, plants, or organic goods',
-    provider_name: 'Ipê Farm',
-    image_url: 'https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?auto=format&fit=crop&q=80&w=400&h=300',
-    active: true,
-    ai_generated: false,
-    is_mock: true,
-    mock_key: 'bracatinga-honey-500g'
-  },
-  {
-    session_id: 'bread-co-id',
-    title: 'Artisan Sourdough Subscription',
-    description: 'Fresh sourdough delivered weekly for a month. 100% natural fermentation, no additives. 4 loaves total.',
-    category: 'Products',
-    subcategory: 'Food & Drink',
-    condition: 'new',
-    price_fiat: 45,
-    accepts_trade: true,
-    trade_wants: 'Fresh produce or fermented foods',
-    provider_name: 'Bread & Co',
-    image_url: 'https://images.unsplash.com/photo-1586444248902-2f64eddc13df?auto=format&fit=crop&q=80&w=400&h=300',
-    active: true,
-    ai_generated: false,
-    is_mock: true,
-    mock_key: 'artisan-sourdough-subscription'
-  },
-  {
-    session_id: 'skyview-lab-id',
-    title: 'DJI Mini 4 Pro Drone',
-    description: 'DJI Mini 4 Pro with 2 batteries and carrying case. 4K/60fps, 34min flight time. Less than 10 flights.',
-    category: 'Products',
-    subcategory: 'Electronics',
-    condition: 'like_new',
-    price_fiat: 550,
-    accepts_trade: true,
-    trade_wants: 'Photography gear or tech equipment',
-    provider_name: 'SkyView Lab',
-    image_url: 'https://images.unsplash.com/photo-1508614999368-9260051292e5?auto=format&fit=crop&q=80&w=400&h=300',
-    active: true,
-    ai_generated: false,
-    is_mock: true,
-    mock_key: 'dji-mini-4-pro-drone'
-  },
-  {
-    session_id: 'green-roots-id',
-    title: 'Solar Panel Kit 200W',
-    description: 'Complete off-grid solar kit: 200W panel, 20A charge controller, cables and mounting brackets. Perfect for van or tiny house.',
-    category: 'Products',
-    subcategory: 'Electric',
-    condition: 'new',
-    price_fiat: 320,
-    accepts_trade: true,
-    trade_wants: 'Construction materials or tools',
-    provider_name: 'Green Roots',
-    image_url: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&q=80&w=400&h=300',
-    active: true,
-    ai_generated: false,
-    is_mock: true,
-    mock_key: 'solar-panel-kit-200w'
-  },
-  {
-    session_id: 'bia-tech-id',
-    title: 'Web Development Consulting',
-    description: '10h package of Web Design and Development consulting. React, Next.js, Node.js. Portfolio available.',
-    category: 'Services',
-    subcategory: 'Technology',
-    price_fiat: 500,
-    accepts_trade: true,
-    trade_wants: 'Electronic equipment or quality food',
-    provider_name: 'Bia Tech',
-    image_url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=400&h=300',
-    active: true,
-    ai_generated: false,
-    is_mock: true,
-    mock_key: 'web-development-consulting'
-  },
-  {
-    session_id: 'marina-h-id',
-    title: 'Reiki & Energy Healing',
-    description: 'Full Reiki session (60 min) for energy balancing, stress relief and inner alignment. Peaceful space with aromatherapy and sound bowl.',
-    category: 'Services',
-    subcategory: 'Health & Wellness',
-    price_fiat: 60,
-    accepts_trade: true,
-    trade_wants: 'Yoga classes or organic food',
-    provider_name: 'Marina H.',
-    image_url: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=400&h=300',
-    active: true,
-    ai_generated: false,
-    is_mock: true,
-    mock_key: 'reiki-energy-healing'
-  },
-  {
-    session_id: 'code-lab-id',
-    title: 'Python & AI Workshop',
-    description: 'Hands-on 2-day workshop: Python fundamentals → AI/ML basics → building your first model. Small group (max 8 people).',
-    category: 'Knowledge',
-    subcategory: 'Workshops',
-    price_fiat: 120,
-    accepts_trade: true,
-    trade_wants: 'Design, photography or content creation',
-    provider_name: 'Code Lab',
-    image_url: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&q=80&w=400&h=300',
-    active: true,
-    ai_generated: false,
-    is_mock: true,
-    mock_key: 'python-ai-workshop'
-  },
-  {
-    session_id: 'community-id',
-    title: 'Box of Books',
-    description: 'Curated selection of 20 books: fiction, philosophy, science, self-development. Excellent condition.',
-    category: 'Donations',
-    subcategory: 'Books',
-    price_fiat: 0,
-    accepts_trade: false,
-    provider_name: 'Book Exchange',
-    image_url: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=400&h=300',
-    active: true,
-    ai_generated: false,
-    is_mock: true,
-    mock_key: 'box-of-books'
-  },
+#### 2b. Add new listings to `MOCK_LISTINGS`
 
+Append the following entries to the `MOCK_LISTINGS` array in [backend/lib/mockData.js](backend/lib/mockData.js):
+
+```js
   // ── Real Estate ──────────────────────────────────────────────────────────────
   {
     session_id: 'founder-haus-id',
@@ -490,23 +383,52 @@ export const MOCK_LISTINGS = [
     ai_generated: false,
     is_mock: true,
     mock_key: 'padi-scuba-diving-certification'
-  }
-];
+  },
+```
 
-export const MOCK_DEMANDS = [
-  { session_id: 'test-session-id', description: 'Looking for web design and development consulting', category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-test-web-dev' },
-  { session_id: 'bia-tech-id',      description: 'I want fresh artisan sourdough bread',              category: 'Products', accepts_trade: true, is_mock: true, mock_key: 'demand-bia-bread' },
-  { session_id: 'bread-co-id',      description: 'Need an electric bike for deliveries',              category: 'Products', accepts_trade: true, is_mock: true, mock_key: 'demand-bread-bike' },
-  { session_id: 'luna-photo-id',    description: 'I want graphic design for my portfolio',            category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-luna-design' },
-  { session_id: 'studio-pixel-id',  description: 'Looking for a kayak to explore the coast',          category: 'Products', accepts_trade: true, is_mock: true, mock_key: 'demand-pixel-kayak' },
-  { session_id: 'trailco-id',       description: 'I want photography for my brand',                   category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-trail-photo' },
-  { session_id: 'marina-h-id',      description: 'Looking for Python and AI training',                category: 'Knowledge', accepts_trade: true, is_mock: true, mock_key: 'demand-marina-python' },
-  { session_id: 'code-lab-id',      description: 'I want a sound healing session',                    category: 'Knowledge', accepts_trade: true, is_mock: true, mock_key: 'demand-code-sound' },
-  { session_id: 'sound-lab-id',     description: 'I want reiki and energy healing',                   category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-sound-reiki' },
-  { session_id: 'fitcoach-id',      description: 'I want a no-code app building workshop',            category: 'Knowledge', accepts_trade: true, is_mock: true, mock_key: 'demand-fit-nocode' },
-  { session_id: 'inner-spaces-id',  description: 'I want personal training and fitness coaching',     category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-inner-fit' },
-  { session_id: 'code-lab-id',      description: 'I need a MacBook for development work',             category: 'Products', accepts_trade: true, is_mock: true, mock_key: 'demand-code-macbook' },
-  { session_id: 'green-roots-id',   description: 'I want permaculture and farming knowledge',         category: 'Knowledge', accepts_trade: true, is_mock: true, mock_key: 'demand-green-perma' },
-  { session_id: 'balance-studio-id', description: 'I want yoga teacher training',                     category: 'Knowledge', accepts_trade: true, is_mock: true, mock_key: 'demand-balance-yoga' },
-  { session_id: 'skyview-lab-id',   description: 'I want acupuncture and body work',                  category: 'Services', accepts_trade: true, is_mock: true, mock_key: 'demand-sky-acupuncture' }
-];
+---
+
+### Step 3 — Trigger re-seed
+
+After the schema fix (Step 1) and code changes are deployed/running locally, call the seed endpoint. Two options:
+
+**Option A — Via ConfigPage UI (easiest)**
+1. Open the app → go to **Config** page (settings icon)
+2. Scroll to **Admin & Debug** section
+3. Click **"Seed Mock City Data"** button
+4. Wait for the green success toast
+
+**Option B — Via curl (faster for local dev)**
+```bash
+curl -X POST http://localhost:3001/api/admin/seed
+```
+
+The `seedDatabase()` function uses `upsert` with `onConflict: 'mock_key'`, so it is safe to run multiple times — it will insert new entries and update existing ones without creating duplicates.
+
+---
+
+## Files to Change
+
+| File | Change |
+|------|--------|
+| Supabase SQL Editor (dashboard) | Run the ALTER TABLE from Step 1 |
+| [backend/lib/mockData.js](backend/lib/mockData.js) | Add 16 sessions to `MOCK_SESSIONS` + 18 listings to `MOCK_LISTINGS` |
+
+**No frontend changes needed.** `DiscoverPage.jsx` already has all 9 category filter chips and subcategory maps wired up.
+
+---
+
+## Verification Checklist
+
+After executing all steps:
+
+- [ ] Supabase SQL Editor: the ALTER TABLE ran without errors
+- [ ] `MOCK_SESSIONS` has 32 entries (16 original + 16 new)
+- [ ] `MOCK_LISTINGS` has 28 entries (10 original + 18 new)
+- [ ] Seed endpoint returns `{ "success": true }`
+- [ ] Discover page → filter "Real Estate" → 3 listings appear
+- [ ] Discover page → filter "Vehicles" → 4 listings appear
+- [ ] Discover page → filter "Food & Drink" → 3 listings appear
+- [ ] Discover page → filter "Events" → 3 listings appear
+- [ ] Discover page → filter "Jobs" → 3 listings appear
+- [ ] Discover page → filter "All" → 28+ listings appear
