@@ -285,7 +285,8 @@ const AgentCommandCenter = ({ isOpen, onClose, onNavigate }) => {
                     <div
                       className={`acc-msg-bubble ${msg.role}`}
                       dangerouslySetInnerHTML={{ __html: formatText(msg.content) }}
-                                  {msg.role === 'agent' && msg.listingDraft && !msg.listingPublished && (
+                    />
+                    {msg.role === 'agent' && msg.listingDraft && !msg.listingPublished && (
                       <div className="listing-draft-card glass-panel" style={{ marginTop: 12, padding: 16, border: '1px solid var(--accent-lime)' }}>
                         <p style={{ fontSize: 10, color: 'var(--accent-lime)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 10, letterSpacing: 1 }}>
                           ✨ Listing Draft Ready
@@ -343,7 +344,7 @@ const AgentCommandCenter = ({ isOpen, onClose, onNavigate }) => {
                         Live in the marketplace!
                         <button className="listing-published-link" onClick={() => handleCTA({ tab: 'discover' })}>View in Discover →</button>
                       </div>
-                    )}           )}
+                    )}
 
                     {msg.role === 'agent' && msg.cta && !msg.listingReady && (
                       <button className="chat-cta-btn" onClick={() => handleCTA(msg.cta)}>
