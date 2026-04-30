@@ -13,43 +13,60 @@ const inMemory = {
   intents: [],
   listings: [...MOCK_LISTINGS],
   demands: [],
+  // All prices anchored to pa (first item). vr = min(px/pa) for all x != a, threshold 0.70.
   cycles: [
     {
       id: 'cycle-demo-3hop',
       hops: 3,
-      matchScore: 94.5,
-      valueRatio: 82.1,
+      matchScore: 92.0,
+      valueRatio: 84.7,
+      // anchor $850 | min(800/850, 720/850) = 0.847
       nodes: [
         { user: 'You', item: 'Electric Bike', price: 850, rep: 85, is_mock: true, sourceType: 'user_listing', avatar: null },
-        { user: 'Bia Tech', item: 'Web Dev Consulting (10h)', price: 500, rep: 92, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=60&h=60' },
-        { user: 'Bread & Co', item: 'Artisan Sourdough Subscription', price: 450, rep: 96, is_mock: true, sourceType: 'store_product', storeId: 'store-bakery', avatar: 'https://images.unsplash.com/photo-1586444248902-2f64eddc13df?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'Bia Tech', item: 'Web Dev Consulting (10h)', price: 800, rep: 92, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'WoodCraft', item: 'Woodworking Workshop (6 lessons)', price: 720, rep: 79, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1540314227222-2daee298072c?auto=format&fit=crop&q=80&w=60&h=60' },
       ]
     },
     {
       id: 'cycle-demo-4hop',
       hops: 4,
-      matchScore: 88.7,
-      valueRatio: 74.0,
+      matchScore: 88.8,
+      valueRatio: 81.7,
+      // anchor $1200 | min(1050/1200, 980/1200, 1100/1200) = 0.817
       nodes: [
-        { user: 'You', item: 'Electric Bike', price: 850, rep: 85, is_mock: true, sourceType: 'user_listing', avatar: null },
-        { user: 'FitCoach', item: 'Yoga Sessions (10h)', price: 600, rep: 88, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=60&h=60' },
-        { user: 'CoffeeLab', item: 'Coffee Roasting Workshop', price: 700, rep: 94, is_mock: true, sourceType: 'store_product', storeId: 'store-coffee', avatar: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=60&h=60' },
-        { user: 'AI Haus', item: 'Smart Home Setup', price: 800, rep: 91, is_mock: true, sourceType: 'store_product', storeId: 'store-aihaus', avatar: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'You', item: 'MacBook Pro M1 14"', price: 1200, rep: 85, is_mock: true, sourceType: 'user_listing', avatar: null },
+        { user: 'Studio Pixel', item: 'Full Brand Identity Package', price: 1050, rep: 89, is_mock: true, sourceType: 'store_product', avatar: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'Luna Foto', item: 'Photography Full Day Session', price: 980, rep: 94, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1520390138845-fd2d229dd553?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'TrailCo', item: 'Adventure Tour + Gear Rental', price: 1100, rep: 88, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&q=80&w=60&h=60' },
       ]
     },
     {
       id: 'cycle-demo-5hop',
       hops: 5,
-      matchScore: 82.3,
-      valueRatio: 71.5,
+      matchScore: 86.3,
+      valueRatio: 81.8,
+      // anchor $550 | min(480/550, 500/550, 520/550, 450/550) = 0.818
       nodes: [
-        { user: 'You', item: 'Macbook Pro M1', price: 1200, rep: 85, is_mock: true, sourceType: 'user_listing', avatar: null },
-        { user: 'Bia Tech', item: 'Web Dev Consulting (15h)', price: 1000, rep: 92, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=60&h=60' },
-        { user: 'WoodCraft', item: 'Woodworking Workshop (5 lessons)', price: 900, rep: 79, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1540314227222-2daee298072c?auto=format&fit=crop&q=80&w=60&h=60' },
-        { user: 'Ipê Bakery', item: '3-Month Sourdough Subscription', price: 750, rep: 96, is_mock: true, sourceType: 'store_product', storeId: 'store-bakery', avatar: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=60&h=60' },
-        { user: 'Green Roots', item: 'Organic Veggie Box (3 months)', price: 975, rep: 88, is_mock: true, sourceType: 'store_product', storeId: 'store-organic', avatar: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'You', item: 'DJI Mini 4 Pro Drone', price: 550, rep: 85, is_mock: true, sourceType: 'user_listing', avatar: null },
+        { user: 'Ipê City Motors', item: 'Full Electrical Review', price: 480, rep: 94, is_mock: true, sourceType: 'store_product', avatar: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'Green Roots', item: 'Permaculture + Urban Farm Day', price: 500, rep: 91, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'Marina H.', item: 'Wellness & Massage Package', price: 520, rep: 97, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'Code Lab', item: 'No-Code App Sprint (20h)', price: 450, rep: 93, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?auto=format&fit=crop&q=80&w=60&h=60' },
       ]
-    }
+    },
+    {
+      id: 'cycle-demo-4hop-b',
+      hops: 4,
+      matchScore: 87.1,
+      valueRatio: 85.3,
+      // anchor $680 | min(600/680, 620/680, 580/680) = 0.853
+      nodes: [
+        { user: 'You', item: 'Road Bike (Cannondale)', price: 680, rep: 85, is_mock: true, sourceType: 'user_listing', avatar: null },
+        { user: 'Ipê Health Clinic', item: 'Physiotherapy (6 sessions)', price: 600, rep: 100, is_mock: true, sourceType: 'store_product', avatar: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'FitCoach', item: 'Personal Training (10 sessions)', price: 620, rep: 88, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'Bread & Co', item: 'Sourdough + Coffee Bundle', price: 580, rep: 98, is_mock: true, sourceType: 'store_product', avatar: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=60&h=60' },
+      ]
+    },
   ],
 };
 
@@ -375,9 +392,15 @@ export async function getTradeCycles(sessionId) {
     console.error('getTradeCycles error:', error.message);
     return inMemory.cycles;
   }
-  
-  // Pl/PgSQL JSONB returns either null or an array
-  return data && data.length > 0 ? data : inMemory.cycles;
+
+  if (!data || data.length === 0) return inMemory.cycles;
+
+  // If the SQL returned its own hardcoded demo fallback (IDs start with 'cycle-demo-'),
+  // replace with the JS-layer corrected cycles so value balances are always anchor-based.
+  const isFromSqlFallback = data.every(c => String(c.id || '').startsWith('cycle-demo-'));
+  if (isFromSqlFallback) return inMemory.cycles;
+
+  return data;
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
