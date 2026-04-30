@@ -187,6 +187,122 @@ export const mockListings = [
     coordinates: { lat: -27.4433, lng: -48.5022 },
     nodeName: 'bakery-hub',
     image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // --- NEW MOCK DATA ---
+  // Real Estate
+  {
+    id: 'l33',
+    title: 'Dedicated Desk at Founder Haus',
+    category: 'Real Estate',
+    provider: 'Founder Haus', type: 'Service', acceptedPayments: ['crypto', 'fiat'], price: '$200/month',
+    description: '24/7 access to our co-working space. High-speed internet, meeting rooms, and coffee included.',
+    isPublic: true,
+    coordinates: { lat: -27.43890, lng: -48.49985 },
+    nodeName: 'founder-haus',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l34',
+    title: 'Beachfront Studio (Short-term)',
+    category: 'Real Estate',
+    provider: 'Carlos M.', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: '$80/night',
+    description: 'Cozy studio directly facing Jurerê beach. Fully furnished, perfect for digital nomads.',
+    isPublic: true,
+    coordinates: { lat: -27.4360, lng: -48.5020 },
+    nodeName: 'studio-beach',
+    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // Vehicles
+  {
+    id: 'l35',
+    title: 'Xiaomi Electric Scooter Pro 2',
+    category: 'Vehicles',
+    provider: 'Tech Rent', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$350',
+    description: 'Used for 6 months. Great condition, 45km range. Includes charger and helmet.',
+    isPublic: true,
+    coordinates: { lat: -27.4405, lng: -48.5080 },
+    nodeName: 'scooter-hub',
+    image: 'https://images.unsplash.com/photo-1593955675402-1b154a86f7b1?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l36',
+    title: 'Honda PCX 150 - 2022',
+    category: 'Vehicles',
+    provider: 'Moto Jurere', type: 'Product', acceptedPayments: ['fiat'], price: '$2,800',
+    description: 'Automatic scooter, 8,000km. Perfect for moving around the city. Documentation up to date.',
+    isPublic: true,
+    coordinates: { lat: -27.4420, lng: -48.4960 },
+    nodeName: 'moto-jurere',
+    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // Food & Drink
+  {
+    id: 'l37',
+    title: 'Organic Veggie Box (Weekly)',
+    category: 'Food & Drink',
+    provider: 'Green Roots', type: 'Product', acceptedPayments: ['fiat', 'trade'], price: '$25/week',
+    description: 'Seasonal organic vegetables and greens from our urban farm delivered to your door.',
+    isPublic: true,
+    coordinates: { lat: -27.4460, lng: -48.5060 },
+    nodeName: 'green-roots-farm',
+    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l38',
+    title: 'Ipê Craft IPA - 6 Pack',
+    category: 'Food & Drink',
+    provider: 'Brewery Jurerê', type: 'Product', acceptedPayments: ['crypto', 'fiat'], price: '$18',
+    description: 'Local craft IPA brewed with native Brazilian hops. Support local brewing!',
+    isPublic: true,
+    coordinates: { lat: -27.4445, lng: -48.5015 },
+    nodeName: 'brewery-jurere',
+    image: 'https://images.unsplash.com/photo-1614316784845-f938fae8fcbc?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // Events
+  {
+    id: 'l39',
+    title: 'Beach Cleanup & Sunset Yoga',
+    category: 'Events',
+    provider: 'Community Hub', type: 'Service', acceptedPayments: ['free'], price: 'Free',
+    description: 'Join us for a 1-hour beach cleanup followed by a sunset yoga session. Bring your own mat!',
+    isPublic: true,
+    coordinates: { lat: -27.4350, lng: -48.5000 },
+    nodeName: 'beach-yoga',
+    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l40',
+    title: 'Web3 Builders Hackathon',
+    category: 'Events',
+    provider: 'AI Haus', type: 'Service', acceptedPayments: ['crypto', 'fiat'], price: '$15 (Catering)',
+    description: 'Weekend hackathon focusing on local DAO governance and smart contracts. Food and drinks included.',
+    isPublic: true,
+    coordinates: { lat: -27.43747, lng: -48.50342 },
+    nodeName: 'ai-haus',
+    image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // Jobs
+  {
+    id: 'l41',
+    title: 'Senior React Native Dev',
+    category: 'Jobs',
+    provider: 'Ipê Tech', type: 'Service', acceptedPayments: ['crypto'], price: '5,000 USDC/mo',
+    description: 'Looking for an experienced RN developer to help build the mobile version of IpêXchange. Remote OK.',
+    isPublic: true,
+    coordinates: { lat: -27.44130, lng: -48.50540 },
+    nodeName: 'ipe-tech',
+    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l42',
+    title: 'Part-time Barista',
+    category: 'Jobs',
+    provider: 'Ipê Bakery', type: 'Service', acceptedPayments: ['fiat'], price: '$12/hour',
+    description: 'We are looking for a friendly barista for the morning shift (7 AM - 12 PM). Experience preferred but not required.',
+    isPublic: true,
+    coordinates: { lat: -27.44580, lng: -48.50100 },
+    nodeName: 'ipe-bakery',
+    image: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&q=80&w=400&h=300'
   }
 ];
 
