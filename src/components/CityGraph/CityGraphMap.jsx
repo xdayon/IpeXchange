@@ -8,9 +8,100 @@ import { LAYER_META } from '../../lib/cityGraphAdapter';
 import { EntityDetailPanel } from './EntityDetailPanel';
 import { LayerToggle } from './LayerToggle';
 import { SimEngine } from './SimEngine';
-import { ActivityFeed } from '../ActivityFeed';
 
+// ─── Inline ActivityFeed (embedded to avoid external file dependency) ─────────
 
+const ACTIVITY_ICONS = {
+  trade:      '⇄',
+  listing:    '🏷',
+  event:      '📅',
+  investment: '📈',
+  transfer:   '→',
+};
+
+function ActivityFeed({ activities }) {
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: 16,
+      left: 16,
+      zIndex: 600,
+      width: 280,
+      maxHeight: 220,
+      background: 'rgba(4,18,36,0.88)',
+      border: '1px solid rgba(122,231,255,0.15)',
+      borderRadius: 14,
+      backdropFilter: 'blur(12px)',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      pointerEvents: 'none',
+    }}>
+      <div style={{
+        padding: '10px 14px',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        color: 'rgba(122,231,255,0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+      }}>
+        <span style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: '#B4F44A',
+          boxShadow: '0 0 6px #B4F44A',
+          animation: 'pulse 1.5s ease-in-out infinite',
+        }} />
+        Live Activity
+      </div>
+      <ul style={{ margin: 0, padding: '6px 0', listStyle: 'none', overflowY: 'auto', flex: 1 }}>
+        {activities.length === 0 ? (
+          <li style={{ padding: '8px 14px', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+            Waiting for activity…
+          </li>
+        ) : (
+          activities.slice(0, 6).map(act => (
+            <li key={act.id} style={{
+              padding: '7px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              borderBottom: '1px solid rgba(255,255,255,0.04)',
+            }}>
+              <span style={{
+                fontSize: 12,
+                color: act.color,
+                background: `${act.color}18`,
+                width: 22,
+                height: 22,
+                borderRadius: 6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                {ACTIVITY_ICONS[act.type] || '⚡'}
+              </span>
+              <span style={{
+                fontSize: 11,
+                lineHeight: 1.4,
+                color: 'rgba(255,255,255,0.7)',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+              }}>
+                {act.text}
+              </span>
+            </li>
+          ))
+        )}
+      </ul>
+    </div>
+  );
+}
 
 const SW = [-27.4518, -48.5135];
 const NE = [-27.4334, -48.4905];
