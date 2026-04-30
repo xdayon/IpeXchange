@@ -41,7 +41,7 @@ const ComboTag = ({ combo }) => {
   );
 };
 
-const MultiHopTradeCard = ({ cycle }) => {
+const MultiHopTradeCard = ({ cycle, onNavigate }) => {
   const [status, setStatus] = useState('pending');
 
   const hops = cycle.hops || cycle.nodes?.length || 3;
@@ -147,6 +147,28 @@ const MultiHopTradeCard = ({ cycle }) => {
                         <span style={{ fontSize: 12, fontWeight: 700, color: '#B4F44A', marginLeft: 'auto', background: 'rgba(180,244,74,0.08)', padding: '2px 8px', borderRadius: 100, border: '1px solid rgba(180,244,74,0.2)' }}>
                           {fmtPrice(node.price)}
                         </span>
+                      )}
+                      
+                      {/* Navigation Link */}
+                      {onNavigate && (node.sourceType === 'user_listing' || node.sourceType === 'store_product') && (
+                        <button
+                          onClick={() => {
+                            if (node.sourceType === 'store_product' && node.storeId) {
+                              onNavigate('store-detail', { storeId: node.storeId });
+                            } else {
+                              onNavigate('discover');
+                            }
+                          }}
+                          style={{
+                            fontSize: 10, fontWeight: 800, color: '#38BDF8', background: 'transparent',
+                            border: 'none', cursor: 'pointer', padding: '4px 8px', marginLeft: 4,
+                            textTransform: 'uppercase', letterSpacing: '0.05em'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                          onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                        >
+                          View →
+                        </button>
                       )}
                     </div>
                     {/* Combo items if present */}

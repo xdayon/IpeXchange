@@ -69,7 +69,7 @@ export const mockListings = [
     id: 'l7',
     title: 'Climate Data Analysis',
     category: 'Services',
-    provider: 'Jurere Climate', type: 'Service', acceptedPayments: ['fiat'], price: '$30',
+    provider: 'Jurere Climate', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: '$30',
     description: 'Environmental impact reports for local constructions and gardens.',
     isPublic: true,
     coordinates: { lat: -27.4445, lng: -48.5085 },
@@ -135,7 +135,7 @@ export const mockListings = [
     id: 'l28',
     title: 'Cello Lessons',
     category: 'Services',
-    provider: 'Music & Co', type: 'Service', acceptedPayments: ['fiat', 'trade'], price: '$15/hour',
+    provider: 'Music & Co', type: 'Service', acceptedPayments: ['fiat', 'crypto', 'trade'], price: '$15/hour',
     description: 'Beginner and intermediate classes. I have an extra cello.',
     isPublic: true,
     coordinates: { lat: -27.4430, lng: -48.5080 },
@@ -158,7 +158,7 @@ export const mockListings = [
     id: 'l30',
     title: 'Woodworking Workshop',
     category: 'Knowledge',
-    provider: 'WoodCraft', type: 'Service', acceptedPayments: ['fiat', 'trade'], price: '$15/lesson',
+    provider: 'WoodCraft', type: 'Service', acceptedPayments: ['fiat', 'crypto', 'trade'], price: '$15/lesson',
     citizenTier: 'Resident', ipeRep: 75,
     description: 'Practical lessons on manual woodworking. Build your own furniture.',
     isPublic: true,
@@ -181,7 +181,7 @@ export const mockListings = [
     id: 'l32',
     title: 'Artisan Sourdough Bakery',
     category: 'Products',
-    provider: 'Bread & Co', type: 'Product', acceptedPayments: ['fiat', 'trade'], price: '$5/loaf',
+    provider: 'Bread & Co', type: 'Product', acceptedPayments: ['fiat', 'crypto', 'trade'], price: '$5/loaf',
     description: 'Freshly baked sourdough bread every morning. We accept trades for fresh produce.',
     isPublic: true,
     coordinates: { lat: -27.4433, lng: -48.5022 },
@@ -228,7 +228,7 @@ export const mockListings = [
     id: 'l36',
     title: 'Honda PCX 150 - 2022',
     category: 'Vehicles',
-    provider: 'Moto Jurere', type: 'Product', acceptedPayments: ['fiat'], price: '$2,800',
+    provider: 'Moto Jurere', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$2,800',
     description: 'Automatic scooter, 8,000km. Perfect for moving around the city. Documentation up to date.',
     isPublic: true,
     coordinates: { lat: -27.4420, lng: -48.4960 },
@@ -240,7 +240,7 @@ export const mockListings = [
     id: 'l37',
     title: 'Organic Veggie Box (Weekly)',
     category: 'Food & Drink',
-    provider: 'Green Roots', type: 'Product', acceptedPayments: ['fiat', 'trade'], price: '$25/week',
+    provider: 'Green Roots', type: 'Product', acceptedPayments: ['fiat', 'crypto', 'trade'], price: '$25/week',
     description: 'Seasonal organic vegetables and greens from our urban farm delivered to your door.',
     isPublic: true,
     coordinates: { lat: -27.4460, lng: -48.5060 },
@@ -268,7 +268,7 @@ export const mockListings = [
     isPublic: true,
     coordinates: { lat: -27.4350, lng: -48.5000 },
     nodeName: 'beach-yoga',
-    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=400&h=300'
+    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=400&h=300'
   },
   {
     id: 'l40',
@@ -297,7 +297,7 @@ export const mockListings = [
     id: 'l42',
     title: 'Part-time Barista',
     category: 'Jobs',
-    provider: 'Ipê Bakery', type: 'Service', acceptedPayments: ['fiat'], price: '$12/hour',
+    provider: 'Ipê Bakery', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: '$12/hour',
     description: 'We are looking for a friendly barista for the morning shift (7 AM - 12 PM). Experience preferred but not required.',
     isPublic: true,
     coordinates: { lat: -27.44580, lng: -48.50100 },
@@ -338,14 +338,14 @@ export const mockListings = [
     isPublic: true,
     coordinates: { lat: -27.44290, lng: -48.49985 },
     nodeName: 'alex-house',
-    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=400&h=300'
+    image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=400&h=300'
   },
   // Jobs
   {
     id: 'l46',
     title: 'Beach Life-Guard',
     category: 'Jobs',
-    provider: 'Jurerê Safety', type: 'Service', acceptedPayments: ['fiat'], price: '3,500 BRL/mo',
+    provider: 'Jurerê Safety', type: 'Service', acceptedPayments: ['fiat', 'crypto'], price: '3,500 BRL/mo',
     description: 'Looking for a certified life-guard for the summer season (Dec-Mar). Must have valid CPR and water rescue certificates.',
     isPublic: true,
     coordinates: { lat: -27.4380, lng: -48.5000 },
@@ -398,7 +398,7 @@ export const mockListings = [
     isPublic: true,
     coordinates: { lat: -27.4360, lng: -48.5080 },
     nodeName: 'dive-shop',
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&q=80&w=400&h=300'
+    image: 'https://images.unsplash.com/photo-1559825481-12a05cc00344?auto=format&fit=crop&q=80&w=400&h=300'
   }
 ];
 

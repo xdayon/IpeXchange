@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import {
   Home, Compass, Store, TrendingUp,
   User, Wallet, Bot, Settings, Bell, Repeat,
-  MessageCircle, ChevronRight, BarChart3
+  MessageCircle, ChevronRight, BarChart3, Recycle2
 } from 'lucide-react';
 import { pingHealth } from '../lib/api';
 
@@ -21,6 +21,7 @@ const CircularTradePage = lazy(() => import('./CircularTradePage'));
 const ConfigPage        = lazy(() => import('./ConfigPage'));
 const NotificationsPage = lazy(() => import('./NotificationsPage'));
 const TreasuryPage      = lazy(() => import('./TreasuryPage'));
+const RecyclePage       = lazy(() => import('./RecyclePage'));
 
 // Overlay / sub-pages (heaviest — always lazy)
 const XchangeCheckout   = lazy(() => import('./XchangeCheckout'));
@@ -46,11 +47,12 @@ const NAV_TABS = [
 const NAV_ICONS = [
   { id: 'profile',  icon: <User size={20} />,     label: 'Profile' },
   { id: 'wallet',   icon: <Wallet size={20} />,   label: 'Wallet' },
+  { id: 'recycle',  icon: <Recycle2 size={20} />, label: 'Recycle' },
   { id: 'agent',    icon: <Bot size={20} />,      label: 'Agent' },
   { id: 'config',   icon: <Settings size={20} />, label: 'Config' },
 ];
 
-const PAGES         = ['profile', 'wallet', 'agent', 'circular', 'config', 'notifications'];
+const PAGES         = ['profile', 'wallet', 'recycle', 'agent', 'circular', 'config', 'notifications'];
 const OVERLAY_PAGES = ['checkout', 'listing-detail', 'investment-detail', 'my-purchases', 'my-listings', 'store-detail'];
 
 // ─── Minimal page skeleton shown while lazy chunks load ───────────────────────
@@ -282,8 +284,9 @@ const MainPortal = () => {
                 {tab === 'profile'       && <ProfilePage />}
                 {tab === 'wallet'        && <WalletPage onNavigate={handleNavigate} />}
                 {tab === 'agent'         && <AgentPage />}
-                { tab === 'circular'      && <CircularTradePage /> }
+                { tab === 'circular'      && <CircularTradePage onNavigate={handleNavigate} /> }
                 { tab === 'treasury'      && <TreasuryPage /> }
+                { tab === 'recycle'       && <RecyclePage /> }
                 { tab === 'config'        && <ConfigPage /> }
                 {tab === 'notifications' && <NotificationsPage />}
               </TabBoundary>

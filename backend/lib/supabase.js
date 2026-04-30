@@ -13,7 +13,44 @@ const inMemory = {
   intents: [],
   listings: [...MOCK_LISTINGS],
   demands: [],
-  cycles: [],
+  cycles: [
+    {
+      id: 'cycle-demo-3hop',
+      hops: 3,
+      matchScore: 94.5,
+      valueRatio: 82.1,
+      nodes: [
+        { user: 'You', item: 'Electric Bike', price: 850, rep: 85, is_mock: true, sourceType: 'user_listing', avatar: null },
+        { user: 'Bia Tech', item: 'Web Dev Consulting (10h)', price: 500, rep: 92, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'Bread & Co', item: 'Artisan Sourdough Subscription', price: 450, rep: 96, is_mock: true, sourceType: 'store_product', storeId: 'store-bakery', avatar: 'https://images.unsplash.com/photo-1586444248902-2f64eddc13df?auto=format&fit=crop&q=80&w=60&h=60' },
+      ]
+    },
+    {
+      id: 'cycle-demo-4hop',
+      hops: 4,
+      matchScore: 88.7,
+      valueRatio: 74.0,
+      nodes: [
+        { user: 'You', item: 'Electric Bike', price: 850, rep: 85, is_mock: true, sourceType: 'user_listing', avatar: null },
+        { user: 'FitCoach', item: 'Yoga Sessions (10h)', price: 600, rep: 88, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'CoffeeLab', item: 'Coffee Roasting Workshop', price: 700, rep: 94, is_mock: true, sourceType: 'store_product', storeId: 'store-coffee', avatar: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'AI Haus', item: 'Smart Home Setup', price: 800, rep: 91, is_mock: true, sourceType: 'store_product', storeId: 'store-aihaus', avatar: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=60&h=60' },
+      ]
+    },
+    {
+      id: 'cycle-demo-5hop',
+      hops: 5,
+      matchScore: 82.3,
+      valueRatio: 71.5,
+      nodes: [
+        { user: 'You', item: 'Macbook Pro M1', price: 1200, rep: 85, is_mock: true, sourceType: 'user_listing', avatar: null },
+        { user: 'Bia Tech', item: 'Web Dev Consulting (15h)', price: 1000, rep: 92, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'WoodCraft', item: 'Woodworking Workshop (5 lessons)', price: 900, rep: 79, is_mock: true, sourceType: 'user_listing', avatar: 'https://images.unsplash.com/photo-1540314227222-2daee298072c?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'Ipê Bakery', item: '3-Month Sourdough Subscription', price: 750, rep: 96, is_mock: true, sourceType: 'store_product', storeId: 'store-bakery', avatar: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=60&h=60' },
+        { user: 'Green Roots', item: 'Organic Veggie Box (3 months)', price: 975, rep: 88, is_mock: true, sourceType: 'store_product', storeId: 'store-organic', avatar: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=60&h=60' },
+      ]
+    }
+  ],
 };
 
 try {
@@ -325,7 +362,9 @@ export async function createDemand({ sessionId, description, category, maxBudget
 // ─── Multi-Hop Engine ─────────────────────────────────────────────────────────
 
 export async function getTradeCycles(sessionId) {
-  if (!dbAvailable || !sessionId) return [];
+  if (!dbAvailable || !sessionId) {
+    return inMemory.cycles;
+  }
 
   const { data, error } = await supabase.rpc('find_trade_cycles', {
     target_session_id: sessionId,
@@ -334,11 +373,11 @@ export async function getTradeCycles(sessionId) {
 
   if (error) {
     console.error('getTradeCycles error:', error.message);
-    return [];
+    return inMemory.cycles;
   }
   
   // Pl/PgSQL JSONB returns either null or an array
-  return data || [];
+  return data && data.length > 0 ? data : inMemory.cycles;
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────

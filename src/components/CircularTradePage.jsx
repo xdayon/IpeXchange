@@ -5,7 +5,7 @@ import MultiHopTradeCard from './MultiHopTradeCard';
 let API_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 if (API_URL.startsWith('http') && !API_URL.endsWith('/api')) API_URL += '/api';
 
-const CircularTradePage = () => {
+const CircularTradePage = ({ onNavigate }) => {
   const [cycles, setCycles]       = useState([]);
   const [isScanning, setIsScanning] = useState(false);
   const [filter, setFilter]       = useState('all'); // all | 3 | 4 | 5
@@ -156,7 +156,7 @@ const CircularTradePage = () => {
           </div>
         )}
         {!isScanning && filtered.map(cycle => (
-          <MultiHopTradeCard key={cycle.id} cycle={cycle} />
+          <MultiHopTradeCard key={cycle.id} cycle={cycle} onNavigate={onNavigate} />
         ))}
       </div>
     </div>
