@@ -123,7 +123,6 @@ BEGIN
       (h3.s1+h3.s2+h3.s3)/3.0 AS avg_sem,
       LEAST(
         CASE WHEN GREATEST(uo.price_fiat,h3.pb)>0 THEN LEAST(uo.price_fiat,h3.pb)/GREATEST(uo.price_fiat,h3.pb) ELSE 0 END,
-        CASE WHEN GREATEST(h3.pb,h3.pc)>0 THEN LEAST(h3.pb,h3.pc)/GREATEST(h3.pb,h3.pc) ELSE 0 END,
         CASE WHEN GREATEST(uo.price_fiat,h3.pc)>0 THEN LEAST(uo.price_fiat,h3.pc)/GREATEST(uo.price_fiat,h3.pc) ELSE 0 END
       ) AS vr
     FROM h3
@@ -149,8 +148,7 @@ BEGIN
       (h4.s1+h4.s2+h4.s3+h4.s4)/4.0 AS avg_sem,
       LEAST(
         CASE WHEN GREATEST(uo.price_fiat,h4.pb)>0 THEN LEAST(uo.price_fiat,h4.pb)/GREATEST(uo.price_fiat,h4.pb) ELSE 0 END,
-        CASE WHEN GREATEST(h4.pb,h4.pc)>0 THEN LEAST(h4.pb,h4.pc)/GREATEST(h4.pb,h4.pc) ELSE 0 END,
-        CASE WHEN GREATEST(h4.pc,h4.pd)>0 THEN LEAST(h4.pc,h4.pd)/GREATEST(h4.pc,h4.pd) ELSE 0 END,
+        CASE WHEN GREATEST(uo.price_fiat,h4.pc)>0 THEN LEAST(uo.price_fiat,h4.pc)/GREATEST(uo.price_fiat,h4.pc) ELSE 0 END,
         CASE WHEN GREATEST(uo.price_fiat,h4.pd)>0 THEN LEAST(uo.price_fiat,h4.pd)/GREATEST(uo.price_fiat,h4.pd) ELSE 0 END
       ) AS vr
     FROM h4
@@ -177,9 +175,8 @@ BEGIN
       5 AS hops,
       LEAST(
         CASE WHEN GREATEST(uo_a.price_fiat,h4.pb)>0 THEN LEAST(uo_a.price_fiat,h4.pb)/GREATEST(uo_a.price_fiat,h4.pb) ELSE 0 END,
-        CASE WHEN GREATEST(h4.pb,h4.pc)>0 THEN LEAST(h4.pb,h4.pc)/GREATEST(h4.pb,h4.pc) ELSE 0 END,
-        CASE WHEN GREATEST(h4.pc,h4.pd)>0 THEN LEAST(h4.pc,h4.pd)/GREATEST(h4.pc,h4.pd) ELSE 0 END,
-        CASE WHEN GREATEST(h4.pd,h4.pe)>0 THEN LEAST(h4.pd,h4.pe)/GREATEST(h4.pd,h4.pe) ELSE 0 END,
+        CASE WHEN GREATEST(uo_a.price_fiat,h4.pc)>0 THEN LEAST(uo_a.price_fiat,h4.pc)/GREATEST(uo_a.price_fiat,h4.pc) ELSE 0 END,
+        CASE WHEN GREATEST(uo_a.price_fiat,h4.pd)>0 THEN LEAST(uo_a.price_fiat,h4.pd)/GREATEST(uo_a.price_fiat,h4.pd) ELSE 0 END,
         CASE WHEN GREATEST(uo_a.price_fiat,h4.pe)>0 THEN LEAST(uo_a.price_fiat,h4.pe)/GREATEST(uo_a.price_fiat,h4.pe) ELSE 0 END
       ) AS vr
     FROM h4
@@ -252,63 +249,57 @@ BEGIN
   IF result IS NULL OR jsonb_array_length(result) = 0 THEN
     SELECT jsonb_agg(c) INTO result FROM (
 
-      -- 3-hop: Bike ↔ Web Dev ↔ Sourdough combo (ratio ~0.71 ✅)
+      -- 3-hop: Bike ↔ Web Dev ↔ Woodworking (all within 30% of $850 anchor)
+      -- vr = min(800/850, 720/850) = min(0.941, 0.847) = 0.847 → 84.7%
       SELECT jsonb_build_object(
-        'id','cycle-demo-1','hops',3,'matchScore',94.2,'valueRatio',71.0,
+        'id','cycle-demo-1','hops',3,'matchScore',92.0,'valueRatio',84.7,
         'nodes', jsonb_build_array(
           jsonb_build_object('user','You','item','Electric Bike','price',850,'rep',85,'is_mock',true,'sourceType','user_listing','avatar',null),
-          jsonb_build_object('user','Bia Tech','item','Web Dev Consulting (10h)','price',500,'rep',92,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=60&h=60'),
-          jsonb_build_object('user','Bread & Co','item','Sourdough Sub + Baking Workshop','price',635,'rep',98,'is_mock',true,'sourceType','store_product',
-            'avatar','https://images.unsplash.com/photo-1586444248902-2f64eddc13df?auto=format&fit=crop&q=80&w=60&h=60',
-            'combo',jsonb_build_array(
-              jsonb_build_object('name','Artisan Sourdough (6 months)','price',300,'qty',6),
-              jsonb_build_object('name','Baking Workshop','price',335,'qty',1)
-            ))
+          jsonb_build_object('user','Bia Tech','item','Web Dev Consulting (10h)','price',800,'rep',92,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=60&h=60'),
+          jsonb_build_object('user','WoodCraft','item','Woodworking Workshop (6 lessons)','price',720,'rep',79,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1540314227222-2daee298072c?auto=format&fit=crop&q=80&w=60&h=60')
         )
       ) AS c
 
       UNION ALL
 
-      -- 4-hop: MacBook ↔ Web Design ↔ Photography ↔ Kayak + Gear (ratio ~0.78 ✅)
+      -- 4-hop: MacBook ↔ Brand Identity ↔ Photography Full Day ↔ Adventure Tour
+      -- anchor $1200 | vr = min(1050/1200, 980/1200, 1100/1200) = min(0.875, 0.817, 0.917) = 0.817 → 81.7%
       SELECT jsonb_build_object(
-        'id','cycle-demo-2','hops',4,'matchScore',91.5,'valueRatio',78.3,
+        'id','cycle-demo-2','hops',4,'matchScore',88.8,'valueRatio',81.7,
         'nodes', jsonb_build_array(
           jsonb_build_object('user','You','item','MacBook Pro M1 14"','price',1200,'rep',85,'is_mock',true,'sourceType','user_listing','avatar',null),
-          jsonb_build_object('user','Studio Pixel','item','Full Brand Identity','price',950,'rep',89,'is_mock',true,'sourceType','store_product','avatar','https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=60&h=60'),
-          jsonb_build_object('user','Luna Foto','item','Photography Half Day','price',480,'rep',94,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1520390138845-fd2d229dd553?auto=format&fit=crop&q=80&w=60&h=60'),
-          jsonb_build_object('user','TrailCo','item','Touring Kayak + Gear','price',400,'rep',88,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&q=80&w=60&h=60')
+          jsonb_build_object('user','Studio Pixel','item','Full Brand Identity Package','price',1050,'rep',89,'is_mock',true,'sourceType','store_product','avatar','https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=60&h=60'),
+          jsonb_build_object('user','Luna Foto','item','Photography Full Day Session','price',980,'rep',94,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1520390138845-fd2d229dd553?auto=format&fit=crop&q=80&w=60&h=60'),
+          jsonb_build_object('user','TrailCo','item','Adventure Tour + Gear Rental','price',1100,'rep',88,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&q=80&w=60&h=60')
         )
       )
 
       UNION ALL
 
-      -- 5-hop: Drone ↔ Full EV Review ↔ Permaculture ↔ Reiki + Sound Healing ↔ No-Code Workshop (ratio ~0.82 ✅)
+      -- 5-hop: Drone ↔ EV Review ↔ Permaculture Day ↔ Wellness Package ↔ No-Code Sprint
+      -- anchor $550 | vr = min(480/550, 500/550, 520/550, 450/550) = min(0.873, 0.909, 0.945, 0.818) = 0.818 → 81.8%
       SELECT jsonb_build_object(
-        'id','cycle-demo-3','hops',5,'matchScore',88.7,'valueRatio',82.4,
+        'id','cycle-demo-3','hops',5,'matchScore',86.3,'valueRatio',81.8,
         'nodes', jsonb_build_array(
           jsonb_build_object('user','You','item','DJI Mini 4 Pro Drone','price',550,'rep',85,'is_mock',true,'sourceType','user_listing','avatar',null),
-          jsonb_build_object('user','Ipê City Motors','item','Full Electrical Review','price',420,'rep',94,'is_mock',true,'sourceType','store_product','avatar','https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=60&h=60'),
-          jsonb_build_object('user','Green Roots','item','Permaculture Consultation','price',120,'rep',91,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&q=80&w=60&h=60'),
-          jsonb_build_object('user','Marina H.','item','Reiki & Energy Healing','price',60,'rep',97,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=60&h=60'),
-          jsonb_build_object('user','Code Lab','item','No-Code App Workshop','price',95,'rep',93,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1587620962725-abab7fe55159?auto=format&fit=crop&q=80&w=60&h=60')
+          jsonb_build_object('user','Ipê City Motors','item','Full Electrical Review','price',480,'rep',94,'is_mock',true,'sourceType','store_product','avatar','https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=60&h=60'),
+          jsonb_build_object('user','Green Roots','item','Permaculture + Urban Farm Day','price',500,'rep',91,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&q=80&w=60&h=60'),
+          jsonb_build_object('user','Marina H.','item','Wellness & Massage Package','price',520,'rep',97,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=60&h=60'),
+          jsonb_build_object('user','Code Lab','item','No-Code App Sprint (20h)','price',450,'rep',93,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1587620962725-abab7fe55159?auto=format&fit=crop&q=80&w=60&h=60')
         )
       )
 
       UNION ALL
 
-      -- 4-hop: Road Bike ↔ Physiotherapy ↔ Wine Tasting ↔ Sourdough + Coffee combo (ratio ~0.75 ✅)
+      -- 4-hop: Road Bike ↔ Physiotherapy ↔ Personal Training ↔ Sourdough + Coffee
+      -- anchor $680 | vr = min(600/680, 620/680, 580/680) = min(0.882, 0.912, 0.853) = 0.853 → 85.3%
       SELECT jsonb_build_object(
-        'id','cycle-demo-4','hops',4,'matchScore',86.9,'valueRatio',75.1,
+        'id','cycle-demo-4','hops',4,'matchScore',87.1,'valueRatio',85.3,
         'nodes', jsonb_build_array(
           jsonb_build_object('user','You','item','Road Bike (Cannondale)','price',680,'rep',85,'is_mock',true,'sourceType','user_listing','avatar',null),
-          jsonb_build_object('user','Ipê Health Clinic','item','Physiotherapy (6 sessions)','price',480,'rep',100,'is_mock',true,'sourceType','store_product','avatar','https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=60&h=60'),
-          jsonb_build_object('user','Wine & Cheese Ipê','item','Wine Tasting Experience','price',75,'rep',95,'is_mock',true,'sourceType','store_product','avatar','https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&q=80&w=60&h=60'),
-          jsonb_build_object('user','Bread & Co','item','Sourdough + Coffee Bundle','price',511,'rep',98,'is_mock',true,'sourceType','store_product',
-            'avatar','https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=60&h=60',
-            'combo',jsonb_build_array(
-              jsonb_build_object('name','Classic Sourdough (weekly, 3mo)','price',48,'qty',12),
-              jsonb_build_object('name','Specialty Arabica Coffee (monthly)','price',9,'qty',9)
-            ))
+          jsonb_build_object('user','Ipê Health Clinic','item','Physiotherapy (6 sessions)','price',600,'rep',100,'is_mock',true,'sourceType','store_product','avatar','https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=60&h=60'),
+          jsonb_build_object('user','FitCoach','item','Personal Training (10 sessions)','price',620,'rep',88,'is_mock',true,'sourceType','user_listing','avatar','https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=60&h=60'),
+          jsonb_build_object('user','Bread & Co','item','Sourdough + Coffee Bundle','price',580,'rep',98,'is_mock',true,'sourceType','store_product','avatar','https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=60&h=60')
         )
       )
 
