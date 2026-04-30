@@ -7,6 +7,9 @@ import { fetchCityGraphData } from '../../lib/api';
 import { LAYER_META } from '../../lib/cityGraphAdapter';
 import { EntityDetailPanel } from './EntityDetailPanel';
 import { LayerToggle } from './LayerToggle';
+import { SimEngine } from './SimEngine';
+import { ActivityFeed } from '../ActivityFeed';
+
 
 
 const SW = [-27.4518, -48.5135];
