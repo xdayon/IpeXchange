@@ -1,13 +1,11 @@
 // src/lib/cityGraphAdapter.js
 
 export const LAYER_META = [
-  { id: 'commerce',       label: 'Commerce',       color: '#B4F44A', icon: 'Store' },
-  { id: 'identity',       label: 'Citizens',        color: '#38BDF8', icon: 'Users' },
-  { id: 'infrastructure', label: 'Infrastructure',  color: '#F59E0B', icon: 'Cpu' },
-  { id: 'governance',     label: 'Governance',      color: '#818CF8', icon: 'Vote' },
-  { id: 'safety',         label: 'Safety',          color: '#F43F5E', icon: 'ShieldAlert' },
-  { id: 'environment',    label: 'Environment',     color: '#34D399', icon: 'Leaf' },
-  { id: 'events',         label: 'Events',          color: '#FB923C', icon: 'CalendarDays' },
+  { id: 'commerce',   label: 'Stores',      color: '#B4F44A', icon: 'Store' },
+  { id: 'identity',   label: 'Citizens',    color: '#38BDF8', icon: 'Users' },
+  { id: 'listings',   label: 'Listings',    color: '#A78BFA', icon: 'Tag' },
+  { id: 'events',     label: 'Events',      color: '#FB923C', icon: 'CalendarDays' },
+  { id: 'investment', label: 'Investment',  color: '#FFC857', icon: 'TrendingUp' },
 ];
 
 export const LAYER_COLOR = Object.fromEntries(LAYER_META.map(l => [l.id, l.color]));

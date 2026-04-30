@@ -3,12 +3,11 @@
 // without requiring real backend transactions.
 
 const TEMPLATES = [
-  { type: 'trade',    label: (a, b) => `Trade: ${a} ↔ ${b}`,      color: '#7AE7FF' },
-  { type: 'transfer', label: (a, b) => `Transfer: ${a} → ${b}`,    color: '#B4F44A' },
-  { type: 'connect',  label: (a, b) => `${a} connected to ${b}`,    color: '#818CF8' },
-  { type: 'purchase', label: (a, b) => `Purchase at ${b} by ${a}`,  color: '#FFC857' },
-  { type: 'vote',     label: (a, b) => `${a} voted on ${b}`,        color: '#F59E0B' },
-  { type: 'transfer', label: (a, b) => `Signal: ${a} → ${b}`,       color: '#F43F5E' },
+  { type: 'trade',      label: (a, b) => `Trade: ${a} ↔ ${b}`,       color: '#7AE7FF' },
+  { type: 'listing',    label: (a, b) => `New offer: ${a} → ${b}`,    color: '#A78BFA' },
+  { type: 'event',      label: (a, b) => `${b} confirmed ${a}`,       color: '#FB923C' },
+  { type: 'investment', label: (a, b) => `${a} applied to ${b}`,      color: '#FFC857' },
+  { type: 'transfer',   label: (a, b) => `Transfer: ${a} → ${b}`,     color: '#B4F44A' },
 ];
 
 function pick(arr) {

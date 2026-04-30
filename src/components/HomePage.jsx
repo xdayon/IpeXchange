@@ -1,7 +1,9 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { MapPin, Zap, TrendingUp, Users, Store, Network, Lock, Wallet, AlertTriangle, X } from 'lucide-react';
+import React, { useState, useEffect, lazy, Suspense, useRef, useCallback } from 'react';
+import { MapPin, Zap, TrendingUp, Users, Store, Network, Lock, Wallet, AlertTriangle, X, Tag, CalendarDays } from 'lucide-react';
 import { mockDemands } from '../data/mockData';
 import { fetchDiscoverItems } from '../lib/api';
+import { SimEngine } from './CityGraph/SimEngine';
+import { ActivityFeed } from './ActivityFeed';
 
 // Lazy-load Leaflet so it doesn't block the initial render
 const CityGraphMap = lazy(() => import('./CityGraph/CityGraphMap'));
@@ -23,35 +25,53 @@ const StatCard = ({ icon: Icon, color, title, value, subtext }) => (
 
 const HomePage = () => {
   const [selectedDemand, setSelectedDemand] = useState(null);
-  const [liveFeed, setLiveFeed] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const simEdgeCallbackRef = useRef(null);
+  const simEngineRef = useRef(null);
+  const [listings, setListings] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
     fetchDiscoverItems({})
       .then(data => {
         if (cancelled) return;
-        const items = (data.listings || []).slice(0, 7).map((l, i) => ({
-          icon: l.category === 'Services' ? <Zap size={14} /> :
-                l.category === 'Knowledge' ? <Users size={14} /> :
-                l.category === 'Donations' ? <MapPin size={14} /> : <TrendingUp size={14} />,
-          color: l.category === 'Services' ? '#B4F44A' :
-                 l.category === 'Knowledge' ? '#818CF8' :
-                 l.category === 'Donations' ? '#F43F5E' : '#38BDF8',
-          text: l.acceptsTrade
-            ? `${l.title} — accepts trade`
-            : `New listing: ${l.title}${l.priceFiat ? ` — $${l.priceFiat}` : ''}`,
-          time: i === 0 ? '2m' : i === 1 ? '5m' : `${(i + 1) * 4}m`,
-        }));
-        setLiveFeed(items.length > 0 ? items : [
-          { icon: <TrendingUp size={14} />, color: '#B4F44A', text: 'Marketplace is live — be the first to list!', time: 'now' },
-        ]);
+        setListings(data.listings || []);
       })
-      .catch(() => {
-        if (!cancelled) setLiveFeed([
-          { icon: <TrendingUp size={14} />, color: '#38BDF8', text: 'Live feed connecting...', time: 'now' },
-        ]);
-      });
+      .catch(() => {});
     return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!listings?.length) return;
+    const initialItems = listings.slice(0, 5).map(l => ({
+      id: `real-${l.id}`,
+      text: `New listing: ${l.title}`,
+      color: '#A78BFA',
+      type: 'listing',
+      time: '5m',
+      ts: Date.now() - 300000,
+    }));
+    setActivities(initialItems);
+  }, [listings]);
+
+  useEffect(() => {
+    const sim = new SimEngine({
+      onSimEdge: (edge) => {
+        if (simEdgeCallbackRef.current) simEdgeCallbackRef.current(edge);
+      },
+      onActivity: (act) => {
+        setActivities(prev => [act, ...prev].slice(0, 20));
+      },
+    });
+    simEngineRef.current = sim;
+    sim.start();
+    return () => sim.stop();
+  }, []);
+
+  const handleEntitiesLoad = useCallback((entities) => {
+    if (simEngineRef.current) {
+      simEngineRef.current.setEntities(entities);
+    }
   }, []);
 
   const todaysSeed = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
@@ -81,32 +101,16 @@ const HomePage = () => {
         {/* Map takes up most of the space */}
         <div className="home-map-area">
           <Suspense fallback={<div style={{ width:'100%', height:'100%', background:'#0B1421' }} />}>
-            <CityGraphMap />
+            <CityGraphMap 
+              onRegisterSimEdge={(fn) => { simEdgeCallbackRef.current = fn; }} 
+              onEntitiesLoad={handleEntitiesLoad}
+            />
           </Suspense>
         </div>
 
         {/* Live Activity Feed sidebar */}
-        <aside className="activity-feed" style={{ display: 'flex', flexDirection: 'column' }}>
-          <h4 className="feed-title" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', margin: 0 }}>
-            <span className="live-dot" /> Live Activity in Ipê City
-          </h4>
-          <ul className="feed-list" style={{ overflowY: 'auto', flex: 1, padding: '16px 0' }}>
-            {liveFeed.length > 0 ? (
-              liveFeed.map((item, i) => (
-                <li key={i} className="feed-item" style={{ padding: '12px 24px', borderBottom: i < liveFeed.length - 1 ? '1px solid var(--border-color)' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span className="feed-icon" style={{ color: item.color, background: `${item.color}15`, padding: 8, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <span className="feed-text" style={{ fontSize: 13, lineHeight: 1.4, display: 'block', whiteSpace: 'normal' }}>{item.text}</span>
-                    <span className="feed-time" style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{item.time} ago</span>
-                  </div>
-                </li>
-              ))
-            ) : (
-              [...Array(5)].map((_, i) => (
-                <li key={i} className="feed-item skeleton" style={{ padding: '12px 24px', height: 60 }} />
-              ))
-            )}
-          </ul>
+        <aside className="activity-feed">
+          <ActivityFeed activities={activities} />
         </aside>
       </div>
 

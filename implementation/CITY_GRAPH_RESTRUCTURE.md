@@ -1,108 +1,87 @@
 # City Graph — Map Restructure, Ocean Fix & Live Activity Consolidation
 
-**Status:** Pronto para execução  
+**Status:** Pronto para re-execução (primeira tentativa falhou no deploy — ver diagnóstico abaixo)  
 **Estimated effort:** ~4–5 horas  
-**Files affected:** 4 arquivos principais + 1 arquivo CSS
+**Files affected:** 6 arquivos
 
 ---
 
-## 1. Contexto & Diagnóstico
+## 0. Diagnóstico da Falha Anterior
 
-O City Graph foi construído inicialmente baseado nas categorias do projeto `ipe-city-graph` do iggy (`infrastructure`, `governance`, `safety`, `environment`). Essas categorias não fazem parte dos produtos e serviços reais do IpêXchange.
+A primeira execução deste plano (commit `6539a4c`) causou um erro de build no Render:
 
-Além disso, dois problemas visuais foram identificados:
-- Alguns nós com coordenadas geradas deterministicamente caíram sobre o mar (costa norte de Jurerê).
-- O "Live Activity" aparece duplicado: uma janela pequena no canto inferior esquerdo (inserida pelo `ActivityFeed.jsx`) e uma barra maior no lado direito da `HomePage.jsx` com dados mais estáticos.
+```
+[UNRESOLVED_IMPORT] Could not resolve './ActivityFeed' in CityGraphMap.jsx
+import { ActivityFeed } from "./ActivityFeed";   ← linha não removida
+```
+
+**O que aconteceu:** O arquivo `src/components/CityGraph/ActivityFeed.jsx` foi deletado, mas a linha `import { ActivityFeed } from "./ActivityFeed"` no topo de `CityGraphMap.jsx` não foi removida. O build quebrou porque o módulo importado não existia mais.
+
+**Commits de correção posteriores (`8ae1036`, `dcf4395`, `1711f39`)** resolveram o erro com um workaround: a `ActivityFeed` foi reimplementada como uma **função local inline** dentro de `CityGraphMap.jsx`, em vez de ser movida para `src/components/`.
 
 ---
 
-## 2. Mudanças Planejadas
+## 1. Estado Atual do Código (pós-fix)
 
-### 2.1 — Reestruturar as Categorias do Mapa
+Antes de executar qualquer mudança, confirme que estes estados são verdadeiros:
 
-**Categorias a remover:** `infrastructure`, `governance`, `safety`, `environment`  
-**Categorias a manter/adicionar:**
+| Arquivo | Estado atual |
+|---------|-------------|
+| `src/lib/cityGraphAdapter.js` | **INALTERADO** — ainda tem 7 layers antigos: `commerce`, `identity`, `infrastructure`, `governance`, `safety`, `environment`, `events` |
+| `backend/lib/cityGraphBuilder.js` | **INALTERADO** — ainda tem entidades `infra-*`, `gov-*`, `safety-*`, `env-*` |
+| `src/components/CityGraph/CityGraphMap.jsx` | **PARCIALMENTE ALTERADO** — `ActivityFeed` existe como função local inline (não importada); `SimEngine` e `activities` state ainda estão aqui |
+| `src/components/CityGraph/ActivityFeed.jsx` | **NÃO EXISTE** (foi deletado) |
+| `src/components/CityGraph/LayerToggle.jsx` | **INALTERADO** — ícones `Cpu, Vote, ShieldAlert, Leaf` ainda importados |
+| `src/components/CityGraph/SimEngine.js` | **INALTERADO** — templates antigos (`vote`, `purchase`, `connect`) |
+| `src/components/HomePage.jsx` | **INALTERADO** — não instancia SimEngine, não tem activities state |
+
+---
+
+## 2. Objetivo Final
+
+### Categorias do mapa
+
+**Remover:** `infrastructure`, `governance`, `safety`, `environment`  
+**Manter/adicionar:**
 
 | ID | Label | Cor | Ícone | O que representa |
 |----|-------|-----|-------|-----------------|
 | `commerce` | Stores | `#B4F44A` | `Store` | Lojas físicas da cidade |
 | `identity` | Citizens | `#38BDF8` | `Users` | Cidadãos e seus perfis |
-| `listings` | Listings | `#A78BFA` | `Tag` | Anúncios do Discovery (Produtos, Serviços, Conhecimento, Doações) |
+| `listings` | Listings | `#A78BFA` | `Tag` | Anúncios do Discovery |
 | `events` | Events | `#FB923C` | `CalendarDays` | Eventos da cidade |
 | `investment` | Investment | `#FFC857` | `TrendingUp` | Grants e oportunidades de investimento |
 
-> **Nota:** Os venues (Founder Haus, AI Haus, Privacy Haus) continuam como nós especiais dentro de `commerce`, com os marcadores dourados que já existem.
+> Os venues (Founder Haus, AI Haus, Privacy Haus) continuam como nós especiais dentro de `commerce`.
+
+### Live Activity
+
+- `ActivityFeed` deixa de existir dentro de `CityGraphMap` (nem inline, nem importado).
+- `SimEngine` é instanciado na `HomePage.jsx`, não no `CityGraphMap`.
+- Feed dinâmico aparece **somente** na barra lateral direita da `HomePage`.
 
 ---
 
-### 2.2 — Corrigir Pontos no Oceano
-
-**Problema:** A função `deterministicCoords()` em `cityGraphBuilder.js` gera coordenadas dentro do bounding box de Jurerê, mas a região norte (lat < ~-27.440) é oceano/costa. Nós de identidade e listagens sem GPS real acabam caindo ali.
-
-**Solução:** Definir uma lista de **coordenadas seguras em terra** para as entidades estáticas (citizens, venues, eventos, investimentos), garantindo que todos fiquem dentro do polígono habitado de Jurerê Internacional.
-
-**Polígono aproximado de terra segura:**
-```
-Lat: -27.441 a -27.449 (área residencial sul)
-Lon: -48.495 a -48.512
-```
-
-Entidades específicas a reposicionar para terra:
-- `citizen-alex`, `citizen-luna`, `citizen-fitcoach`, `citizen-sound`, `citizen-green`, `citizen-code`, `citizen-trailco`, `citizen-skyview` — estão muito próximas da costa norte, precisam ser movidas para latitudes mais ao sul (`-27.442` a `-27.448`).
-
-**Exceções válidas (podem ficar no mar/costa):**
-- Entidades com `label` ou `description` contendo `surf`, `kitesurf`, `jet`, `catamaran`, `golfinhos`, `ocean`, `beach tour`, `mergulho`.
-- Um novo conjunto de 3–4 entidades oceânicas pode ser adicionado para representar serviços no mar.
-
-**Novos exemplos de entidades oceânicas válidas:**
-```js
-{ id: 'ocean-surf-school', layer: 'listings', label: 'Surf School', description: 'Aulas de surf para iniciantes e intermediários na praia de Jurerê.', location: { lat: -27.4378, lon: -48.4985 } },
-{ id: 'ocean-jetski', layer: 'listings', label: 'Jet-Ski Rental', description: 'Aluguel de jet-ski por hora. Saída da orla de Jurerê Internacional.', location: { lat: -27.4365, lon: -48.5010 } },
-{ id: 'ocean-catamaran', layer: 'listings', label: 'Catamaran Tour', description: 'Passeio de catamarã ao pôr do sol. Saída do Molhe Sul.', location: { lat: -27.4352, lon: -48.5050 } },
-{ id: 'ocean-dolphins', layer: 'listings', label: 'Dolphin Watch Tour', description: 'Passeio guiado para observação de golfinhos. Grupos pequenos.', location: { lat: -27.4340, lon: -48.5080 } },
-```
-
----
-
-### 2.3 — Consolidar o Live Activity (remover duplicata)
-
-**Situação atual:**
-- `ActivityFeed.jsx` renderizado dentro do `CityGraphMap.jsx` → aparece **dentro** do mapa, canto inferior esquerdo.
-- `<aside className="activity-feed">` na `HomePage.jsx` → aparece **do lado direito** do mapa, dados parcialmente estáticos.
-
-**Solução:**
-1. **Remover** `<ActivityFeed />` do `CityGraphMap.jsx` — eliminar a janelinha do canto inferior esquerdo.
-2. **Transformar o `<aside className="activity-feed">`** da `HomePage.jsx` em um feed **real e dinâmico**, alimentado por:
-   - Atividades simuladas do `SimEngine` (passadas via prop ou contexto de cima).
-   - Dados reais do `fetchDiscoverItems` (listings recentes).
-3. O `SimEngine` passará a ser inicializado na `HomePage.jsx` (não mais dentro do `CityGraphMap.jsx`), e o feed de atividade será compartilhado entre o mapa e a barra lateral.
-
-**Nova arquitetura de dados do feed:**
-```js
-// Cada item do feed segue este shape:
-{
-  id: string,           // único
-  text: string,         // ex: "Trade: Surf School ↔ Bread & Co"
-  color: string,        // hex da categoria
-  type: string,         // 'trade' | 'listing' | 'event' | 'investment'
-  icon: ReactElement,   // Zap, TrendingUp, etc.
-  time: string,         // "agora", "2m", "5m"
-  ts: number,           // timestamp para ordenação
-}
-```
-
-**Origem dos itens:**
-- Simulados em tempo real pelo `SimEngine` (aparecem a cada ~3s com label "agora").
-- Listings reais da API (aparecem uma vez no load com timestamp relativo "Xm ago").
-
----
-
-## 3. Arquivos a Modificar
+## 3. Arquivos a Modificar — Instruções Detalhadas
 
 ### 3.1 — `src/lib/cityGraphAdapter.js`
 
-**O que muda:** Substituir os 7 layers por 5 novos layers alinhados ao IpêXchange.
+**Ação:** Substituir o array `LAYER_META` inteiro pelo novo.
 
+Substituir:
+```js
+export const LAYER_META = [
+  { id: 'commerce',       label: 'Commerce',       color: '#B4F44A', icon: 'Store' },
+  { id: 'identity',       label: 'Citizens',        color: '#38BDF8', icon: 'Users' },
+  { id: 'infrastructure', label: 'Infrastructure',  color: '#F59E0B', icon: 'Cpu' },
+  { id: 'governance',     label: 'Governance',      color: '#818CF8', icon: 'Vote' },
+  { id: 'safety',         label: 'Safety',          color: '#F43F5E', icon: 'ShieldAlert' },
+  { id: 'environment',    label: 'Environment',     color: '#34D399', icon: 'Leaf' },
+  { id: 'events',         label: 'Events',          color: '#FB923C', icon: 'CalendarDays' },
+];
+```
+
+Por:
 ```js
 export const LAYER_META = [
   { id: 'commerce',   label: 'Stores',      color: '#B4F44A', icon: 'Store' },
@@ -117,137 +96,231 @@ export const LAYER_META = [
 
 ### 3.2 — `backend/lib/cityGraphBuilder.js`
 
-**O que muda:**
+**Ações (cada uma obrigatória):**
 
-1. **Remover** todos os `STATIC_ENTITIES` dos layers `infrastructure`, `governance`, `safety`, `environment`.
-2. **Adicionar** entidades estáticas para o layer `investment` (Grants + Loans mockados):
+**3.2.1** — Remover do array `STATIC_ENTITIES` todos os objetos com `layer: 'infrastructure'`, `layer: 'governance'`, `layer: 'safety'`, `layer: 'environment'`. Manter apenas os de `layer: 'commerce'`, `layer: 'identity'`, `layer: 'events'`.
+
+**3.2.2** — No array `STATIC_ENTITIES`, reposicionar os cidadãos com latitude acima de `-27.441` (que caem no oceano) para latitudes entre `-27.442` e `-27.448`. Os IDs afetados são: `citizen-alex`, `citizen-luna`, `citizen-fitcoach`, `citizen-sound`, `citizen-green`, `citizen-code`, `citizen-trailco`, `citizen-skyview`.
+
+**3.2.3** — Adicionar ao array `STATIC_ENTITIES` as seguintes entidades de investimento:
 ```js
-{ id: 'inv-artizen', layer: 'investment', label: 'Artizen: Regen Hub', description: 'Grant $5,000 for bio-regenerative infrastructure.', location: { lat: -27.4445, lon: -48.5062 } },
-{ id: 'inv-ipe-culture', layer: 'investment', label: 'Ipê Culture Fund', description: 'Grant 2,500 RBTC for local artists and cultural events.', location: { lat: -27.4432, lon: -48.5034 } },
-{ id: 'inv-bread-loan', layer: 'investment', label: 'Bread & Co Expansion', description: 'Loan $1,200 — oven upgrade for sourdough bakery.', location: { lat: -27.4438, lon: -48.5018 } },
-{ id: 'inv-climate-loan', layer: 'investment', label: 'Eco-Sensor Network', description: 'Loan 500 USDC — 20 new air quality sensors for South Sector.', location: { lat: -27.4453, lon: -48.5045 } },
+{ id: 'inv-artizen',      layer: 'investment', label: 'Artizen: Regen Hub',    description: 'Grant $5,000 for bio-regenerative infrastructure.',              location: { lat: -27.4445, lon: -48.5062 } },
+{ id: 'inv-ipe-culture',  layer: 'investment', label: 'Ipê Culture Fund',       description: 'Grant 2,500 RBTC for local artists and cultural events.',         location: { lat: -27.4432, lon: -48.5034 } },
+{ id: 'inv-bread-loan',   layer: 'investment', label: 'Bread & Co Expansion',   description: 'Loan $1,200 — oven upgrade for sourdough bakery.',                location: { lat: -27.4438, lon: -48.5018 } },
+{ id: 'inv-climate-loan', layer: 'investment', label: 'Eco-Sensor Network',     description: 'Loan 500 USDC — 20 new air quality sensors for South Sector.',    location: { lat: -27.4453, lon: -48.5045 } },
 ```
 
-3. **Adicionar** entidades oceânicas no layer `listings`:
+**3.2.4** — Adicionar ao array `STATIC_ENTITIES` as seguintes entidades oceânicas (layer `listings`):
 ```js
-{ id: 'ocean-surf-school', layer: 'listings', label: 'Surf School', description: 'Surf lessons for beginners and intermediate. Jurerê beach.', location: { lat: -27.4378, lon: -48.4985 } },
-{ id: 'ocean-jetski', layer: 'listings', label: 'Jet-Ski Rental', description: 'Hourly jet-ski rental. Departs from Jurerê Internacional shore.', location: { lat: -27.4365, lon: -48.5010 } },
-{ id: 'ocean-catamaran', layer: 'listings', label: 'Sunset Catamaran', description: 'Catamaran tour at sunset. Departs from the South Pier.', location: { lat: -27.4352, lon: -48.5050 } },
-{ id: 'ocean-dolphins', layer: 'listings', label: 'Dolphin Watch Tour', description: 'Guided small-group dolphin watching experience.', location: { lat: -27.4340, lon: -48.5080 } },
+{ id: 'ocean-surf-school', layer: 'listings', label: 'Surf School',        description: 'Surf lessons for beginners and intermediate. Jurerê beach.',             location: { lat: -27.4378, lon: -48.4985 } },
+{ id: 'ocean-jetski',      layer: 'listings', label: 'Jet-Ski Rental',     description: 'Hourly jet-ski rental. Departs from Jurerê Internacional shore.',        location: { lat: -27.4365, lon: -48.5010 } },
+{ id: 'ocean-catamaran',   layer: 'listings', label: 'Sunset Catamaran',   description: 'Catamaran tour at sunset. Departs from the South Pier.',                 location: { lat: -27.4352, lon: -48.5050 } },
+{ id: 'ocean-dolphins',    layer: 'listings', label: 'Dolphin Watch Tour', description: 'Guided small-group dolphin watching experience.',                         location: { lat: -27.4340, lon: -48.5080 } },
 ```
 
-4. **Reposicionar** todos os `STATIC_ENTITIES` de `identity` que estão na costa norte para latitudes > -27.441 (sul, terra firme).
+**3.2.5** — Na função `listingToEntity()`, alterar `layer: 'commerce'` para `layer: 'listings'`.
 
-5. **Atualizar** a função `listingToEntity()` para usar `layer: 'listings'` ao invés de `layer: 'commerce'`.
+**3.2.6** — No array `STATIC_EDGES`, remover todos os objetos em que `source` ou `target` começam com `infra-`, `gov-`, `safety-`, `env-`.
 
-6. **Atualizar** a função `storeToEntity()` para manter `layer: 'commerce'` (lojas físicas são commerce, correto).
-
-7. **Remover** dos `STATIC_EDGES` todas as referências a `infra-*`, `gov-*`, `safety-*`, `env-*`.
-
-8. **Adicionar** novas edges estáticas entre `investment` e `identity`/`commerce`:
+**3.2.7** — Adicionar ao array `STATIC_EDGES`:
 ```js
-{ id: 'e-artizen-community', source: 'inv-artizen', target: 'citizen-green', relationship: 'funded-by', label: 'Applicant' },
-{ id: 'e-bread-loan-bread', source: 'inv-bread-loan', target: 'venue-founder-haus', relationship: 'backed-by', label: 'Backed by' },
+{ id: 'e-artizen-community', source: 'inv-artizen',    target: 'citizen-green',     relationship: 'funded-by', label: 'Applicant' },
+{ id: 'e-bread-loan-bread',  source: 'inv-bread-loan', target: 'venue-founder-haus', relationship: 'backed-by', label: 'Backed by' },
 ```
 
 ---
 
 ### 3.3 — `src/components/CityGraph/CityGraphMap.jsx`
 
-**O que muda:**
+**Contexto:** Após os commits de fix, `ActivityFeed` existe como uma função local inline dentro deste arquivo (não é importada). O `SimEngine` é instanciado aqui e o `activities` state também vive aqui.
 
-1. **Remover** a importação e renderização do `<ActivityFeed />`.
-2. **Mover** a lógica do `SimEngine` para fora do `CityGraphMap`:
-   - O `SimEngine` será instanciado na `HomePage.jsx`.
-   - O `CityGraphMap` receberá uma prop `onSimEdge` (callback) para receber os dots de animação sem precisar do state do feed.
-   - Remover `activities` state e `handleActivity` callback do componente.
-3. **Atualizar** o `SimEngine` para respeitar apenas os layers do novo schema (`commerce`, `identity`, `listings`, `events`, `investment`).
-4. **Atualizar** a lógica de markers para não renderizar mais nós de `safety`, `environment`, `infrastructure`, `governance`.
+**Ações obrigatórias:**
 
-**Nova assinatura do componente:**
+**3.3.1** — Remover **completamente** o bloco da função local `ActivityFeed` (do comentário `// ─── Inline ActivityFeed` até o fechamento da função). Não existe import a remover — ela é uma função local, então deletar o corpo da função é suficiente.
+
+**3.3.2** — Remover o `useState` de `activities`:
+```js
+const [activities, setActivities] = useState([]);  // ← deletar esta linha
+```
+
+**3.3.3** — Remover o callback `handleActivity`:
+```js
+const handleActivity = useCallback((act) => {
+  setActivities(prev => [...prev.slice(-11), act]);
+}, []);  // ← deletar este bloco inteiro
+```
+
+**3.3.4** — No trecho onde o `SimEngine` é instanciado (dentro de um `useEffect`), remover a inicialização local e substituir por uma chamada ao `onSimEdge` recebido como prop. O componente não deve mais instanciar `SimEngine` por conta própria. Remover:
+```js
+const sim = new SimEngine({
+  onSimEdge: handleSimEdge,
+  onActivity: handleActivity,
+  ...
+});
+```
+E também remover o `import { SimEngine } from './SimEngine'` do topo do arquivo, pois o SimEngine passará a ser instanciado na `HomePage.jsx`.
+
+**3.3.5** — Remover do JSX a renderização `<ActivityFeed activities={activities} />` (que está no canto inferior esquerdo do mapa).
+
+**3.3.6** — Atualizar a assinatura da função para aceitar as props externas:
 ```jsx
 export default function CityGraphMap({ onSimEdge, onActivity }) { ... }
 ```
+O `handleSimEdge` interno deve chamar `onSimEdge` (prop) quando receber um evento do SimEngine — mas como o SimEngine agora vive na HomePage, o `onSimEdge` será uma referência externa que a HomePage passa diretamente para o CityGraphMap usar como callback de animação.
 
 ---
 
-### 3.4 — `src/components/CityGraph/ActivityFeed.jsx`
+### 3.4 — CRIAR `src/components/ActivityFeed.jsx` (arquivo novo)
 
-**O que muda:** Mover para `src/components/ActivityFeed.jsx` (fora do CityGraph) e adaptar o layout para a barra lateral da HomePage.
+**Este arquivo não existe.** Criar com o seguinte conteúdo:
 
-**Novo design da barra lateral:**
-- Header: `🔴 Live Activity in Ipê City` com pulse dot animado.
-- Lista de items com:
-  - Ícone colorido por tipo (trade = ⇄, listing = Tag, event = Calendar, investment = TrendingUp).
-  - Texto descritivo.
-  - Timestamp relativo ("agora", "2m ago", "5m ago").
-- Auto-scroll para o item mais recente.
-- Máximo 20 itens (os mais antigos saem).
-- Items reais da API ficam na base; items simulados vão ao topo.
+```jsx
+// src/components/ActivityFeed.jsx
+import { useEffect, useRef } from 'react';
+
+const ACTIVITY_ICONS = {
+  trade:      '⇄',
+  listing:    '🏷',
+  event:      '📅',
+  investment: '📈',
+  transfer:   '→',
+};
+
+export function ActivityFeed({ activities }) {
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = 0;
+    }
+  }, [activities.length]);
+
+  return (
+    <div className="activity-feed-panel">
+      <div className="activity-feed-header">
+        <span className="pulse-dot" />
+        Live Activity in Ipê City
+      </div>
+      <ul ref={listRef} className="activity-feed-list">
+        {activities.length === 0 ? (
+          <li className="activity-feed-empty">Waiting for activity…</li>
+        ) : (
+          activities.slice(0, 20).map(act => (
+            <li key={act.id} className="activity-feed-item">
+              <span className="activity-icon" style={{ color: act.color }}>
+                {ACTIVITY_ICONS[act.type] ?? '•'}
+              </span>
+              <span className="activity-text">{act.text}</span>
+              <span className="activity-time">{act.time}</span>
+            </li>
+          ))
+        )}
+      </ul>
+    </div>
+  );
+}
+```
 
 ---
 
 ### 3.5 — `src/components/HomePage.jsx`
 
-**O que muda:**
+**Ações:**
 
-1. **Instanciar o `SimEngine`** aqui, passando:
-   - `onSimEdge` → enviado como prop para o `<CityGraphMap />`.
-   - `onActivity` → atualiza o state `activities` da HomePage.
-
-2. **Substituir** a lógica atual do `liveFeed` (que vinha de `fetchDiscoverItems`) para ser gerenciada por um state `activities` unificado.
-
-3. **Popular** o feed inicial com os últimos listings reais ao montar:
+**3.5.1** — Importar no topo do arquivo:
 ```js
-const initialItems = listings.slice(0, 5).map(l => ({
-  id: `real-${l.id}`,
-  text: `New listing: ${l.title}`,
-  color: '#A78BFA',
-  type: 'listing',
-  icon: <Tag size={14} />,
-  time: '5m',
-  ts: Date.now() - 300000,
-}));
-setActivities(initialItems);
+import { SimEngine } from './CityGraph/SimEngine';
+import { ActivityFeed } from './ActivityFeed';
+import { Tag, TrendingUp, CalendarDays, Zap } from 'lucide-react';
 ```
 
-4. **Renderizar** o novo `<ActivityFeed activities={activities} />` dentro do `<aside className="activity-feed">`.
+**3.5.2** — Adicionar state de activities:
+```js
+const [activities, setActivities] = useState([]);
+```
 
-5. **Passar** `onSimEdge` e `onActivity` ao `<CityGraphMap />`.
+**3.5.3** — Instanciar o `SimEngine` em um `useEffect` (após o mount):
+```js
+useEffect(() => {
+  const sim = new SimEngine({
+    onSimEdge: (edge) => {
+      // edge é passado como prop para CityGraphMap via callback
+      if (simEdgeCallbackRef.current) simEdgeCallbackRef.current(edge);
+    },
+    onActivity: (act) => {
+      setActivities(prev => [act, ...prev].slice(0, 20));
+    },
+    nodes: [],  // CityGraphMap vai preencher via ref
+  });
+  sim.start();
+  return () => sim.stop();
+}, []);
+```
+
+> **Nota:** Para passar a referência do `onSimEdge` para o CityGraphMap sem re-render, usar um `useRef` como `simEdgeCallbackRef`:
+> ```js
+> const simEdgeCallbackRef = useRef(null);
+> ```
+> E passar para o CityGraphMap:
+> ```jsx
+> <CityGraphMap onRegisterSimEdge={(fn) => { simEdgeCallbackRef.current = fn; }} ... />
+> ```
+> Dentro do `CityGraphMap`, expor o callback chamando `onRegisterSimEdge(handleSimEdge)` no mount.
+
+**3.5.4** — Popular o feed inicial com listings reais ao carregar:
+```js
+useEffect(() => {
+  if (!listings?.length) return;
+  const initialItems = listings.slice(0, 5).map(l => ({
+    id: `real-${l.id}`,
+    text: `New listing: ${l.title}`,
+    color: '#A78BFA',
+    type: 'listing',
+    time: '5m',
+    ts: Date.now() - 300000,
+  }));
+  setActivities(initialItems);
+}, [listings]);
+```
+
+**3.5.5** — Dentro do JSX, na barra lateral `<aside className="activity-feed">`, substituir o conteúdo atual pelo componente novo:
+```jsx
+<aside className="activity-feed">
+  <ActivityFeed activities={activities} />
+</aside>
+```
 
 ---
 
-### 3.6 — `LayerToggle.jsx` — Atualizar ícones
+### 3.6 — `src/components/CityGraph/LayerToggle.jsx`
 
-**O que muda:** Adicionar o ícone `Tag` e `TrendingUp` para os novos layers.
+**Ação:** Atualizar imports e o mapa de ícones para incluir os novos layers e remover os antigos.
 
-```jsx
-import { ..., Tag, TrendingUp } from 'lucide-react';
+Substituir a linha de import:
+```js
+import { Eye, EyeOff, Users, Cpu, Vote, Store, ShieldAlert, Leaf, CalendarDays } from 'lucide-react';
+```
+Por:
+```js
+import { Eye, EyeOff, Users, Store, Tag, CalendarDays, TrendingUp } from 'lucide-react';
+```
+
+Substituir:
+```js
+const ICONS = { Users, Cpu, Vote, Store, ShieldAlert, Leaf, CalendarDays };
+```
+Por:
+```js
 const ICONS = { Store, Users, Tag, CalendarDays, TrendingUp };
 ```
 
 ---
 
-## 4. Arquitetura Final do Fluxo
+### 3.7 — `src/components/CityGraph/SimEngine.js`
 
-```
-HomePage.jsx
-├── instancia SimEngine
-│   ├── onSimEdge → prop para CityGraphMap (anima dot no mapa)
-│   └── onActivity → atualiza state `activities`
-├── activities state (real + simulado) → ActivityFeed (barra direita)
-└── CityGraphMap
-    ├── recebe onSimEdge como prop
-    ├── usa simLayerRef para plotar dots simulados
-    └── NÃO tem mais ActivityFeed interno
-```
+**Ação:** Atualizar os templates para refletir as categorias reais do IpêXchange.
 
----
-
-## 5. SimEngine — Atualizar Templates
-
-Os templates do SimEngine devem usar as categorias reais:
-
+Substituir o array `TEMPLATES` pelo seguinte:
 ```js
 const TEMPLATES = [
   { type: 'trade',      label: (a, b) => `Trade: ${a} ↔ ${b}`,       color: '#7AE7FF' },
@@ -260,17 +333,49 @@ const TEMPLATES = [
 
 ---
 
-## 6. Resumo das Mudanças por Arquivo
+## 4. Arquitetura Final do Fluxo
+
+```
+HomePage.jsx
+├── instancia SimEngine via useEffect
+│   ├── onSimEdge → repassado via ref para CityGraphMap (anima dot no mapa)
+│   └── onActivity → atualiza state `activities` na HomePage
+├── activities state (real + simulado) → <ActivityFeed /> (barra lateral direita)
+└── <CityGraphMap onRegisterSimEdge={...} />
+    ├── registra handleSimEdge via onRegisterSimEdge no mount
+    ├── usa simLayerRef para plotar dots simulados
+    └── NÃO tem mais ActivityFeed (nem inline, nem importado)
+        NÃO instancia SimEngine
+        NÃO tem activities state
+```
+
+---
+
+## 5. Resumo das Mudanças por Arquivo
 
 | Arquivo | Tipo | O que muda |
 |---------|------|------------|
-| `src/lib/cityGraphAdapter.js` | MODIFY | 5 novos layers alinhados ao IpêXchange |
-| `backend/lib/cityGraphBuilder.js` | MODIFY | Remove infra/gov/safety/env, adiciona investment + ocean listings, reposiciona nós na terra |
-| `src/components/CityGraph/CityGraphMap.jsx` | MODIFY | Remove ActivityFeed interno, recebe onSimEdge como prop |
-| `src/components/CityGraph/ActivityFeed.jsx` | MOVE+MODIFY | Move para `src/components/`, adapta para barra lateral direita |
+| `src/lib/cityGraphAdapter.js` | MODIFY | Substituir 7 layers antigos pelos 5 novos |
+| `backend/lib/cityGraphBuilder.js` | MODIFY | Remove infra/gov/safety/env, adiciona investment + ocean, reposiciona cidadãos |
+| `src/components/CityGraph/CityGraphMap.jsx` | MODIFY | Remove ActivityFeed inline + activities state + SimEngine init |
+| `src/components/ActivityFeed.jsx` | CREATE | Novo arquivo — componente para barra lateral da HomePage |
 | `src/components/CityGraph/SimEngine.js` | MODIFY | Atualiza templates para categorias reais |
-| `src/components/CityGraph/LayerToggle.jsx` | MODIFY | Adiciona ícones Tag e TrendingUp |
-| `src/components/HomePage.jsx` | MODIFY | Instancia SimEngine, gerencia activities state, passa props para CityGraphMap |
+| `src/components/CityGraph/LayerToggle.jsx` | MODIFY | Substitui ícones antigos por Tag e TrendingUp |
+| `src/components/HomePage.jsx` | MODIFY | Instancia SimEngine, gerencia activities state, renderiza ActivityFeed |
+
+---
+
+## 6. Ordem de Execução Recomendada
+
+Executar nesta ordem para evitar erros intermediários de build:
+
+1. `src/lib/cityGraphAdapter.js` — layers
+2. `backend/lib/cityGraphBuilder.js` — entidades e edges
+3. `src/components/ActivityFeed.jsx` — **criar o arquivo primeiro** (antes de modificar HomePage)
+4. `src/components/CityGraph/LayerToggle.jsx` — ícones
+5. `src/components/CityGraph/SimEngine.js` — templates
+6. `src/components/CityGraph/CityGraphMap.jsx` — remover ActivityFeed inline, activities state, SimEngine init
+7. `src/components/HomePage.jsx` — instanciar SimEngine, usar ActivityFeed
 
 ---
 
@@ -280,10 +385,11 @@ const TEMPLATES = [
 - [ ] Nenhum layer de infra/gov/safety/env está presente
 - [ ] Todos os nós de cidadãos estão em terra (lat < -27.441)
 - [ ] Nós oceânicos (surf, jet-ski, catamarã, golfinhos) estão visualmente na água
-- [ ] LiveActivity aparece **apenas** na barra lateral direita do mapa
-- [ ] A janelinha inferior esquerda (ActivityFeed antigo) NÃO aparece mais dentro do mapa
+- [ ] LiveActivity aparece **apenas** na barra lateral direita da HomePage
+- [ ] Nenhum `ActivityFeed` existe dentro de `CityGraphMap.jsx` (nem inline, nem importado)
 - [ ] O feed atualiza em tempo real com novos eventos simulados a cada ~3s
 - [ ] Os listings reais aparecem no feed ao carregar a página
 - [ ] Animações dos dots continuam fluindo normalmente após a reestruturação
 - [ ] Hover e click nos nós funcionam sem resetar animações
 - [ ] Toggle de layers esconde/mostra os nós e suas arestas corretamente
+- [ ] `npm run build` passa sem erros de import não resolvido

@@ -1,8 +1,8 @@
 // src/components/CityGraph/LayerToggle.jsx
-import { Eye, EyeOff, Users, Cpu, Vote, Store, ShieldAlert, Leaf, CalendarDays } from 'lucide-react';
+import { Eye, EyeOff, Users, Store, Tag, CalendarDays, TrendingUp } from 'lucide-react';
 import { LAYER_META } from '../../lib/cityGraphAdapter';
 
-const ICONS = { Users, Cpu, Vote, Store, ShieldAlert, Leaf, CalendarDays };
+const ICONS = { Store, Users, Tag, CalendarDays, TrendingUp };
 
 export function LayerToggle({ activeLayers, onToggle, onToggleAll, entityCount }) {
   const allActive = activeLayers.size >= LAYER_META.length;

@@ -7,101 +7,8 @@ import { fetchCityGraphData } from '../../lib/api';
 import { LAYER_META } from '../../lib/cityGraphAdapter';
 import { EntityDetailPanel } from './EntityDetailPanel';
 import { LayerToggle } from './LayerToggle';
-import { SimEngine } from './SimEngine';
 
-// ─── Inline ActivityFeed (embedded to avoid external file dependency) ─────────
 
-const ACTIVITY_ICONS = {
-  trade:      '⇄',
-  listing:    '🏷',
-  event:      '📅',
-  investment: '📈',
-  transfer:   '→',
-};
-
-function ActivityFeed({ activities }) {
-  return (
-    <div style={{
-      position: 'absolute',
-      bottom: 16,
-      left: 16,
-      zIndex: 600,
-      width: 280,
-      maxHeight: 220,
-      background: 'rgba(4,18,36,0.88)',
-      border: '1px solid rgba(122,231,255,0.15)',
-      borderRadius: 14,
-      backdropFilter: 'blur(12px)',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      pointerEvents: 'none',
-    }}>
-      <div style={{
-        padding: '10px 14px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: 'rgba(122,231,255,0.8)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-      }}>
-        <span style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: '#B4F44A',
-          boxShadow: '0 0 6px #B4F44A',
-          animation: 'pulse 1.5s ease-in-out infinite',
-        }} />
-        Live Activity
-      </div>
-      <ul style={{ margin: 0, padding: '6px 0', listStyle: 'none', overflowY: 'auto', flex: 1 }}>
-        {activities.length === 0 ? (
-          <li style={{ padding: '8px 14px', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
-            Waiting for activity…
-          </li>
-        ) : (
-          activities.slice(0, 6).map(act => (
-            <li key={act.id} style={{
-              padding: '7px 14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              borderBottom: '1px solid rgba(255,255,255,0.04)',
-            }}>
-              <span style={{
-                fontSize: 12,
-                color: act.color,
-                background: `${act.color}18`,
-                width: 22,
-                height: 22,
-                borderRadius: 6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                {ACTIVITY_ICONS[act.type] || '⚡'}
-              </span>
-              <span style={{
-                fontSize: 11,
-                lineHeight: 1.4,
-                color: 'rgba(255,255,255,0.7)',
-                overflow: 'hidden',
-                whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis',
-              }}>
-                {act.text}
-              </span>
-            </li>
-          ))
-        )}
-      </ul>
-    </div>
-  );
-}
 
 const SW = [-27.4518, -48.5135];
 const NE = [-27.4334, -48.4905];
@@ -192,7 +99,7 @@ function tooltipHtml(entity, color, layerLabel) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function CityGraphMap() {
+export default function CityGraphMap({ onRegisterSimEdge, onEntitiesLoad }) {
   // ── Leaflet refs ──────────────────────────────────────────────────────────
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -211,15 +118,13 @@ export default function CityGraphMap() {
   const animPausedAtRef = useRef(null);
   const animPausedTotalRef = useRef(0);
 
-  // ── SimEngine ref ─────────────────────────────────────────────────────────
-  const simEngineRef = useRef(null);
+
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [entities, setEntities] = useState([]);
   const [edges, setEdges] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
-  const [activities, setActivities] = useState([]);
   const [activeLayers, setActiveLayers] = useState(
     new Set(LAYER_META.map(l => l.id))
   );
@@ -310,15 +215,14 @@ export default function CityGraphMap() {
     );
   }, []);
 
-  const handleActivity = useCallback((act) => {
-    setActivities(prev => [...prev.slice(-11), act]);
-  }, []);
+
 
   // ── Fetch data ────────────────────────────────────────────────────────────
   useEffect(() => {
     fetchCityGraphData().then(data => {
       setEntities(data.entities || []);
       setEdges(data.edges || []);
+      if (onEntitiesLoad) onEntitiesLoad(data.entities || []);
       setLoading(false);
     });
   }, []);
@@ -390,24 +294,19 @@ export default function CityGraphMap() {
       startAnimRef.current();
     });
 
-    // Init SimEngine
-    const sim = new SimEngine({
-      onSimEdge: handleSimEdge,
-      onActivity: handleActivity,
-      intervalMs: 3200,
-    });
-    simEngineRef.current = sim;
-    sim.start();
+    // Register the handleSimEdge callback for external SimEngine
+    if (onRegisterSimEdge) {
+      onRegisterSimEdge(handleSimEdge);
+    }
 
     mapRef.current = map;
 
     return () => {
-      sim.stop();
       stopAnimRef.current();
       map.remove();
       mapRef.current = null;
     };
-  }, [handleSimEdge, handleActivity]);
+  }, [handleSimEdge, onRegisterSimEdge]);
 
   // ── Draw functions ────────────────────────────────────────────────────────
 
@@ -415,48 +314,6 @@ export default function CityGraphMap() {
     const overlayLayer = overlayLayerRef.current;
     if (!overlayLayer) return;
     overlayLayer.clearLayers();
-
-    if (activeLayersRef.current.has('safety')) {
-      for (const entity of entitiesRef.current.filter(e => e.isSafetyZone)) {
-        L.circle([entity.location.lat, entity.location.lon], {
-          radius: entity.zoneRadiusMeters || 80,
-          color: 'rgba(255,107,107,0.35)',
-          weight: 1.5,
-          dashArray: '6 4',
-          fillColor: 'rgba(255,107,107,0.07)',
-          fillOpacity: 0.07,
-          interactive: false,
-          bubblingMouseEvents: false,
-        }).addTo(overlayLayer);
-      }
-    }
-
-    if (activeLayersRef.current.has('environment')) {
-      for (const entity of entitiesRef.current.filter(e => e.layer === 'environment')) {
-        L.circle([entity.location.lat, entity.location.lon], {
-          radius: 30,
-          stroke: false,
-          fillColor: '#4ECDC4',
-          fillOpacity: 0.12,
-          interactive: false,
-          bubblingMouseEvents: false,
-        }).addTo(overlayLayer);
-
-        if (entity.value != null) {
-          L.marker([entity.location.lat, entity.location.lon], {
-            interactive: false,
-            keyboard: false,
-            zIndexOffset: 50,
-            icon: L.divIcon({
-              className: 'city-graph-marker-wrapper',
-              html: `<div style="transform:translateY(3px);text-align:center;color:#4ECDC4;font-size:9px;font-weight:700;opacity:0.9;white-space:nowrap;text-shadow:0 0 8px #4ECDC488">${entity.value}${entity.unit || ''}</div>`,
-              iconSize: [48, 16],
-              iconAnchor: [24, 8],
-            }),
-          }).addTo(overlayLayer);
-        }
-      }
-    }
   }
 
   function drawEdges() {
@@ -686,8 +543,7 @@ export default function CityGraphMap() {
         />
       </div>
 
-      {/* Activity Feed */}
-      <ActivityFeed activities={activities} />
+
 
       {/* Loading overlay */}
       {loading && (
