@@ -15,7 +15,7 @@ const NE = [-27.4334, -48.4905];
 const MAP_CENTER = [-27.43934, -48.50254];
 const SVG_BOUNDS = L.latLngBounds(SW, NE);
 
-const VENUE_IDS = new Set(['venue-founder-haus', 'venue-ai-haus', 'venue-privacy-haus']);
+const VENUE_IDS = new Set(['venue-founder-haus', 'venue-ai-haus', 'venue-artizen-haus']);
 const MAIN_VENUE_ID = 'venue-founder-haus';
 const VENUE_GOLD = '#FFC857';
 

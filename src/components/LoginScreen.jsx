@@ -26,6 +26,7 @@ const LoginScreen = ({ onLogin }) => {
         <div className="icon-wrapper" style={{ padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
           <div style={{
             width: 80, height: 80, borderRadius: 20,
+            margin: '0 auto',
             background: 'linear-gradient(145deg, #080C14 0%, #0B1421 35%, #0d1f2d 65%, #0a1a1a 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 0 0 1px rgba(56,189,248,0.35), 0 0 24px rgba(56,189,248,0.15), 0 8px 32px rgba(0,0,0,0.6)',
@@ -54,8 +55,8 @@ const LoginScreen = ({ onLogin }) => {
             </svg>
           </div>
         </div>
-        <h1 className="hero-title">
-          <img src="/logo.png" alt="IpêXchange" style={{ height: '36px', width: '36px', borderRadius: '8px', verticalAlign: 'middle', marginRight: '10px' }} />
+        <h1 className="hero-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src="/logo.png" alt="IpêXchange" style={{ height: '36px', width: '36px', borderRadius: '8px', marginRight: '10px', flexShrink: 0 }} />
           <span>Ipê<span className="text-gradient-lime">Xchange</span></span>
         </h1>
         <p className="hero-subtitle">Connect your identity to enter the ecosystem.</p>
