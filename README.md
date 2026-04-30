@@ -39,6 +39,7 @@ IpêXchange isn't just a marketplace; it's a city's economic backbone.
 *   **P2P Loans & Investment**: A circular finance layer where residents can fund each other's growth via decentralized loans.
 *   **Recycle Hub**: A built-in circular economy service where citizens exchange unwanted materials for $IPE tokens and reputation.
 
+### 5. Unified Store + Human Economy 🤝
 Unlike platforms that segregate "peer-to-peer marketplaces" from "local businesses," IpêXchange unifies them. Residents and stores exist within the same trade network, participate in the same multi-hop cycles, and are visible on the same City Graph. From speedboats and apartments to coffee and code—everything is part of one cohesive ecosystem.
 
 ### 6. On-Chain Identity, Off-Chain Simplicity 🔐
