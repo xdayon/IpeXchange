@@ -303,6 +303,102 @@ export const mockListings = [
     coordinates: { lat: -27.44580, lng: -48.50100 },
     nodeName: 'ipe-bakery',
     image: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // --- BEACH & MORE MOCK DATA ---
+  // Vehicles
+  {
+    id: 'l43',
+    title: 'Yamaha WaveRunner Jet-Ski',
+    category: 'Vehicles',
+    provider: 'Ocean Rides', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$120/hour',
+    description: 'Rent our high-speed Jet-Ski for an hour. Departs from Jurerê Internacional beach.',
+    isPublic: true,
+    coordinates: { lat: -27.4365, lng: -48.5010 },
+    nodeName: 'ocean-rides',
+    image: 'https://images.unsplash.com/photo-1579704283838-51ec41e174ab?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  {
+    id: 'l44',
+    title: 'Speedboat Focker 240',
+    category: 'Vehicles',
+    provider: 'Marina G.', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$45,000',
+    description: 'Selling my speedboat. 24ft, fits 8 people comfortably. Engine recently revised. Excellent condition.',
+    isPublic: true,
+    coordinates: { lat: -27.4355, lng: -48.5045 },
+    nodeName: 'marina-boats',
+    image: 'https://images.unsplash.com/photo-1560377484-909d854e4c27?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // Real Estate
+  {
+    id: 'l45',
+    title: 'Private Room in Shared House',
+    category: 'Real Estate',
+    provider: 'Alex M.', type: 'Service', acceptedPayments: ['crypto', 'fiat'], price: '$500/month',
+    description: 'Renting out a private room with an en-suite bathroom in my 3-bedroom house. 5 mins walking to the beach. Shared kitchen and pool.',
+    isPublic: true,
+    coordinates: { lat: -27.44290, lng: -48.49985 },
+    nodeName: 'alex-house',
+    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // Jobs
+  {
+    id: 'l46',
+    title: 'Beach Life-Guard',
+    category: 'Jobs',
+    provider: 'Jurerê Safety', type: 'Service', acceptedPayments: ['fiat'], price: '3,500 BRL/mo',
+    description: 'Looking for a certified life-guard for the summer season (Dec-Mar). Must have valid CPR and water rescue certificates.',
+    isPublic: true,
+    coordinates: { lat: -27.4380, lng: -48.5000 },
+    nodeName: 'safety-tower',
+    image: 'https://images.unsplash.com/photo-1534008897995-27a23e859048?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // Services
+  {
+    id: 'l47',
+    title: 'Professional Surfboard Repair',
+    category: 'Services',
+    provider: 'Ipê City Surf Shop', type: 'Service', acceptedPayments: ['trade', 'crypto'], price: 'From $40',
+    description: 'Dings, fin boxes, and full restorations. Fast turnaround. We accept crypto or trade for surf accessories.',
+    isPublic: true,
+    coordinates: { lat: -27.43850, lng: -48.49760 },
+    nodeName: 'surf-shop',
+    image: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // Food & Drink
+  {
+    id: 'l48',
+    title: 'Seafood Paella (Weekend Special)',
+    category: 'Food & Drink',
+    provider: 'Chef Roberto', type: 'Product', acceptedPayments: ['fiat', 'crypto'], price: '$45/portion',
+    description: 'Authentic Spanish Paella made with fresh local seafood. Available only on weekends. Pre-order recommended!',
+    isPublic: true,
+    coordinates: { lat: -27.4430, lng: -48.5020 },
+    nodeName: 'chef-roberto',
+    image: 'https://images.unsplash.com/photo-1515443961218-a51367888e4b?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // Events
+  {
+    id: 'l49',
+    title: 'Catamaran Sunset Boat Party',
+    category: 'Events',
+    provider: 'Ocean Vibe', type: 'Service', acceptedPayments: ['crypto'], price: '$60',
+    description: 'Join us for a 4-hour sunset boat party with live DJs, drinks, and ocean swimming. Limited tickets.',
+    isPublic: true,
+    coordinates: { lat: -27.4352, lng: -48.5050 },
+    nodeName: 'catamaran-dock',
+    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&q=80&w=400&h=300'
+  },
+  // Knowledge
+  {
+    id: 'l50',
+    title: 'PADI Scuba Diving Certification',
+    category: 'Knowledge',
+    provider: 'Deep Blue Dive', type: 'Service', acceptedPayments: ['fiat', 'trade'], price: '$350',
+    description: 'Get your PADI Open Water certification. 3 days of pool and ocean training in the clear waters near Jurerê.',
+    isPublic: true,
+    coordinates: { lat: -27.4360, lng: -48.5080 },
+    nodeName: 'dive-shop',
+    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&q=80&w=400&h=300'
   }
 ];
 
