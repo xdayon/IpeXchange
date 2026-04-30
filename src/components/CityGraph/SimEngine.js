@@ -88,6 +88,7 @@ export class SimEngine {
       text: tmpl.label(src.label, tgt.label),
       color: tmpl.color,
       type: tmpl.type,
+      time: 'now',
       ts: Date.now(),
     });
   }

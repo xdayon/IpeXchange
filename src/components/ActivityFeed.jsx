@@ -1,7 +1,7 @@
 // src/components/ActivityFeed.jsx
 import { useEffect, useRef } from 'react';
 
-const ACTIVITY_ICONS = {
+const FEED_ICONS = {
   trade:      '⇄',
   listing:    '🏷',
   event:      '📅',
@@ -13,32 +13,32 @@ export function ActivityFeed({ activities }) {
   const listRef = useRef(null);
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = 0;
-    }
+    if (listRef.current) listRef.current.scrollTop = 0;
   }, [activities.length]);
 
   return (
-    <div className="activity-feed-panel">
-      <div className="activity-feed-header">
-        <span className="pulse-dot" />
+    <>
+      <h4 className="feed-title">
+        <span className="live-dot" />
         Live Activity in Ipê City
-      </div>
-      <ul ref={listRef} className="activity-feed-list">
+      </h4>
+      <ul ref={listRef} className="feed-list">
         {activities.length === 0 ? (
-          <li className="activity-feed-empty">Waiting for activity…</li>
+          <li style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+            Waiting for activity…
+          </li>
         ) : (
           activities.slice(0, 20).map(act => (
-            <li key={act.id} className="activity-feed-item">
-              <span className="activity-icon" style={{ color: act.color }}>
-                {ACTIVITY_ICONS[act.type] ?? '•'}
+            <li key={act.id} className="feed-item">
+              <span className="feed-icon" style={{ color: act.color }}>
+                {FEED_ICONS[act.type] ?? '•'}
               </span>
-              <span className="activity-text">{act.text}</span>
-              <span className="activity-time">{act.time}</span>
+              <span className="feed-text">{act.text}</span>
+              <span className="feed-time">{act.time}</span>
             </li>
           ))
         )}
       </ul>
-    </div>
+    </>
   );
 }

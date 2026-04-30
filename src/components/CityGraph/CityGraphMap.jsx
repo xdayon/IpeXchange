@@ -477,9 +477,6 @@ export default function CityGraphMap({ onRegisterSimEdge, onEntitiesLoad }) {
     if (!mapRef.current || !edgeLayerRef.current) return;
     drawEdges();
     drawOverlays();
-    if (simEngineRef.current) {
-      simEngineRef.current.setEntities(entitiesRef.current);
-    }
   }, [entities, edges, activeLayers]);
 
   // Effect 3: Highlights
