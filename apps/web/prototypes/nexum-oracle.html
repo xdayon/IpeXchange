@@ -1,0 +1,256 @@
+<title>Nexum — the trade oracle</title>
+<style>
+  :root {
+    --bg: #080C14;
+    --panel: rgba(148, 163, 184, 0.06);
+    --border: rgba(148, 163, 184, 0.14);
+    --text: #F8FAFC;
+    --muted: #94A3B8;
+    --cyan: #38BDF8;
+    --lime: #B4F44A;
+    --indigo: #818CF8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .stage {
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  h1 .accent { color: var(--lime); }
+  canvas {
+    width: min(420px, 90vw);
+    height: auto;
+    display: block;
+  }
+  .caption {
+    min-height: 44px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.5;
+    max-width: 40ch;
+    transition: opacity 0.3s;
+  }
+  .caption strong { color: var(--text); font-weight: 500; }
+  .states {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .states button {
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.25s;
+    backdrop-filter: blur(8px);
+  }
+  .states button:hover { color: var(--text); border-color: rgba(148,163,184,0.35); }
+  .states button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+  .states button.active {
+    color: #080C14;
+    background: var(--lime);
+    border-color: var(--lime);
+    font-weight: 600;
+  }
+  .note {
+    margin-top: 22px;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: center;
+    max-width: 52ch;
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    /* animation loop checks this and renders a still frame */
+  }
+</style>
+
+<div class="stage">
+  <div class="eyebrow">IpeXchange concept</div>
+  <h1>Nexum<span class="accent">.</span> <span style="font-weight:400;color:var(--muted)">the trade oracle</span></h1>
+  <canvas id="orb" width="840" height="840" aria-label="Animated illustration of Nexum, a glowing oracle made of orbiting nodes and connections"></canvas>
+  <p class="caption" id="caption"><strong>Nexum is awake.</strong> Nodes are people, threads are possible trades. It watches the whole graph at once.</p>
+  <div class="states" role="group" aria-label="Nexum states">
+    <button data-state="idle" class="active">Idle</button>
+    <button data-state="listening">Listening</button>
+    <button data-state="thinking">Thinking</button>
+    <button data-state="speaking">Speaking</button>
+  </div>
+  <p class="note">Interaction concept: the orb is Nexum's body. It leans in and turns cyan while you speak, spins indigo while it searches the trade graph, and pulses lime when it found a match. Built entirely in code (canvas), so it ships weightless and reacts in real time.</p>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('orb');
+  const ctx = canvas.getContext('2d');
+  const caption = document.getElementById('caption');
+  const W = 840, H = 840, CX = W / 2, CY = H / 2;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const CYAN = [56, 189, 248], LIME = [180, 244, 74], INDIGO = [129, 140, 248];
+  const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+  const STATES = {
+    idle:      { hue: CYAN,   speed: 1.0, breath: 1.0, link: 150, ripple: 0,  caption: '<strong>Nexum is awake.</strong> Nodes are people, threads are possible trades. It watches the whole graph at once.' },
+    listening: { hue: CYAN,   speed: 0.5, breath: 1.6, link: 120, ripple: -1, caption: '<strong>Listening.</strong> The orb leans toward you and breathes with your voice while you record.' },
+    thinking:  { hue: INDIGO, speed: 3.2, breath: 0.7, link: 185, ripple: 0,  caption: '<strong>Searching the graph.</strong> Orbits accelerate while Nexum crosses interests and offers looking for rings.' },
+    speaking:  { hue: LIME,   speed: 1.4, breath: 1.2, link: 150, ripple: 1,  caption: '<strong>Found something.</strong> Lime pulses radiate outward as Nexum explains the trade it discovered.' },
+  };
+  let state = STATES.idle;
+  let cur = { hue: [...CYAN], speed: 1, breath: 1, link: 150 };
+
+  // Orbiting nodes: people in the trade graph
+  const N = 11;
+  const nodes = Array.from({ length: N }, (_, i) => ({
+    r: 130 + (i % 5) * 42 + Math.random() * 20,
+    a: Math.random() * Math.PI * 2,
+    v: (0.0018 + Math.random() * 0.0022) * (i % 2 ? 1 : -1),
+    s: 3.5 + Math.random() * 3,
+  }));
+
+  const ripples = [];
+  let pulses = [];  // dots travelling along an edge
+  let t = 0, lastRipple = 0, lastPulse = 0;
+
+  function lerp(a, b, k) { return a + (b - a) * k; }
+
+  function frame() {
+    t += 1;
+    // ease current params toward target state
+    cur.speed = lerp(cur.speed, state.speed, 0.04);
+    cur.breath = lerp(cur.breath, state.breath, 0.04);
+    cur.link = lerp(cur.link, state.link, 0.04);
+    for (let i = 0; i < 3; i++) cur.hue[i] = lerp(cur.hue[i], state.hue[i], 0.05);
+    const hue = cur.hue.map(Math.round);
+
+    ctx.clearRect(0, 0, W, H);
+
+    // node positions
+    const pos = nodes.map(n => {
+      n.a += n.v * cur.speed;
+      const wob = Math.sin(t * 0.01 + n.r) * 6;
+      return { x: CX + Math.cos(n.a) * (n.r + wob), y: CY + Math.sin(n.a) * (n.r + wob), s: n.s };
+    });
+
+    // edges between nearby nodes
+    ctx.lineWidth = 1;
+    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+      const dx = pos[i].x - pos[j].x, dy = pos[i].y - pos[j].y;
+      const d = Math.hypot(dx, dy);
+      if (d < cur.link) {
+        ctx.strokeStyle = rgba(hue, 0.22 * (1 - d / cur.link));
+        ctx.beginPath(); ctx.moveTo(pos[i].x, pos[i].y); ctx.lineTo(pos[j].x, pos[j].y); ctx.stroke();
+      }
+    }
+
+    // occasional trade pulse along a random close pair
+    if (t - lastPulse > 90 / cur.speed) {
+      lastPulse = t;
+      const i = Math.floor(Math.random() * N); let best = -1, bd = 1e9;
+      for (let j = 0; j < N; j++) if (j !== i) {
+        const d = Math.hypot(pos[i].x - pos[j].x, pos[i].y - pos[j].y);
+        if (d < bd) { bd = d; best = j; }
+      }
+      if (bd < cur.link * 1.4) pulses.push({ i, j: best, k: 0 });
+    }
+    pulses = pulses.filter(p => p.k < 1);
+    for (const p of pulses) {
+      p.k += 0.02 * cur.speed;
+      const x = lerp(pos[p.i].x, pos[p.j].x, p.k), y = lerp(pos[p.i].y, pos[p.j].y, p.k);
+      ctx.fillStyle = rgba(hue, 0.9);
+      ctx.beginPath(); ctx.arc(x, y, 3, 0, 7); ctx.fill();
+    }
+
+    // nodes
+    for (const p of pos) {
+      ctx.fillStyle = rgba(hue, 0.85);
+      ctx.shadowColor = rgba(hue, 0.8); ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 7); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    // rotating oracle rings
+    for (const [r, dir, seg] of [[86, 1, 0.55], [108, -1, 0.35]]) {
+      ctx.strokeStyle = rgba(hue, 0.5);
+      ctx.lineWidth = 1.6;
+      const off = t * 0.004 * dir * cur.speed;
+      for (let k = 0; k < 3; k++) {
+        const a0 = off + k * (Math.PI * 2 / 3);
+        ctx.beginPath(); ctx.arc(CX, CY, r, a0, a0 + seg * Math.PI * 2 / 3); ctx.stroke();
+      }
+    }
+
+    // ripples (speaking: outward lime; listening: inward cyan)
+    if (state.ripple !== 0 && t - lastRipple > 55) { lastRipple = t; ripples.push({ r: state.ripple > 0 ? 70 : 260, dir: state.ripple }); }
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const rp = ripples[i];
+      rp.r += rp.dir * 1.8;
+      const life = rp.dir > 0 ? 1 - (rp.r - 70) / 200 : (rp.r - 60) / 200;
+      if (life <= 0) { ripples.splice(i, 1); continue; }
+      ctx.strokeStyle = rgba(hue, 0.35 * life);
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(CX, CY, rp.r, 0, 7); ctx.stroke();
+    }
+
+    // core: breathing glow
+    const breath = 1 + Math.sin(t * 0.03 * cur.breath) * 0.08 * cur.breath;
+    const R = 46 * breath;
+    const g = ctx.createRadialGradient(CX, CY, 4, CX, CY, R * 2.6);
+    g.addColorStop(0, rgba([255, 255, 255], 0.95));
+    g.addColorStop(0.18, rgba(hue, 0.9));
+    g.addColorStop(0.5, rgba(hue, 0.25));
+    g.addColorStop(1, rgba(hue, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(CX, CY, R * 2.6, 0, 7); ctx.fill();
+
+    // inner iris ring — gives it a face without being a face
+    ctx.strokeStyle = rgba([8, 12, 20], 0.55);
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(CX, CY, R * 0.55, 0, 7); ctx.stroke();
+
+    if (!reduced) requestAnimationFrame(frame);
+  }
+  frame();
+
+  document.querySelectorAll('.states button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.states button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state = STATES[btn.dataset.state];
+      caption.innerHTML = state.caption;
+    });
+  });
+})();
+</script>

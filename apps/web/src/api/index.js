@@ -1,20 +1,44 @@
-// ── API base client ──────────────────────────────────────────────
-// Todas as chamadas HTTP passam por aqui. Componentes NUNCA fazem fetch direto.
+// All HTTP calls go through apiFetch. Components never fetch directly.
+// Auth is attached here: a Privy access-token provider registered by useAuth,
+// plus Telegram initData when running inside the Mini App.
 
 let BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 if (BASE.startsWith('http') && !BASE.endsWith('/api')) BASE += '/api';
 
 export const API_URL = BASE;
 
+let getAccessToken = null;
+
+export function registerTokenProvider(fn) {
+  getAccessToken = fn;
+}
+
+async function authHeaders() {
+  const headers = {};
+  const initData = window?.Telegram?.WebApp?.initData;
+  if (initData) headers['X-Telegram-Init-Data'] = initData;
+  if (getAccessToken) {
+    try {
+      const token = await getAccessToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    } catch {
+      // expired session: fall through as anonymous / Telegram-only
+    }
+  }
+  return headers;
+}
+
 export async function apiFetch(path, options = {}) {
-  const url = `${BASE}${path}`;
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
-  });
+  const headers = { ...(await authHeaders()), ...options.headers };
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`API ${res.status}: ${body || res.statusText}`);
+    const body = await res.json().catch(() => null);
+    const err = new Error(body?.error || `API ${res.status}: ${res.statusText}`);
+    err.status = res.status;
+    throw err;
   }
   return res.json();
 }

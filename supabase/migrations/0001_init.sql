@@ -44,6 +44,7 @@ CREATE TABLE intents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   direction TEXT NOT NULL CHECK (direction IN ('want', 'offer')),
+  kind TEXT CHECK (kind IN ('good', 'digital', 'service', 'knowledge')),
   title TEXT NOT NULL,
   description TEXT,
   category TEXT,

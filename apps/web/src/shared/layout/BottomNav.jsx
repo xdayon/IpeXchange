@@ -1,20 +1,19 @@
-// ── BottomNav — mobile navigation ──────────────────────────────
-import React from 'react';
-import { Compass, PlusSquare, User, ShoppingBag } from 'lucide-react';
+
+import { Home, Compass, PlusSquare, User } from 'lucide-react';
 
 const TABS = [
-  { id: 'discover', icon: Compass,     label: 'Discover' },
-  { id: 'create',   icon: PlusSquare,  label: 'List'     },
-  { id: 'myitems',  icon: ShoppingBag, label: 'My Items' },
-  { id: 'profile',  icon: User,        label: 'Profile'  },
+  { id: 'home', icon: Home, label: 'Home' },
+  { id: 'discover', icon: Compass, label: 'Market' },
+  { id: 'create', icon: PlusSquare, label: 'Publish' },
+  { id: 'profile', icon: User, label: 'Profile' },
 ];
 
 const styles = {
   nav: {
     position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
     height: 'var(--bottomnav-height)',
-    background: 'rgba(8, 12, 20, 0.95)',
-    backdropFilter: 'blur(24px)',
+    background: 'var(--glass-bg)',
+    backdropFilter: 'var(--glass-blur)',
     borderTop: '1px solid var(--border-color)',
     display: 'flex', alignItems: 'center',
   },
@@ -36,7 +35,6 @@ export default function BottomNav({ page, onNavigate }) {
       {TABS.map(({ id, icon: Icon, label }) => (
         <button
           key={id}
-          id={`bottomnav-${id}`}
           style={styles.tab(page === id)}
           onClick={() => onNavigate(id)}
           aria-label={label}

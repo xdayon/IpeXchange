@@ -6,13 +6,14 @@ import { embed } from '../lib/gemini.js';
 const app = new Hono();
 
 const CARD_FIELDS =
-  'id, user_id, direction, title, description, category, price_fiat, image_url, created_at';
+  'id, user_id, direction, kind, title, description, category, price_fiat, image_url, created_at';
 
 // Public market feed. Anonymous search falls back to text match so Gemini
 // quota is only spent on logged-in users.
 app.get('/market', optionalAuth, async (c) => {
   const db = getDb(c.env);
   const direction = c.req.query('direction');
+  const kind = c.req.query('kind');
   const category = c.req.query('category');
   const q = c.req.query('q')?.trim();
   const limit = Math.min(Number(c.req.query('limit')) || 30, 60);
@@ -40,6 +41,7 @@ app.get('/market', optionalAuth, async (c) => {
     .range(offset, offset + limit - 1);
 
   if (direction === 'want' || direction === 'offer') query = query.eq('direction', direction);
+  if (['good', 'digital', 'service', 'knowledge'].includes(kind)) query = query.eq('kind', kind);
   if (category) query = query.eq('category', category);
   if (q) query = query.or(`title.ilike.%${q.replaceAll('%', '')}%,description.ilike.%${q.replaceAll('%', '')}%`);
 

@@ -1,31 +1,24 @@
-// ── useTelegram — detecta Telegram Mini App ──────────────────────
-// Quando o app é aberto dentro do Telegram, WebApp está disponível.
-// Fornece initData, user e utilitários do Telegram SDK.
+// Detects the Telegram Mini App environment. The Telegram SDK script loads in
+// index.html before React mounts, so presence can be derived synchronously.
 import { useState, useEffect } from 'react';
 
 export function useTelegram() {
-  const [tgUser, setTgUser]     = useState(null);
-  const [isTMA, setIsTMA]       = useState(false);
-  const [isReady, setIsReady]   = useState(false);
+  const [isTMA] = useState(() => Boolean(window?.Telegram?.WebApp?.initData));
+  const [tgUser] = useState(() => window?.Telegram?.WebApp?.initDataUnsafe?.user ?? null);
 
   useEffect(() => {
     const tg = window?.Telegram?.WebApp;
     if (tg) {
       tg.ready();
       tg.expand();
-      setIsTMA(true);
-      if (tg.initDataUnsafe?.user) {
-        setTgUser(tg.initDataUnsafe.user);
-      }
     }
-    setIsReady(true);
   }, []);
 
-  const close      = () => window?.Telegram?.WebApp?.close();
-  const haptic     = (style = 'light') => window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
-  const showBack   = () => window?.Telegram?.WebApp?.BackButton?.show();
-  const hideBack   = () => window?.Telegram?.WebApp?.BackButton?.hide();
-  const onBack     = (fn) => {
+  const close = () => window?.Telegram?.WebApp?.close();
+  const haptic = (style = 'light') => window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
+  const showBack = () => window?.Telegram?.WebApp?.BackButton?.show();
+  const hideBack = () => window?.Telegram?.WebApp?.BackButton?.hide();
+  const onBack = (fn) => {
     const tg = window?.Telegram?.WebApp;
     if (!tg) return;
     tg.BackButton.show();
@@ -33,5 +26,5 @@ export function useTelegram() {
     return () => tg.BackButton.offClick(fn);
   };
 
-  return { isTMA, tgUser, isReady, close, haptic, showBack, hideBack, onBack };
+  return { isTMA, tgUser, isReady: true, close, haptic, showBack, hideBack, onBack };
 }

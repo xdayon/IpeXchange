@@ -2,7 +2,7 @@
 
 ## What this project is
 Intent marketplace for Ipê City (network state, Florianópolis, Brazil).
-Citizens list what they WANT and what they HAVE/OFFER; the system crosses
+Citizens list their INTERESTS and their OFFERS; the system crosses
 intents to suggest purchases, connections and multi-hop trade cycles (2-3
 people, off-chain, max 25% value imbalance). Payments in ETH on Base L2
 arrive in launch 2.
@@ -25,7 +25,10 @@ Interfaces: Web app (ipexchange.xyz) + Telegram Mini App (xchange.synapses.acade
 The developer speaks Portuguese — that is fine for conversation — but every output targeting the app, bot, or API must be English.
 
 ## Product language
-UI uses human words ("I want", "I have", "Offer", "I'm interested").
+The two user-facing concepts are **Interests** (what you are looking for) and
+**Offers** (what you bring to the market). Never use "I have" copy.
+Offers are broad: physical goods, digital products, services, work,
+consulting, knowledge and skills — all tradeable.
 Internally everything is an `intent` with `direction: want | offer`.
 
 ## Visual Identity (preserve always)
@@ -46,7 +49,7 @@ Internally everything is an `intent` with `direction: want | offer`.
 - **Mini App auth:** Telegram initData validated with HMAC in the Worker
 - **Blockchain:** Base L2 (chainId 8453) — launch 2
 - **Bot:** raw Telegram Bot API (webhook route on the Worker; no Telegraf)
-- **LLM:** Gemini REST — `gemini-flash-latest` (Copilot) + `text-embedding-004` (embeddings)
+- **LLM:** Gemini REST — `gemini-flash-latest` (Copilot) + `gemini-embedding-001` (embeddings, `outputDimensionality: 768`, normalized client-side)
 
 ## Project Structure
 ```
@@ -76,7 +79,7 @@ scripts/                 ← db-apply.js, seed.js
 
 ## Supabase Tables (MVP)
 - `users` — id, privy_did, wallet, email, telegram_id, telegram_username, telegram_dm_ok, display_name, avatar_url
-- `intents` — id, user_id, direction (want|offer), title, description, category, price_fiat, image_url, embedding vector(768), status, source
+- `intents` — id, user_id, direction (want|offer), kind (good|digital|service|knowledge), title, description, category, price_fiat, image_url, embedding vector(768), status, source
 - `intent_drafts` — Copilot drafts (raw_text, drafts jsonb, status)
 - `interest_marks` — intent_id, user_id, message (unique per pair)
 - `trade_cycles` + `trade_cycle_participants` — multi-hop state machine

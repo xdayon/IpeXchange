@@ -1,12 +1,26 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { PrivyProvider } from '@privy-io/react-auth';
 import App from './App.jsx';
 
-// NOTE: PrivyProvider será adicionado aqui quando tivermos o PRIVY_APP_ID do MVP.
-// Por enquanto o useAuth usa identidade Telegram ou sessão anônima.
+const PRIVY_APP_ID = import.meta.env.VITE_PRIVY_APP_ID;
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
+const privyConfig = {
+  loginMethods: ['email', 'wallet', 'telegram'],
+  appearance: {
+    theme: 'dark',
+    accentColor: '#B4F44A',
+    logo: undefined,
+  },
+  embeddedWallets: { createOnLogin: 'users-without-wallets' },
+};
+
+const app = PRIVY_APP_ID ? (
+  <PrivyProvider appId={PRIVY_APP_ID} config={privyConfig}>
     <App />
-  </StrictMode>,
+  </PrivyProvider>
+) : (
+  <App />
 );
+
+createRoot(document.getElementById('root')).render(<StrictMode>{app}</StrictMode>);

@@ -6,19 +6,21 @@ import { embed } from '../lib/gemini.js';
 const app = new Hono();
 
 const DIRECTIONS = ['want', 'offer'];
-const EDITABLE = ['title', 'description', 'category', 'price_fiat', 'image_url', 'status'];
+const KINDS = ['good', 'digital', 'service', 'knowledge'];
+const EDITABLE = ['title', 'description', 'kind', 'category', 'price_fiat', 'image_url', 'status'];
 const STATUSES = ['active', 'fulfilled', 'archived'];
 
 const INTENT_FIELDS =
-  'id, user_id, direction, title, description, category, price_fiat, image_url, status, source, created_at';
+  'id, user_id, direction, kind, title, description, category, price_fiat, image_url, status, source, created_at';
 
 app.post('/intents', requireAuth, async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Invalid JSON body' }, 400);
 
-  const { direction, title, description, category, price_fiat, image_url, source } = body;
+  const { direction, kind, title, description, category, price_fiat, image_url, source } = body;
   if (!DIRECTIONS.includes(direction)) return c.json({ error: 'direction must be want or offer' }, 400);
+  if (kind != null && !KINDS.includes(kind)) return c.json({ error: 'kind must be good, digital, service or knowledge' }, 400);
   if (!title || String(title).trim().length < 3) return c.json({ error: 'title is required (min 3 chars)' }, 400);
   if (price_fiat != null && (isNaN(Number(price_fiat)) || Number(price_fiat) < 0)) {
     return c.json({ error: 'price_fiat must be a non-negative number' }, 400);
@@ -32,6 +34,7 @@ app.post('/intents', requireAuth, async (c) => {
     .insert({
       user_id: user.id,
       direction,
+      kind: kind ?? null,
       title: String(title).trim(),
       description: description ? String(description).trim() : null,
       category: category ?? null,
@@ -72,6 +75,7 @@ app.patch('/intents/:id', requireAuth, async (c) => {
   for (const key of EDITABLE) if (key in body) patch[key] = body[key];
   if (Object.keys(patch).length === 0) return c.json({ error: 'Nothing to update' }, 400);
   if (patch.status && !STATUSES.includes(patch.status)) return c.json({ error: 'Invalid status' }, 400);
+  if (patch.kind != null && !KINDS.includes(patch.kind)) return c.json({ error: 'Invalid kind' }, 400);
   if (patch.title != null && String(patch.title).trim().length < 3) {
     return c.json({ error: 'title is required (min 3 chars)' }, 400);
   }
