@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ipexchange",
+  "main": "src/index.js",
+  "compatibility_date": "2026-06-01",
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": {
+    "enabled": true
+  }
+  // Custom domains (ipexchange.xyz, xchange.synapses.academy) are attached
+  // in the Cloudflare dashboard after the first deploy.
+  // Secrets (wrangler secret put): SUPABASE_URL, SUPABASE_SECRET_KEY,
+  // GEMINI_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET,
+  // PRIVY_APP_ID, LINK_TOKEN_SECRET
+}

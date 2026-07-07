@@ -1,0 +1,67 @@
+/* ============================================================
+   IpêXchange — Design Tokens
+   Fonte da verdade para cores, tipografia, espaçamento e sombras.
+   Sempre use variáveis CSS, nunca cores hardcoded.
+   ============================================================ */
+
+:root {
+  /* ── Cores base ────────────────────────────────────────────── */
+  --bg-dark:        #080C14;
+  --bg-card:        #0E1420;
+  --bg-elevated:    #141B28;
+  --border-color:   rgba(255, 255, 255, 0.07);
+  --border-active:  rgba(56, 189, 248, 0.35);
+
+  /* ── Accent palette ────────────────────────────────────────── */
+  --accent-cyan:    #38BDF8;
+  --accent-lime:    #B4F44A;
+  --accent-purple:  #A855F7;
+  --accent-pink:    #F43F5E;
+  --accent-amber:   #F59E0B;
+
+  /* ── Texto ─────────────────────────────────────────────────── */
+  --text-primary:   #F0F4FF;
+  --text-secondary: rgba(240, 244, 255, 0.5);
+  --text-muted:     rgba(240, 244, 255, 0.3);
+
+  /* ── Glassmorphism ─────────────────────────────────────────── */
+  --glass-bg:       rgba(14, 20, 32, 0.8);
+  --glass-border:   rgba(255, 255, 255, 0.07);
+  --glass-blur:     blur(20px);
+
+  /* ── Sombras ───────────────────────────────────────────────── */
+  --shadow-sm:      0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md:      0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg:      0 8px 48px rgba(0, 0, 0, 0.5);
+  --shadow-cyan:    0 4px 24px rgba(56, 189, 248, 0.2);
+  --shadow-lime:    0 4px 24px rgba(180, 244, 74, 0.2);
+
+  /* ── Raios ─────────────────────────────────────────────────── */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+  --radius-full: 9999px;
+
+  /* ── Espaçamento ───────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* ── Tipografia ────────────────────────────────────────────── */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Transições ────────────────────────────────────────────── */
+  --transition: 0.2s ease;
+  --transition-slow: 0.35s ease;
+
+  /* ── Navbar ────────────────────────────────────────────────── */
+  --navbar-height: 64px;
+  --bottomnav-height: 64px;
+}

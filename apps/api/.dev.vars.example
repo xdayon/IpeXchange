@@ -1,0 +1,12 @@
+# Copy to .dev.vars for local development (wrangler dev). NEVER commit .dev.vars.
+SUPABASE_URL=https://your-project.supabase.co
+# Secret API key (sb_secret_...) from Supabase dashboard > Settings > API keys
+SUPABASE_SECRET_KEY=
+GEMINI_API_KEY=
+TELEGRAM_BOT_TOKEN=
+# Random string; must match the secret_token passed to Telegram setWebhook
+TELEGRAM_WEBHOOK_SECRET=
+# Privy app id from dashboard.privy.io
+PRIVY_APP_ID=
+# Random string; signs Telegram account-linking deep-link tokens
+LINK_TOKEN_SECRET=
