@@ -10,10 +10,11 @@
   },
   "observability": {
     "enabled": true
-  }
-  // Custom domains (ipexchange.xyz, xchange.synapses.academy) are attached
-  // in the Cloudflare dashboard after the first deploy.
-  // Secrets (wrangler secret put): SUPABASE_URL, SUPABASE_SECRET_KEY,
-  // GEMINI_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET,
-  // PRIVY_APP_ID, LINK_TOKEN_SECRET
+  },
+  "routes": [
+    { "pattern": "xchange.synapses.academy", "custom_domain": true }
+  ]
+  // Secrets (wrangler secret bulk): SUPABASE_URL, SUPABASE_SECRET_KEY,
+  // GEMINI_API_KEY, GROQ_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET,
+  // PRIVY_APP_ID, LINK_TOKEN_SECRET, TELEGRAM_BOT_USERNAME
 }

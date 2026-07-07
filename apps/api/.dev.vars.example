@@ -10,3 +10,9 @@ TELEGRAM_WEBHOOK_SECRET=
 PRIVY_APP_ID=
 # Random string; signs Telegram account-linking deep-link tokens
 LINK_TOKEN_SECRET=
+# Groq (primary LLM: Llama 3.3 chat/drafts + Whisper transcription)
+GROQ_API_KEY=
+# Bot username without @, used to build t.me deep links
+TELEGRAM_BOT_USERNAME=
+# Postgres connection string, used only by scripts/db-apply.js and seed
+DATABASE_URL=

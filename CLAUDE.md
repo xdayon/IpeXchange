@@ -49,13 +49,13 @@ Internally everything is an `intent` with `direction: want | offer`.
 - **Mini App auth:** Telegram initData validated with HMAC in the Worker
 - **Blockchain:** Base L2 (chainId 8453) — launch 2
 - **Bot:** raw Telegram Bot API (webhook route on the Worker; no Telegraf)
-- **LLM:** Gemini REST — `gemini-flash-latest` (Copilot) + `gemini-embedding-001` (embeddings, `outputDimensionality: 768`, normalized client-side)
+- **LLM:** Groq is primary — `llama-3.3-70b-versatile` (Nexum interview + intent drafting) and `whisper-large-v3` (audio transcription); Gemini REST as fallback for drafting and for embeddings (`gemini-embedding-001`, `outputDimensionality: 768`, normalized client-side)
 
 ## Project Structure
 ```
 apps/web/                ← Vite SPA
   src/
-    features/{marketplace,listing,auth,profile}/
+    features/{marketplace,intent,cycles,nexum,auth,profile,home}/
     shared/{ui,layout,hooks}/
     api/                 ← all HTTP calls; apiFetch attaches auth headers
     styles/              ← tokens.css (SINGLE SOURCE OF TRUTH), globals.css
@@ -65,8 +65,8 @@ apps/api/                ← Cloudflare Worker
     index.js             ← Hono app + route mounts only
     middleware/auth.js   ← Privy JWT + Telegram initData
     routes/              ← one file per resource
-    lib/                 ← supabase.js, gemini.js, telegram.js
-supabase/migrations/     ← schema; apply with npm run db:apply
+    lib/                 ← supabase.js, gemini.js, groq.js, telegram.js, notify.js, matching.js, linktoken.js, nexum.js
+supabase/migrations/     ← schema; apply with npm run db:apply (tracked in schema_migrations, each file runs once)
 scripts/                 ← db-apply.js, seed.js
 ```
 
@@ -85,7 +85,7 @@ scripts/                 ← db-apply.js, seed.js
 - `trade_cycles` + `trade_cycle_participants` — multi-hop state machine
 - `notifications` — user_id, type, payload jsonb, telegram_sent
 - `ai_usage` — daily per-user AI action counters
-- RPCs: `match_intents`, `find_intent_cycles`, `increment_ai_usage`
+- RPCs: `match_intents`, `find_intent_cycles`, `increment_ai_usage`; cycle state machine is atomic plpgsql — `persist_intent_cycle` (dedup by cycle_hash), `respond_to_cycle`, `confirm_cycle_step` (fulfills gives + wants on completion)
 
 ## Code Conventions
 - No TypeScript — pure JavaScript project
