@@ -1,7 +1,13 @@
 
-import { Handshake, Megaphone, Compass, ArrowRight, LogIn } from 'lucide-react';
+import { Handshake, Megaphone, Compass, Repeat, ArrowRight, LogIn } from 'lucide-react';
 
 const CTAS = [
+  {
+    id: 'cycles', icon: Repeat, title: 'My trade cycles', authOnly: true,
+    desc: 'Rings the oracle closed with your intents',
+    color: 'var(--accent-purple)', bg: 'rgba(168,85,247,0.08)', border: 'rgba(168,85,247,0.25)',
+    to: ['cycles'],
+  },
   {
     id: 'want', icon: Handshake, title: 'List an interest',
     desc: 'Tell the network what you are looking for',
@@ -40,7 +46,7 @@ export default function HomePage({ user, isAuthenticated, login, onNavigate }) {
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {CTAS.map((cta) => {
+        {CTAS.filter((cta) => !cta.authOnly || isAuthenticated).map((cta) => {
           const Icon = cta.icon;
           return (
             <button

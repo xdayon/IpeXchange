@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
 import { getDb } from '../lib/supabase.js';
 import { embed } from '../lib/gemini.js';
+import { matchAndNotify } from '../lib/matching.js';
 
 const app = new Hono();
 
@@ -50,6 +51,7 @@ app.post('/intents', requireAuth, async (c) => {
     console.error('Intent insert failed:', error);
     return c.json({ error: 'Could not create intent' }, 500);
   }
+  c.executionCtx.waitUntil(matchAndNotify(c.env, user.id));
   return c.json(data, 201);
 });
 

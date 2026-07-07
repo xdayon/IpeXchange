@@ -4,6 +4,7 @@ import { getDb } from '../lib/supabase.js';
 import { embed, extractDrafts } from '../lib/gemini.js';
 import { transcribe, chat, extractDraftsGroq } from '../lib/groq.js';
 import { NEXUM_SYSTEM_PROMPT } from '../lib/nexum.js';
+import { matchAndNotify } from '../lib/matching.js';
 
 const app = new Hono();
 
@@ -120,6 +121,7 @@ app.post('/copilot/drafts/:id/publish', requireAuth, async (c) => {
   }
 
   await db.from('intent_drafts').update({ status: 'published' }).eq('id', draft.id);
+  c.executionCtx.waitUntil(matchAndNotify(c.env, user.id));
   return c.json({ intents }, 201);
 });
 

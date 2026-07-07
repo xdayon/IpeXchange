@@ -1,10 +1,11 @@
 
-import { Home, Compass, PlusSquare, User } from 'lucide-react';
+import { Home, Compass, PlusSquare, Repeat, User } from 'lucide-react';
 
 const TABS = [
   { id: 'home', icon: Home, label: 'Home' },
   { id: 'discover', icon: Compass, label: 'Market' },
   { id: 'create', icon: PlusSquare, label: 'Publish' },
+  { id: 'cycles', icon: Repeat, label: 'Trades' },
   { id: 'profile', icon: User, label: 'Profile' },
 ];
 

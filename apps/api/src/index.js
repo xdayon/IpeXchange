@@ -6,6 +6,7 @@ import interest from './routes/interest.js';
 import uploads from './routes/uploads.js';
 import copilot from './routes/copilot.js';
 import telegram from './routes/telegram.js';
+import cycles from './routes/cycles.js';
 
 const app = new Hono();
 
@@ -20,6 +21,7 @@ app.route('/api', interest);
 app.route('/api', uploads);
 app.route('/api', copilot);
 app.route('/api', telegram);
+app.route('/api', cycles);
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404));
 

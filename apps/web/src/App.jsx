@@ -13,6 +13,8 @@ const IntentDetail = lazy(() => import('./features/intent/IntentDetail.jsx'));
 const CreateIntentWizard = lazy(() => import('./features/intent/CreateIntentWizard.jsx'));
 const ProfilePage = lazy(() => import('./features/profile/ProfilePage.jsx'));
 const NexumInterview = lazy(() => import('./features/nexum/NexumInterview.jsx'));
+const CyclesPage = lazy(() => import('./features/cycles/CyclesPage.jsx'));
+const CycleDetail = lazy(() => import('./features/cycles/CycleDetail.jsx'));
 
 const Loader = () => (
   <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)' }}>
@@ -38,6 +40,7 @@ export default function App() {
   const { page, push, pop, reset, canBack } = useHistory('home');
 
   const [selectedIntent, setSelectedIntent] = useState(null);
+  const [selectedCycleId, setSelectedCycleId] = useState(null);
   const [createDirection, setCreateDirection] = useState(null);
 
   useEffect(() => {
@@ -70,8 +73,9 @@ export default function App() {
   const navigate = (dest, data = {}) => {
     haptic('light');
     if (dest === 'intent-detail' && data.intent) setSelectedIntent(data.intent);
+    if (dest === 'cycle-detail' && data.cycleId) setSelectedCycleId(data.cycleId);
     if (dest === 'create') setCreateDirection(data.direction ?? null);
-    if (dest === 'home' || dest === 'discover') { setSelectedIntent(null); reset(dest); return; }
+    if (dest === 'home' || dest === 'discover' || dest === 'cycles') { setSelectedIntent(null); reset(dest); return; }
     push(dest);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -133,6 +137,17 @@ export default function App() {
               onBack={goBack}
               onMarket={() => reset('discover')}
             />
+          )}
+          {page === 'cycles' && (
+            <CyclesPage
+              user={user}
+              isAuthenticated={isAuthenticated}
+              login={login}
+              onSelectCycle={(cycle) => navigate('cycle-detail', { cycleId: cycle.id })}
+            />
+          )}
+          {page === 'cycle-detail' && selectedCycleId && (
+            <CycleDetail cycleId={selectedCycleId} user={user} onBack={goBack} />
           )}
           {page === 'profile' && (
             <ProfilePage

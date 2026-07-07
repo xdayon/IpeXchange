@@ -34,11 +34,13 @@ async function embed(text) {
   return values.map((v) => v / norm);
 }
 
+// Dev telegram ids let local tests authenticate as seed users with
+// forged initData and exercise the DM pipeline end to end.
 const SEED_USERS = [
-  { display_name: 'Seed Dayon', email: 'seed-dayon@test.local' },
-  { display_name: 'Seed Bia', email: 'seed-bia@test.local' },
-  { display_name: 'Seed Joao', email: 'seed-joao@test.local' },
-  { display_name: 'Seed Rico', email: 'seed-rico@test.local' },
+  { display_name: 'Seed Dayon', email: 'seed-dayon@test.local', telegram_id: 990101, telegram_dm_ok: true },
+  { display_name: 'Seed Bia', email: 'seed-bia@test.local', telegram_id: 990102, telegram_dm_ok: true },
+  { display_name: 'Seed Joao', email: 'seed-joao@test.local', telegram_id: 990103, telegram_dm_ok: true },
+  { display_name: 'Seed Rico', email: 'seed-rico@test.local', telegram_id: 990104, telegram_dm_ok: true },
 ];
 
 // 2-hop ring: Dayon wants a bicycle (Rico offers one, $280) and Rico wants a
@@ -61,6 +63,8 @@ const INTENTS = () => [
 ];
 
 console.log('Cleaning previous seed data...');
+// Cycles reference intents without cascade; clear them first (dev database).
+await rest('/trade_cycles?id=not.is.null', { method: 'DELETE' });
 await rest('/users?email=like.seed-*@test.local', { method: 'DELETE' });
 
 console.log('Creating users...');
