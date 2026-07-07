@@ -24,12 +24,14 @@ async function rest(pathname, options = {}) {
 
 async function embed(text) {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`,
     { method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ content: { parts: [{ text }] } }) },
+      body: JSON.stringify({ content: { parts: [{ text }] }, outputDimensionality: 768 }) },
   );
   if (!res.ok) throw new Error(`embed: ${res.status} ${await res.text()}`);
-  return (await res.json()).embedding.values;
+  const values = (await res.json()).embedding.values;
+  const norm = Math.sqrt(values.reduce((s, v) => s + v * v, 0));
+  return values.map((v) => v / norm);
 }
 
 const SEED_USERS = [

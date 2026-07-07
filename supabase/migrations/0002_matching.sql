@@ -7,7 +7,7 @@
 CREATE OR REPLACE FUNCTION match_intents(
   query_embedding VECTOR(768),
   p_direction TEXT DEFAULT 'offer',
-  match_threshold FLOAT DEFAULT 0.60,
+  match_threshold FLOAT DEFAULT 0.58,
   match_count INT DEFAULT 20
 ) RETURNS TABLE (
   id UUID, user_id UUID, direction TEXT, title TEXT, description TEXT,
@@ -34,7 +34,7 @@ $$;
 -- prices pass.
 CREATE OR REPLACE FUNCTION find_intent_cycles(
   p_user_id UUID,
-  match_threshold FLOAT DEFAULT 0.65,
+  match_threshold FLOAT DEFAULT 0.58,
   min_value_ratio FLOAT DEFAULT 0.75,
   max_results INT DEFAULT 10
 ) RETURNS JSONB LANGUAGE sql STABLE AS $$
