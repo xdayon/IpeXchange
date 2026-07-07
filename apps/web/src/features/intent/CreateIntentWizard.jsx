@@ -62,7 +62,28 @@ function SuccessScreen({ intent, onMarket, onCreateAnother }) {
   );
 }
 
-export default function CreateIntentWizard({ onBack, onMarket, isAuthenticated, login, initialDirection }) {
+function NexumBanner({ onNexum }) {
+  return (
+    <button onClick={onNexum} style={{
+      width: '100%', marginBottom: 24, padding: '14px 16px', borderRadius: 'var(--radius-lg)',
+      border: '1px solid rgba(129,140,248,0.35)', background: 'rgba(129,140,248,0.08)',
+      cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-sans)',
+      display: 'flex', alignItems: 'center', gap: 12,
+    }}>
+      <Sparkles size={20} style={{ color: 'var(--accent-purple)', flexShrink: 0 }} />
+      <span>
+        <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+          Let Nexum interview you
+        </span>
+        <span style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)' }}>
+          Talk or type freely; the oracle drafts your intents. Or fill manually below.
+        </span>
+      </span>
+    </button>
+  );
+}
+
+export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthenticated, login, initialDirection }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ ...INITIAL_FORM, direction: initialDirection || INITIAL_FORM.direction });
   const [submitting, setSubmitting] = useState(false);
@@ -130,6 +151,7 @@ export default function CreateIntentWizard({ onBack, onMarket, isAuthenticated, 
         </div>
       </div>
 
+      {step === 0 && onNexum && <NexumBanner onNexum={onNexum} />}
       {step === 0 && (
         <StepIntentType direction={form.direction} kind={form.kind}
           onDirection={(v) => set('direction', v)} onKind={(v) => set('kind', v)} />

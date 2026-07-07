@@ -4,6 +4,7 @@ import intents from './routes/intents.js';
 import market from './routes/market.js';
 import interest from './routes/interest.js';
 import uploads from './routes/uploads.js';
+import copilot from './routes/copilot.js';
 
 const app = new Hono();
 
@@ -16,6 +17,7 @@ app.route('/api', me);
 app.route('/api', intents);
 app.route('/api', interest);
 app.route('/api', uploads);
+app.route('/api', copilot);
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404));
 

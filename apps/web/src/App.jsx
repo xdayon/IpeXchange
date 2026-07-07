@@ -11,6 +11,7 @@ const MarketFeed = lazy(() => import('./features/marketplace/MarketFeed.jsx'));
 const IntentDetail = lazy(() => import('./features/intent/IntentDetail.jsx'));
 const CreateIntentWizard = lazy(() => import('./features/intent/CreateIntentWizard.jsx'));
 const ProfilePage = lazy(() => import('./features/profile/ProfilePage.jsx'));
+const NexumInterview = lazy(() => import('./features/nexum/NexumInterview.jsx'));
 
 const Loader = () => (
   <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)' }}>
@@ -110,6 +111,15 @@ export default function App() {
               isAuthenticated={isAuthenticated}
               login={login}
               initialDirection={createDirection}
+              onBack={goBack}
+              onMarket={() => reset('discover')}
+              onNexum={() => navigate('nexum')}
+            />
+          )}
+          {page === 'nexum' && (
+            <NexumInterview
+              isAuthenticated={isAuthenticated}
+              login={login}
               onBack={goBack}
               onMarket={() => reset('discover')}
             />
