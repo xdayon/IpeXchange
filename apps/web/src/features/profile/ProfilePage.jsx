@@ -1,6 +1,39 @@
 
+import { useState } from 'react';
 import { LogIn, LogOut, Send } from 'lucide-react';
+import { requestTelegramLink } from '../../api/me.js';
 import MyIntents from './MyIntents.jsx';
+
+function TelegramLinkBanner() {
+  const [error, setError] = useState(null);
+
+  const link = async () => {
+    setError(null);
+    try {
+      const { url } = await requestTelegramLink();
+      window.open(url, '_blank', 'noopener');
+    } catch {
+      setError('Could not create the link. Try again.');
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: 24, padding: '14px 16px', borderRadius: 'var(--radius-lg)',
+      border: '1px solid rgba(56,189,248,0.3)', background: 'rgba(56,189,248,0.06)',
+      display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      <Send size={18} style={{ color: 'var(--accent-cyan)', flexShrink: 0 }} />
+      <span style={{ flex: 1, fontSize: 13, color: 'var(--text-secondary)', minWidth: 180 }}>
+        Link your Telegram to get a message when someone is interested in your intents.
+      </span>
+      <button onClick={link} style={{ padding: '9px 18px', borderRadius: 'var(--radius-full)',
+        background: 'var(--accent-cyan)', color: 'var(--bg-dark)', fontWeight: 700, fontSize: 13,
+        border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+        Link Telegram
+      </button>
+      {error && <span style={{ fontSize: 12, color: 'var(--accent-pink)', width: '100%' }}>{error}</span>}
+    </div>
+  );
+}
 
 export default function ProfilePage({ user, isAuthenticated, login, logout, onNavigate, onSelectIntent }) {
   if (!isAuthenticated) {
@@ -51,6 +84,8 @@ export default function ProfilePage({ user, isAuthenticated, login, logout, onNa
           </button>
         )}
       </div>
+
+      {!user?.telegramLinked && <TelegramLinkBanner />}
 
       <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>My Intents</h2>
       <MyIntents onSelectIntent={onSelectIntent} />

@@ -5,6 +5,7 @@ import Navbar from './shared/layout/Navbar.jsx';
 import BottomNav from './shared/layout/BottomNav.jsx';
 import { useAuth } from './features/auth/useAuth.js';
 import { useTelegram } from './shared/hooks/useTelegram.js';
+import { confirmDmOk } from './api/me.js';
 
 const HomePage = lazy(() => import('./features/home/HomePage.jsx'));
 const MarketFeed = lazy(() => import('./features/marketplace/MarketFeed.jsx'));
@@ -33,7 +34,7 @@ function useHistory(initial = 'home') {
 
 export default function App() {
   const { user, loading: authLoading, isAuthenticated, login, logout } = useAuth();
-  const { isTMA, haptic } = useTelegram();
+  const { isTMA, haptic, requestWriteAccess } = useTelegram();
   const { page, push, pop, reset, canBack } = useHistory('home');
 
   const [selectedIntent, setSelectedIntent] = useState(null);
@@ -56,6 +57,15 @@ export default function App() {
     tg?.setHeaderColor?.('#080C14');
     tg?.setBackgroundColor?.('#080C14');
   }, []);
+
+  // Inside the Mini App, ask once for DM permission so the bot can notify.
+  useEffect(() => {
+    if (!isTMA || !user || user.telegramDmOk) return;
+    requestWriteAccess().then((granted) => {
+      if (granted) confirmDmOk().catch(() => {});
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTMA, user?.id, user?.telegramDmOk]);
 
   const navigate = (dest, data = {}) => {
     haptic('light');

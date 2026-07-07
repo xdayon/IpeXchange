@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
 import { getDb } from '../lib/supabase.js';
+import { notify } from '../lib/notify.js';
 
 const app = new Hono();
 
@@ -30,19 +31,25 @@ app.post('/intents/:id/interest', requireAuth, async (c) => {
     return c.json({ error: 'Could not save interest' }, 500);
   }
 
-  // Telegram delivery of this notification lands in the bot phase;
-  // the row is queued with telegram_sent=false either way.
-  await db.from('notifications').insert({
-    user_id: intent.user_id,
-    type: 'interest_received',
-    payload: {
-      intent_id: intent.id,
-      intent_title: intent.title,
-      from_user_id: user.id,
-      from_display_name: user.display_name,
-      message: body.message ?? null,
-    },
-  });
+  const who = user.display_name || 'Someone';
+  const dm =
+    `${who} is interested in your intent "${intent.title}".` +
+    (body.message ? `\n\nTheir message: ${String(body.message).slice(0, 280)}` : '') +
+    '\n\nOpen IpeXchange to follow up.';
+  c.executionCtx.waitUntil(
+    notify(c.env, {
+      userId: intent.user_id,
+      type: 'interest_received',
+      payload: {
+        intent_id: intent.id,
+        intent_title: intent.title,
+        from_user_id: user.id,
+        from_display_name: user.display_name,
+        message: body.message ?? null,
+      },
+      text: dm,
+    }),
+  );
 
   return c.json(mark, 201);
 });

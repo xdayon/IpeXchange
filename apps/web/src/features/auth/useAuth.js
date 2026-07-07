@@ -19,6 +19,7 @@ function toAppUser(me, session) {
     wallet: me.wallet || session.wallet || null,
     telegramUsername: me.telegram_username || null,
     telegramLinked: me.telegram_linked ?? false,
+    telegramDmOk: me.telegram_dm_ok ?? false,
     source: session.source,
   };
 }

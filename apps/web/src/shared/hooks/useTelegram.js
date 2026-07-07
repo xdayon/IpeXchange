@@ -15,6 +15,16 @@ export function useTelegram() {
   }, []);
 
   const close = () => window?.Telegram?.WebApp?.close();
+  const requestWriteAccess = () =>
+    new Promise((resolve) => {
+      const tg = window?.Telegram?.WebApp;
+      if (!tg?.requestWriteAccess) return resolve(false);
+      try {
+        tg.requestWriteAccess((granted) => resolve(Boolean(granted)));
+      } catch {
+        resolve(false);
+      }
+    });
   const haptic = (style = 'light') => window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
   const showBack = () => window?.Telegram?.WebApp?.BackButton?.show();
   const hideBack = () => window?.Telegram?.WebApp?.BackButton?.hide();
@@ -26,5 +36,5 @@ export function useTelegram() {
     return () => tg.BackButton.offClick(fn);
   };
 
-  return { isTMA, tgUser, isReady: true, close, haptic, showBack, hideBack, onBack };
+  return { isTMA, tgUser, isReady: true, close, haptic, showBack, hideBack, onBack, requestWriteAccess };
 }
