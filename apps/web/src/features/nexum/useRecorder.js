@@ -11,7 +11,9 @@ export function useRecorder() {
     if (!supported || recorderRef.current) return false;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
+      // Safari/iOS has no webm support and records mp4/aac instead.
+      const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus']
+        .find((t) => MediaRecorder.isTypeSupported(t)) || '';
       const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       chunksRef.current = [];
       recorder.ondataavailable = (e) => { if (e.data.size) chunksRef.current.push(e.data); };

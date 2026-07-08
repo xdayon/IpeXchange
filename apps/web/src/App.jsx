@@ -75,7 +75,7 @@ export default function App() {
     if (dest === 'intent-detail' && data.intent) setSelectedIntent(data.intent);
     if (dest === 'cycle-detail' && data.cycleId) setSelectedCycleId(data.cycleId);
     if (dest === 'create') setCreateDirection(data.direction ?? null);
-    if (dest === 'home' || dest === 'discover' || dest === 'cycles') { setSelectedIntent(null); reset(dest); return; }
+    if (['home', 'discover', 'cycles', 'profile'].includes(dest)) { setSelectedIntent(null); reset(dest); return; }
     push(dest);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -85,13 +85,17 @@ export default function App() {
 
   if (authLoading) return <Loader />;
 
-  // Telegram provides its own chrome inside the Mini App
-  const showNav = !isTMA;
+  // Top navbar is web-only (Telegram provides its own header chrome).
+  // BottomNav shows on root tabs; stacked pages rely on back affordances.
+  const showTopNav = !isTMA;
+  const showBottomNav = ['home', 'discover', 'cycles', 'profile'].includes(page);
 
   const contentStyle = {
     flex: 1,
-    paddingTop: showNav ? 'var(--navbar-height)' : 0,
-    paddingBottom: showNav ? 'var(--bottomnav-height)' : 'env(safe-area-inset-bottom, 16px)',
+    paddingTop: showTopNav ? 'var(--navbar-height)' : 0,
+    paddingBottom: showBottomNav
+      ? 'calc(var(--bottomnav-height) + env(safe-area-inset-bottom, 0px))'
+      : 'env(safe-area-inset-bottom, 16px)',
     maxWidth: 1200,
     margin: '0 auto',
     width: '100%',
@@ -101,7 +105,7 @@ export default function App() {
 
   return (
     <div className="app-root">
-      {showNav && <Navbar user={user} isAuthenticated={isAuthenticated} login={login} onNavigate={navigate} />}
+      {showTopNav && <Navbar user={user} isAuthenticated={isAuthenticated} login={login} onNavigate={navigate} />}
 
       <main style={contentStyle}>
         <Suspense fallback={<Loader />}>
@@ -162,7 +166,7 @@ export default function App() {
         </Suspense>
       </main>
 
-      {showNav && <BottomNav page={page} onNavigate={navigate} />}
+      {showBottomNav && <BottomNav page={page} onNavigate={navigate} />}
     </div>
   );
 }

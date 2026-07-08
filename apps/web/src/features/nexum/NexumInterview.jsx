@@ -5,6 +5,7 @@ import { useInterview } from './useInterview.js';
 import { useRecorder } from './useRecorder.js';
 import { transcribeAudio } from '../../api/copilot.js';
 import DraftCards, { PublishedScreen } from './DraftCards.jsx';
+import { useTelegram } from '../../shared/hooks/useTelegram.js';
 
 const iconBtn = (active) => ({
   width: 46, height: 46, borderRadius: '50%', border: 'none', flexShrink: 0,
@@ -16,13 +17,27 @@ const iconBtn = (active) => ({
 export default function NexumInterview({ isAuthenticated, login, onBack, onMarket }) {
   const { messages, orbState, setOrbState, error, draft, send, reveal, userTurns } = useInterview();
   const { recording, supported, start, stop } = useRecorder();
+  const { isTMA } = useTelegram();
   const [input, setInput] = useState('');
+  const [micError, setMicError] = useState(null);
   const [published, setPublished] = useState(null);
   const endRef = useRef(null);
 
+  const scrollToEnd = () => endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToEnd();
   }, [messages.length]);
+
+  // Telegram updates --tg-viewport-stable-height when the keyboard opens;
+  // re-anchor the chat to keep the latest message and the input visible.
+  useEffect(() => {
+    const tg = window?.Telegram?.WebApp;
+    if (!tg?.onEvent) return;
+    const onViewport = () => scrollToEnd();
+    tg.onEvent('viewportChanged', onViewport);
+    return () => tg.offEvent('viewportChanged', onViewport);
+  }, []);
 
   if (!isAuthenticated) {
     return (
@@ -47,6 +62,7 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
   };
 
   const toggleMic = async () => {
+    setMicError(null);
     if (recording) {
       setOrbState('thinking');
       const blob = await stop();
@@ -56,16 +72,26 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
         if (text) send(text);
         else setOrbState('idle');
       } catch {
+        setMicError('Could not transcribe the audio. Try again or type instead.');
         setOrbState('idle');
       }
     } else if (await start()) {
       setOrbState('listening');
+    } else {
+      setMicError('Microphone unavailable. Check your browser permissions.');
     }
   };
 
+  // Fixed height (Telegram stable viewport inside the Mini App) so the
+  // message list scrolls internally and the input stays above the keyboard.
+  const chatHeight = isTMA
+    ? 'calc(var(--tg-viewport-stable-height, 100dvh) - 24px)'
+    : 'calc(100dvh - var(--navbar-height) - 48px)';
+
   return (
-    <div className="page-enter" style={{ padding: '16px 0 32px', maxWidth: 560, margin: '0 auto',
-      display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 140px)' }}>
+    <div className="page-enter" style={{ padding: '16px 0', maxWidth: 560, margin: '0 auto', width: '100%',
+      display: 'flex', flexDirection: 'column',
+      ...(draft ? { minHeight: 'calc(100dvh - 140px)' } : { height: chatHeight }) }}>
       <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
         background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer',
         fontFamily: 'var(--font-sans)', fontSize: 14 }}>
@@ -83,7 +109,7 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
         <DraftCards draft={draft} onPublished={setPublished} />
       ) : (
         <>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto', padding: '8px 0' }}>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto', padding: '8px 0' }}>
             {messages.map((m, i) => (
               <div key={i} style={{
                 alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
@@ -98,7 +124,9 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
             <div ref={endRef} />
           </div>
 
-          {error && <p style={{ fontSize: 13, color: 'var(--accent-pink)', textAlign: 'center', margin: '8px 0' }}>{error}</p>}
+          {(error || micError) && (
+            <p style={{ fontSize: 13, color: 'var(--accent-pink)', textAlign: 'center', margin: '8px 0' }}>{error || micError}</p>
+          )}
 
           {userTurns >= 2 && (
             <button onClick={reveal} disabled={orbState === 'thinking'} style={{
@@ -121,6 +149,7 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submitText()}
+              onFocus={() => setTimeout(scrollToEnd, 250)}
               placeholder={recording ? 'Listening...' : 'Answer Nexum...'}
               disabled={recording || orbState === 'thinking'}
               style={{ flex: 1, padding: '13px 16px', background: 'var(--bg-card)',
