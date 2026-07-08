@@ -59,12 +59,16 @@ app.get('/intents/:id', async (c) => {
   const db = getDb(c.env);
   const { data, error } = await db
     .from('intents')
-    .select(`${INTENT_FIELDS}, users ( id, display_name, avatar_url, telegram_username )`)
+    .select(`${INTENT_FIELDS}, users ( id, display_name, avatar_url, telegram_username, wallet )`)
     .eq('id', c.req.param('id'))
     .maybeSingle();
 
   if (error) return c.json({ error: 'Lookup failed' }, 500);
   if (!data || data.status === 'archived') return c.json({ error: 'Not found' }, 404);
+  // The wallet address itself only travels via POST /payments quotes.
+  if (data.users) {
+    data.users = { ...data.users, wallet: undefined, has_wallet: Boolean(data.users.wallet) };
+  }
   return c.json(data);
 });
 

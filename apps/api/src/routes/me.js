@@ -28,6 +28,17 @@ app.post('/me/telegram-link-token', requireAuth, async (c) => {
   return c.json({ token, url: `https://t.me/${bot}?start=${token}` });
 });
 
+// Called by the web app when the Privy session exposes a wallet address
+// the account does not have yet (payout address for P2P payments).
+app.post('/me/wallet', requireAuth, async (c) => {
+  const user = c.get('user');
+  const body = await c.req.json().catch(() => ({}));
+  const address = String(body.address ?? '').toLowerCase();
+  if (!/^0x[0-9a-f]{40}$/.test(address)) return c.json({ error: 'Invalid wallet address' }, 400);
+  await getDb(c.env).from('users').update({ wallet: address }).eq('id', user.id);
+  return c.json({ ok: true, wallet: address });
+});
+
 // Called by the Mini App after Telegram.WebApp.requestWriteAccess succeeds.
 app.post('/me/dm-ok', requireAuth, async (c) => {
   const user = c.get('user');

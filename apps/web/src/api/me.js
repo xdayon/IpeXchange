@@ -11,3 +11,10 @@ export async function requestTelegramLink() {
 export async function confirmDmOk() {
   return apiFetch('/me/dm-ok', { method: 'POST' });
 }
+
+export async function saveWallet(address) {
+  return apiFetch('/me/wallet', {
+    method: 'POST',
+    body: JSON.stringify({ address }),
+  });
+}

@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { registerTokenProvider } from '../../api/index.js';
-import { fetchMe } from '../../api/me.js';
+import { fetchMe, saveWallet } from '../../api/me.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
 
 const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
@@ -97,6 +97,9 @@ export function useAuth() {
       if (cancelled) return;
       setUser(me ? toAppUser(me, session) : null);
       setLoading(false);
+      // Keep the payout address in sync with the Privy session wallet.
+      const wallet = session.wallet?.toLowerCase();
+      if (me && wallet && me.wallet !== wallet) saveWallet(wallet).catch(() => {});
     });
     return () => { cancelled = true; };
     // identity.session is rebuilt every render; keying on auth state avoids loops

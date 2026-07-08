@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Handshake, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Handshake, Check, Loader2, Wallet } from 'lucide-react';
 import { fetchIntent, markInterest } from '../../api/intents.js';
 import { directionInfo, kindInfo, formatPrice } from './constants.js';
+import { useTelegram } from '../../shared/hooks/useTelegram.js';
+import PayWithEth from './PayWithEth.jsx';
+
+const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
 
 const btnBase = {
   width: '100%', padding: '15px', borderRadius: 'var(--radius-md)', border: 'none',
@@ -10,6 +14,7 @@ const btnBase = {
 };
 
 export default function IntentDetail({ intent: initial, user, isAuthenticated, login, onBack }) {
+  const { isTMA, openLink } = useTelegram();
   const [intent, setIntent] = useState(initial);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -26,6 +31,9 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
   const price = formatPrice(intent.price_fiat);
   const owner = intent.users;
   const isOwn = user && intent.user_id === user.id;
+  // Crypto checkout never runs inside the Mini App: openLink to the web app.
+  const canPay = intent.direction === 'offer' && Number(intent.price_fiat) > 0 &&
+    Boolean(owner?.has_wallet) && !isOwn && (isTMA || PRIVY_ENABLED);
 
   const handleInterest = async () => {
     if (!isAuthenticated) return login?.();
@@ -125,6 +133,21 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
               <p style={{ marginTop: 12, fontSize: 13, color: 'var(--accent-pink)', textAlign: 'center' }}>{error}</p>
             )}
           </>
+        )}
+
+        {canPay && (
+          <div style={{ marginTop: 12 }}>
+            {isTMA ? (
+              <button
+                onClick={() => openLink(`${window.location.origin}/?intent=${intent.id}`)}
+                style={{ ...btnBase, background: 'var(--accent-cyan)', color: 'var(--bg-dark)' }}
+              >
+                <Wallet size={20} /> Pay with ETH in your browser
+              </button>
+            ) : (
+              <PayWithEth intent={intent} isAuthenticated={isAuthenticated} login={login} btnStyle={btnBase} />
+            )}
+          </div>
         )}
       </div>
     </div>

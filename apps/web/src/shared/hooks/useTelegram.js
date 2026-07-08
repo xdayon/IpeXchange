@@ -15,6 +15,11 @@ export function useTelegram() {
   }, []);
 
   const close = () => window?.Telegram?.WebApp?.close();
+  const openLink = (url) => {
+    const tg = window?.Telegram?.WebApp;
+    if (tg?.openLink) tg.openLink(url);
+    else window.open(url, '_blank', 'noopener');
+  };
   const requestWriteAccess = () =>
     new Promise((resolve) => {
       const tg = window?.Telegram?.WebApp;
@@ -36,5 +41,5 @@ export function useTelegram() {
     return () => tg.BackButton.offClick(fn);
   };
 
-  return { isTMA, tgUser, isReady: true, close, haptic, showBack, hideBack, onBack, requestWriteAccess };
+  return { isTMA, tgUser, isReady: true, close, openLink, haptic, showBack, hideBack, onBack, requestWriteAccess };
 }

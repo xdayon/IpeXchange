@@ -23,9 +23,14 @@ const Loader = () => (
   </div>
 );
 
+// Deep link used by the Mini App's openLink checkout handoff:
+// /?intent=<id> lands straight on the intent detail page.
+const deepLinkIntentId = new URLSearchParams(window.location.search).get('intent');
+if (deepLinkIntentId) window.history.replaceState({}, '', window.location.pathname);
+
 // History stack for the Telegram BackButton
 function useHistory(initial = 'home') {
-  const [stack, setStack] = useState([initial]);
+  const [stack, setStack] = useState(() => (Array.isArray(initial) ? initial : [initial]));
   const page = stack[stack.length - 1];
   const push = (p) => setStack((s) => [...s, p]);
   const pop = () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
@@ -37,9 +42,13 @@ function useHistory(initial = 'home') {
 export default function App() {
   const { user, loading: authLoading, isAuthenticated, login, logout } = useAuth();
   const { isTMA, haptic, requestWriteAccess } = useTelegram();
-  const { page, push, pop, reset, canBack } = useHistory('home');
+  const { page, push, pop, reset, canBack } = useHistory(
+    deepLinkIntentId ? ['home', 'intent-detail'] : 'home',
+  );
 
-  const [selectedIntent, setSelectedIntent] = useState(null);
+  const [selectedIntent, setSelectedIntent] = useState(
+    deepLinkIntentId ? { id: deepLinkIntentId } : null,
+  );
   const [selectedCycleId, setSelectedCycleId] = useState(null);
   const [createDirection, setCreateDirection] = useState(null);
 
