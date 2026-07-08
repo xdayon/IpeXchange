@@ -15,7 +15,7 @@ const iconBtn = (active) => ({
 });
 
 export default function NexumInterview({ isAuthenticated, login, onBack, onMarket }) {
-  const { messages, orbState, setOrbState, error, draft, send, reveal, userTurns } = useInterview();
+  const { messages, orbState, setOrbState, error, draft, send, reveal, revealing, userTurns } = useInterview();
   const { recording, supported, start, stop } = useRecorder();
   const { isTMA } = useTelegram();
   const [input, setInput] = useState('');
@@ -129,13 +129,23 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
           )}
 
           {userTurns >= 2 && (
-            <button onClick={reveal} disabled={orbState === 'thinking'} style={{
+            <button onClick={reveal} disabled={revealing || orbState === 'thinking'} style={{
               margin: '10px 0', padding: '13px', borderRadius: 'var(--radius-md)',
               border: '1px solid rgba(180,244,74,0.4)', background: 'rgba(180,244,74,0.08)',
-              color: 'var(--accent-lime)', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+              color: 'var(--accent-lime)', fontWeight: 700, fontSize: 14,
+              cursor: revealing ? 'wait' : 'pointer', opacity: revealing ? 0.85 : 1,
               fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
-              <Sparkles size={16} /> Reveal my intents
+              {revealing ? (
+                <>
+                  <span style={{ width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                    border: '2px solid rgba(180,244,74,0.25)', borderTopColor: 'var(--accent-lime)',
+                    animation: 'spin 0.8s linear infinite' }} />
+                  Nexum is weaving your intents...
+                </>
+              ) : (
+                <><Sparkles size={16} /> Reveal my intents</>
+              )}
             </button>
           )}
 

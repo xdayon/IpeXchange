@@ -11,6 +11,7 @@ export function useInterview() {
   const [orbState, setOrbState] = useState('idle');
   const [error, setError] = useState(null);
   const [draft, setDraft] = useState(null);
+  const [revealing, setRevealing] = useState(false);
 
   const send = useCallback(async (text) => {
     const content = text.trim();
@@ -37,6 +38,7 @@ export function useInterview() {
       return;
     }
     setError(null);
+    setRevealing(true);
     setOrbState('thinking');
     try {
       const result = await createDrafts(spoken);
@@ -45,10 +47,12 @@ export function useInterview() {
     } catch (e) {
       setError(e.status === 429 ? e.message : 'Could not draft your intents. Try again.');
       setOrbState('idle');
+    } finally {
+      setRevealing(false);
     }
   }, [messages]);
 
   const userTurns = messages.filter((m) => m.role === 'user').length;
 
-  return { messages, orbState, setOrbState, error, draft, setDraft, send, reveal, userTurns };
+  return { messages, orbState, setOrbState, error, draft, setDraft, send, reveal, revealing, userTurns };
 }
