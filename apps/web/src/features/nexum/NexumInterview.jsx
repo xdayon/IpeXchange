@@ -14,9 +14,32 @@ const iconBtn = (active) => ({
   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
 });
 
+// Telegram Desktop's webview has no microphone bridge; only mobile clients do.
+const micErrorMessage = (kind) => {
+  const platform = window?.Telegram?.WebApp?.platform;
+  if (platform && !['ios', 'android'].includes(platform)) {
+    return 'Voice is not supported in Telegram Desktop. Open ipexchange.xyz in a browser, or type instead.';
+  }
+  switch (kind) {
+    case 'NotAllowedError':
+    case 'PermissionDeniedError':
+    case 'SecurityError':
+      return 'Microphone blocked. Allow the mic for this site in your browser settings, then try again.';
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+      return 'No microphone found on this device.';
+    case 'NotReadableError':
+      return 'The microphone is busy in another app. Close it and try again.';
+    case 'insecure':
+      return 'Voice needs a secure (https) connection.';
+    default:
+      return 'Microphone unavailable. Check your browser permissions.';
+  }
+};
+
 export default function NexumInterview({ isAuthenticated, login, onBack, onMarket }) {
   const { messages, orbState, setOrbState, error, draft, send, reveal, revealing, userTurns, ready } = useInterview();
-  const { recording, supported, start, stop } = useRecorder();
+  const { recording, supported, start, stop, lastError } = useRecorder();
   const { isTMA } = useTelegram();
   const [input, setInput] = useState('');
   const [micError, setMicError] = useState(null);
@@ -80,7 +103,7 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
     } else if (await start()) {
       setOrbState('listening');
     } else {
-      setMicError('Microphone unavailable. Check your browser permissions.');
+      setMicError(micErrorMessage(lastError.current));
     }
   };
 
@@ -104,6 +127,9 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
         <NexumOrb state={orbState} size={150} />
         <p style={{ fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-secondary)', marginTop: -8 }}>
           Nexum
+        </p>
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, fontStyle: 'italic' }}>
+          The oracle that sees every thread of the market
         </p>
       </div>
 

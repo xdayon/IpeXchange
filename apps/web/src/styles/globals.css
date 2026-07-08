@@ -143,6 +143,19 @@ body {
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 .pulse { animation: pulse 2s ease-in-out infinite; }
 
+/* ── Pop in (publish success, splash orb) ─────────────────────── */
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.4); }
+  60%  { opacity: 1; transform: scale(1.08); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.pop-in { animation: popIn 0.55s cubic-bezier(0.2, 1.3, 0.4, 1) forwards; }
+
+/* ── Splash veil dissolve ─────────────────────────────────────── */
+@keyframes splashOut {
+  to { opacity: 0; visibility: hidden; }
+}
+
 /* ── Lime glow (Nexum ready-to-reveal CTA) ────────────────────── */
 @keyframes glowLime {
   0%, 100% { box-shadow: 0 0 0 0 rgba(180, 244, 74, 0.35); }

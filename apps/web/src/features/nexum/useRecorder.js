@@ -6,9 +6,18 @@ export function useRecorder() {
   const [supported] = useState(() => Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder));
   const recorderRef = useRef(null);
   const chunksRef = useRef([]);
+  const errorRef = useRef(null);
 
   const start = useCallback(async () => {
-    if (!supported || recorderRef.current) return false;
+    errorRef.current = null;
+    if (!supported || recorderRef.current) {
+      errorRef.current = 'unsupported';
+      return false;
+    }
+    if (!window.isSecureContext) {
+      errorRef.current = 'insecure';
+      return false;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       // Safari/iOS has no webm support and records mp4/aac instead.
@@ -21,7 +30,8 @@ export function useRecorder() {
       recorderRef.current = recorder;
       setRecording(true);
       return true;
-    } catch {
+    } catch (err) {
+      errorRef.current = err?.name || 'unknown';
       return false;
     }
   }, [supported]);
@@ -41,5 +51,5 @@ export function useRecorder() {
     });
   }, []);
 
-  return { recording, supported, start, stop };
+  return { recording, supported, start, stop, lastError: errorRef };
 }

@@ -24,7 +24,7 @@ const CTAS = [
   {
     id: 'mine', icon: ListChecks, title: 'My intents', authOnly: true,
     desc: 'Manage your interests, offers and marks',
-    color: 'var(--accent-amber)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
+    color: 'var(--accent-indigo)', bg: 'rgba(129,140,248,0.08)', border: 'rgba(129,140,248,0.25)',
     to: ['profile'],
   },
 ];

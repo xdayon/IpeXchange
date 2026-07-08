@@ -18,8 +18,10 @@ app.get('/market', optionalAuth, async (c) => {
   const q = c.req.query('q')?.trim();
   const limit = Math.min(Number(c.req.query('limit')) || 30, 60);
   const offset = Math.max(Number(c.req.query('offset')) || 0, 0);
+  // The market shows other people's intents; your own live in your profile.
+  const viewer = c.get('user');
 
-  if (q && c.get('user')) {
+  if (q && viewer) {
     const vector = await embed(c.env, q);
     if (vector) {
       const { data, error } = await db.rpc('match_intents', {
@@ -28,7 +30,9 @@ app.get('/market', optionalAuth, async (c) => {
         match_threshold: 0.55,
         match_count: limit,
       });
-      if (!error) return c.json({ intents: data ?? [], mode: 'semantic' });
+      if (!error) {
+        return c.json({ intents: (data ?? []).filter((i) => i.user_id !== viewer.id), mode: 'semantic' });
+      }
       console.error('match_intents failed:', error);
     }
   }
@@ -40,6 +44,7 @@ app.get('/market', optionalAuth, async (c) => {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
+  if (viewer) query = query.neq('user_id', viewer.id);
   if (direction === 'want' || direction === 'offer') query = query.eq('direction', direction);
   if (['good', 'digital', 'service', 'knowledge'].includes(kind)) query = query.eq('kind', kind);
   if (category) query = query.eq('category', category);

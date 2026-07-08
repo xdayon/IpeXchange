@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ArrowLeft, Sparkles, CheckCircle2, LogIn } from 'lucide-react';
+import { ArrowLeft, Sparkles, CheckCircle2, LogIn, SquarePen, ChevronRight } from 'lucide-react';
 import { createIntent, uploadImage } from '../../api/intents.js';
 import StepIntentType from './wizard/StepIntentType.jsx';
 import StepIntentDetails from './wizard/StepIntentDetails.jsx';
@@ -46,7 +46,7 @@ function LoginGate({ login }) {
 function SuccessScreen({ intent, onMarket, onCreateAnother }) {
   return (
     <div className="page-enter" style={{ textAlign: 'center', padding: '60px 0', maxWidth: 360, margin: '0 auto' }}>
-      <CheckCircle2 size={56} color="var(--accent-lime)" style={{ margin: '0 auto 20px', display: 'block' }} />
+      <CheckCircle2 size={56} color="var(--accent-lime)" className="pop-in" style={{ margin: '0 auto 20px', display: 'block' }} />
       <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>
         {intent.direction === 'offer' ? 'Offer' : 'Interest'} <span className="text-gradient-lime">published</span>
       </h2>
@@ -69,29 +69,62 @@ function SuccessScreen({ intent, onMarket, onCreateAnother }) {
   );
 }
 
-function NexumBanner({ onNexum }) {
+function ModeCard({ icon: Icon, title, desc, color, bg, border, onClick, delay }) {
   return (
-    <button onClick={onNexum} style={{
-      width: '100%', marginBottom: 24, padding: '14px 16px', borderRadius: 'var(--radius-lg)',
-      border: '1px solid rgba(129,140,248,0.35)', background: 'rgba(129,140,248,0.08)',
-      cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-sans)',
-      display: 'flex', alignItems: 'center', gap: 12,
+    <button onClick={onClick} className="stagger-enter" style={{
+      width: '100%', padding: '22px 20px', borderRadius: 'var(--radius-lg)',
+      border: `1px solid ${border}`, background: bg, cursor: 'pointer',
+      textAlign: 'left', fontFamily: 'var(--font-sans)',
+      display: 'flex', alignItems: 'center', gap: 16, animationDelay: `${delay}ms`,
     }}>
-      <Sparkles size={20} style={{ color: 'var(--accent-purple)', flexShrink: 0 }} />
-      <span>
-        <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-          Let Nexum interview you
+      <span style={{ width: 48, height: 48, borderRadius: 'var(--radius-md)', flexShrink: 0,
+        background: 'rgba(8,12,20,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon size={24} style={{ color }} />
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 3 }}>
+          {title}
         </span>
-        <span style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)' }}>
-          Talk or type freely; the oracle drafts your intents. Or fill manually below.
+        <span style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+          {desc}
         </span>
       </span>
+      <ChevronRight size={18} style={{ color, flexShrink: 0 }} />
     </button>
+  );
+}
+
+function ModeChooser({ onBack, onNexum, onManual }) {
+  return (
+    <div className="page-enter" style={{ padding: '16px 0 80px', maxWidth: 520, margin: '0 auto' }}>
+      <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 8,
+        background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer',
+        fontFamily: 'var(--font-sans)', fontSize: 14, marginBottom: 24 }}>
+        <ArrowLeft size={16} /> Back
+      </button>
+      <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.2, marginBottom: 8 }}>
+        List an <span className="text-gradient-lime">intent</span>
+      </h1>
+      <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 28 }}>
+        An interest or an offer. Choose how you want to bring it to the market.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <ModeCard icon={Sparkles} title="List with Nexum interview"
+          desc="Talk or type freely in your own language. The oracle interviews you and drafts your intents."
+          color="var(--accent-indigo)" bg="rgba(129,140,248,0.1)" border="rgba(129,140,248,0.4)"
+          onClick={onNexum} delay={80} />
+        <ModeCard icon={SquarePen} title="List manually"
+          desc="Fill in the type, details and price yourself, step by step."
+          color="var(--accent-lime)" bg="rgba(180,244,74,0.07)" border="rgba(180,244,74,0.3)"
+          onClick={onManual} delay={160} />
+      </div>
+    </div>
   );
 }
 
 export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthenticated, login, initialDirection }) {
   const [step, setStep] = useState(0);
+  const [mode, setMode] = useState(onNexum ? null : 'manual');
   const [form, setForm] = useState({ ...INITIAL_FORM, direction: initialDirection || INITIAL_FORM.direction });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -112,6 +145,10 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
         onCreateAnother={() => { setForm(INITIAL_FORM); setStep(0); setPublished(null); }}
       />
     );
+  }
+
+  if (mode === null) {
+    return <ModeChooser onBack={onBack} onNexum={onNexum} onManual={() => { haptic('light'); setMode('manual'); }} />;
   }
 
   const canProceed = step === 0 ? Boolean(form.direction && form.kind) : form.title.trim().length >= 3;
@@ -155,7 +192,7 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
   return (
     <div style={{ padding: '16px 0 80px', maxWidth: 520, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <button onClick={step === 0 ? onBack : () => { haptic('light'); setStep(step - 1); }}
+        <button onClick={step === 0 ? () => (onNexum ? setMode(null) : onBack()) : () => { haptic('light'); setStep(step - 1); }}
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4,
             color: 'var(--text-secondary)', display: 'flex' }}>
           <ArrowLeft size={20} />
@@ -169,7 +206,6 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
         </div>
       </div>
 
-      {step === 0 && onNexum && <NexumBanner onNexum={onNexum} />}
       {step === 0 && (
         <StepIntentType direction={form.direction} kind={form.kind}
           onDirection={(v) => set('direction', v)} onKind={setKind} />

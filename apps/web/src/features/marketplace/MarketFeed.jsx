@@ -110,8 +110,10 @@ export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }
 
       {!loading && intents.length > 0 && (
         <div className="market-grid" style={{ marginTop: 24 }}>
-          {intents.map((i) => (
-            <IntentCard key={i.id} intent={i} onClick={onSelectIntent} />
+          {intents.map((i, idx) => (
+            <div key={i.id} className="stagger-enter" style={{ animationDelay: `${Math.min(idx, 12) * 45}ms` }}>
+              <IntentCard intent={i} onClick={onSelectIntent} />
+            </div>
           ))}
         </div>
       )}

@@ -2,6 +2,7 @@ import { useState, lazy, Suspense, useEffect } from 'react';
 import './styles/globals.css';
 
 import Navbar from './shared/layout/Navbar.jsx';
+import SplashIntro from './shared/ui/SplashIntro.jsx';
 import BottomNav from './shared/layout/BottomNav.jsx';
 import { useAuth } from './features/auth/useAuth.js';
 import { useTelegram } from './shared/hooks/useTelegram.js';
@@ -114,6 +115,7 @@ export default function App() {
 
   return (
     <div className="app-root">
+      <SplashIntro />
       {showTopNav && <Navbar user={user} isAuthenticated={isAuthenticated} login={login} onNavigate={navigate} />}
 
       <main style={contentStyle}>
