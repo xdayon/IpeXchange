@@ -4,6 +4,18 @@ export async function fetchMe() {
   return apiFetch('/me');
 }
 
+export async function updateProfile(patch) {
+  return apiFetch('/me', { method: 'PATCH', body: JSON.stringify(patch) });
+}
+
+export async function saveSettings(settings) {
+  return apiFetch('/me/settings', { method: 'PUT', body: JSON.stringify(settings) });
+}
+
+export async function fetchMyStats() {
+  return apiFetch('/me/stats');
+}
+
 export async function requestTelegramLink() {
   return apiFetch('/me/telegram-link-token', { method: 'POST' });
 }

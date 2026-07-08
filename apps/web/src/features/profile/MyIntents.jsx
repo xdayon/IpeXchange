@@ -1,13 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Inbox, Archive } from 'lucide-react';
 import { fetchMyIntents, fetchMyInterests, updateIntent } from '../../api/intents.js';
+import { fetchMyPayments } from '../../api/payments.js';
 import { directionInfo, formatPrice } from '../intent/constants.js';
 
 const TABS = [
   { id: 'want', label: 'Interests' },
   { id: 'offer', label: 'Offers' },
   { id: 'marked', label: 'Marked' },
+  { id: 'payments', label: 'Payments' },
 ];
+
+const PAYMENT_COLORS = {
+  confirmed: 'var(--accent-lime)',
+  submitted: 'var(--accent-amber)',
+  quoted: 'var(--text-secondary)',
+  failed: 'var(--accent-pink)',
+};
 
 function Row({ title, subtitle, right, onSelect }) {
   return (
@@ -27,16 +36,19 @@ export default function MyIntents({ onSelectIntent }) {
   const [tab, setTab] = useState('want');
   const [intents, setIntents] = useState({ want: null, offer: null });
   const [marked, setMarked] = useState(null);
+  const [payments, setPayments] = useState(null);
 
   useEffect(() => {
-    if (tab === 'marked') {
+    if (tab === 'payments') {
+      if (!payments) fetchMyPayments().then(setPayments).catch(() => setPayments([]));
+    } else if (tab === 'marked') {
       if (!marked) fetchMyInterests().then((d) => setMarked(d.made ?? [])).catch(() => setMarked([]));
     } else if (!intents[tab]) {
       fetchMyIntents(tab)
         .then((list) => setIntents((s) => ({ ...s, [tab]: list })))
         .catch(() => setIntents((s) => ({ ...s, [tab]: [] })));
     }
-  }, [tab, intents, marked]);
+  }, [tab, intents, marked, payments]);
 
   const archive = async (intent) => {
     try {
@@ -47,7 +59,7 @@ export default function MyIntents({ onSelectIntent }) {
     }
   };
 
-  const list = tab === 'marked' ? marked : intents[tab];
+  const list = tab === 'payments' ? payments : tab === 'marked' ? marked : intents[tab];
 
   return (
     <div>
@@ -66,12 +78,29 @@ export default function MyIntents({ onSelectIntent }) {
           borderRadius: 'var(--radius-lg)', textAlign: 'center', color: 'var(--text-secondary)' }}>
           <Inbox size={28} style={{ margin: '0 auto 10px', opacity: 0.3 }} />
           <p style={{ fontSize: 14 }}>
-            {tab === 'marked' ? 'You have not marked interest in anything yet.' : 'Nothing published here yet.'}
+            {tab === 'payments'
+              ? 'No on-chain payments yet.'
+              : tab === 'marked'
+                ? 'You have not marked interest in anything yet.'
+                : 'Nothing published here yet.'}
           </p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {tab === 'marked'
+          {tab === 'payments'
+            ? list.map((p) => (
+                <Row key={p.id}
+                  title={p.intent_title ?? 'Intent removed'}
+                  subtitle={`${p.role === 'buyer' ? 'Sent' : 'Received'} ${p.amount_display} ${p.symbol} - ${new Date(p.created_at).toLocaleDateString()}`}
+                  onSelect={p.tx_hash ? () => window.open(`https://basescan.org/tx/${p.tx_hash}`, '_blank', 'noopener') : null}
+                  right={
+                    <span style={{ fontSize: 12, fontWeight: 700, color: PAYMENT_COLORS[p.status] }}>
+                      {p.status}
+                    </span>
+                  }
+                />
+              ))
+            : tab === 'marked'
             ? list.map((m) => (
                 <Row key={m.id}
                   title={m.intents?.title ?? 'Intent removed'}

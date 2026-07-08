@@ -17,9 +17,13 @@ function toAppUser(me, session) {
     avatar: me.avatar_url || session.avatar || null,
     email: me.email || session.email || null,
     wallet: me.wallet || session.wallet || null,
+    bio: me.bio || null,
     telegramUsername: me.telegram_username || null,
     telegramLinked: me.telegram_linked ?? false,
     telegramDmOk: me.telegram_dm_ok ?? false,
+    settings: me.settings ?? {},
+    isAdmin: me.is_admin === true,
+    createdAt: me.created_at ?? null,
     source: session.source,
   };
 }

@@ -1,9 +1,9 @@
 import { apiFetch } from './index.js';
 
-export async function createPayment(intentId) {
+export async function createPayment(intentId, token = 'eth') {
   return apiFetch('/payments', {
     method: 'POST',
-    body: JSON.stringify({ intent_id: intentId }),
+    body: JSON.stringify({ intent_id: intentId, token }),
   });
 }
 
@@ -12,6 +12,10 @@ export async function verifyPayment(paymentId, txHash) {
     method: 'POST',
     body: JSON.stringify({ tx_hash: txHash }),
   });
+}
+
+export async function fetchMyPayments() {
+  return apiFetch('/payments/mine');
 }
 
 export async function getPayment(paymentId) {

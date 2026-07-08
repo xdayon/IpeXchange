@@ -2,6 +2,9 @@
 // index.html before React mounts, so presence can be derived synchronously.
 import { useState, useEffect } from 'react';
 
+// Local mirror of the haptics setting so taps stay silent without a fetch.
+export const HAPTICS_OFF_KEY = 'ipex_haptics_off';
+
 export function useTelegram() {
   const [isTMA] = useState(() => Boolean(window?.Telegram?.WebApp?.initData));
   const [tgUser] = useState(() => window?.Telegram?.WebApp?.initDataUnsafe?.user ?? null);
@@ -30,7 +33,10 @@ export function useTelegram() {
         resolve(false);
       }
     });
-  const haptic = (style = 'light') => window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
+  const haptic = (style = 'light') => {
+    if (localStorage.getItem(HAPTICS_OFF_KEY) === '1') return;
+    window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
+  };
   const showBack = () => window?.Telegram?.WebApp?.BackButton?.show();
   const hideBack = () => window?.Telegram?.WebApp?.BackButton?.hide();
   const onBack = (fn) => {

@@ -1,14 +1,19 @@
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
+import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { notify } from '../lib/notify.js';
 import {
   BASE_CHAIN_ID,
-  getEthUsdPrice,
+  MIN_CONFIRMATIONS,
+  TOKENS,
+  getConfirmations,
+  getTokenUsdPrice,
   getTransaction,
   getTransactionReceipt,
-  usdToWei,
-  weiToEthString,
+  paymentSatisfied,
+  unitsToDecimalString,
+  usdToUnits,
 } from '../lib/base.js';
 
 const app = new Hono();
@@ -22,10 +27,13 @@ const serialize = (p) => ({
   buyer_user_id: p.buyer_user_id,
   seller_user_id: p.seller_user_id,
   to_wallet: p.to_wallet,
+  token: p.token,
+  symbol: TOKENS[p.token].symbol,
+  token_address: TOKENS[p.token].address,
   amount_fiat: Number(p.amount_fiat),
-  amount_wei: String(p.amount_wei),
-  amount_eth: weiToEthString(p.amount_wei),
-  eth_usd_price: Number(p.eth_usd_price),
+  amount_units: String(p.amount_wei),
+  amount_display: unitsToDecimalString(p.amount_wei, TOKENS[p.token].decimals),
+  token_usd_price: Number(p.token_usd_price),
   chain_id: p.chain_id,
   tx_hash: p.tx_hash,
   status: p.status,
@@ -33,10 +41,12 @@ const serialize = (p) => ({
   confirmed_at: p.confirmed_at,
 });
 
-app.post('/payments', requireAuth, async (c) => {
+app.post('/payments', requireAuth, rateLimit(10, 'pay-quote'), async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => ({}));
   if (!body.intent_id) return c.json({ error: 'intent_id is required' }, 400);
+  const token = body.token ?? 'eth';
+  if (!TOKENS[token]) return c.json({ error: 'Unsupported token' }, 400);
 
   const db = getDb(c.env);
   const { data: intent } = await db
@@ -51,15 +61,15 @@ app.post('/payments', requireAuth, async (c) => {
   if (!(Number(intent.price_fiat) > 0)) return c.json({ error: 'This offer has no price' }, 400);
   if (!intent.users?.wallet) return c.json({ error: 'The seller has no wallet linked' }, 409);
 
-  let ethUsdPrice;
+  let usdPrice;
   try {
-    ethUsdPrice = await getEthUsdPrice();
+    usdPrice = await getTokenUsdPrice(token);
   } catch (e) {
-    console.error('ETH quote failed:', e);
-    return c.json({ error: 'Could not fetch the ETH price. Try again.' }, 502);
+    console.error('Token quote failed:', e);
+    return c.json({ error: `Could not fetch the ${TOKENS[token].symbol} price. Try again.` }, 502);
   }
 
-  const amountWei = usdToWei(Number(intent.price_fiat), ethUsdPrice);
+  const amountUnits = usdToUnits(Number(intent.price_fiat), usdPrice, TOKENS[token].decimals);
   const { data: payment, error } = await db
     .from('payments')
     .insert({
@@ -67,9 +77,11 @@ app.post('/payments', requireAuth, async (c) => {
       buyer_user_id: user.id,
       seller_user_id: intent.user_id,
       to_wallet: intent.users.wallet.toLowerCase(),
+      token,
       amount_fiat: Number(intent.price_fiat),
-      eth_usd_price: ethUsdPrice,
-      amount_wei: amountWei.toString(),
+      token_usd_price: usdPrice,
+      eth_usd_price: token === 'eth' ? usdPrice : null,
+      amount_wei: amountUnits.toString(),
       chain_id: BASE_CHAIN_ID,
       quote_expires_at: new Date(Date.now() + QUOTE_TTL_MS).toISOString(),
     })
@@ -83,7 +95,7 @@ app.post('/payments', requireAuth, async (c) => {
   return c.json(serialize(payment), 201);
 });
 
-app.post('/payments/:id/verify', requireAuth, async (c) => {
+app.post('/payments/:id/verify', requireAuth, rateLimit(60, 'pay-verify'), async (c) => {
   const user = c.get('user');
   const db = getDb(c.env);
   const body = await c.req.json().catch(() => ({}));
@@ -97,13 +109,16 @@ app.post('/payments/:id/verify', requireAuth, async (c) => {
   if (payment.status === 'confirmed') return c.json(serialize(payment));
   if (payment.status === 'failed') return c.json({ error: 'This payment already failed' }, 409);
 
-  const txHash = String(body.tx_hash ?? payment.tx_hash ?? '');
+  const txHash = String(body.tx_hash ?? payment.tx_hash ?? '').toLowerCase();
   if (!TX_HASH_RE.test(txHash)) return c.json({ error: 'A valid tx_hash is required' }, 400);
   if (payment.tx_hash && payment.tx_hash !== txHash) {
     return c.json({ error: 'A different transaction is already attached' }, 409);
   }
 
   if (!payment.tx_hash) {
+    if (new Date(payment.quote_expires_at).getTime() < Date.now()) {
+      return c.json({ error: 'This quote expired. Request a new one.' }, 409);
+    }
     const { error } = await db
       .from('payments')
       .update({ tx_hash: txHash, status: 'submitted' })
@@ -120,10 +135,17 @@ app.post('/payments/:id/verify', requireAuth, async (c) => {
   // Not indexed or not mined yet: stay submitted, the client keeps polling.
   if (!tx || !receipt) return c.json(serialize(payment));
 
-  const valid =
-    receipt.status === '0x1' &&
-    tx.to?.toLowerCase() === payment.to_wallet &&
-    BigInt(tx.value) >= BigInt(payment.amount_wei);
+  const valid = paymentSatisfied({
+    tx,
+    receipt,
+    token: payment.token,
+    toWallet: payment.to_wallet,
+    amountUnits: payment.amount_wei,
+  });
+  // Ride out potential reorgs before settling either way.
+  if (valid && (await getConfirmations(c.env, receipt).catch(() => 0)) < MIN_CONFIRMATIONS) {
+    return c.json(serialize(payment));
+  }
 
   const patch = valid
     ? { status: 'confirmed', from_wallet: tx.from?.toLowerCase() ?? null, confirmed_at: new Date().toISOString() }
@@ -141,9 +163,9 @@ app.post('/payments/:id/verify', requireAuth, async (c) => {
 
   if (valid) {
     const who = user.display_name || 'A member';
-    const eth = weiToEthString(payment.amount_wei);
+    const amount = `${unitsToDecimalString(payment.amount_wei, TOKENS[payment.token].decimals)} ${TOKENS[payment.token].symbol}`;
     const dm =
-      `${who} paid ${eth} ETH (~$${Number(payment.amount_fiat)}) for your offer "${payment.intents?.title}" on Base.` +
+      `${who} paid ${amount} (~$${Number(payment.amount_fiat)}) for your offer "${payment.intents?.title}" on Base.` +
       `\n\nTransaction: https://basescan.org/tx/${txHash}` +
       '\n\nDeliver as agreed, then mark the intent fulfilled in your profile.';
     c.executionCtx.waitUntil(
@@ -154,7 +176,8 @@ app.post('/payments/:id/verify', requireAuth, async (c) => {
           payment_id: payment.id,
           intent_id: payment.intent_id,
           from_user_id: user.id,
-          amount_eth: eth,
+          token: payment.token,
+          amount: unitsToDecimalString(payment.amount_wei, TOKENS[payment.token].decimals),
           amount_fiat: Number(payment.amount_fiat),
           tx_hash: txHash,
         },
@@ -163,6 +186,24 @@ app.post('/payments/:id/verify', requireAuth, async (c) => {
     );
   }
   return c.json(serialize(updated));
+});
+
+app.get('/payments/mine', requireAuth, async (c) => {
+  const user = c.get('user');
+  const { data } = await getDb(c.env)
+    .from('payments')
+    .select('*, intents ( id, title )')
+    .or(`buyer_user_id.eq.${user.id},seller_user_id.eq.${user.id}`)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  return c.json(
+    (data ?? []).map((p) => ({
+      ...serialize(p),
+      intent_title: p.intents?.title ?? null,
+      role: p.buyer_user_id === user.id ? 'buyer' : 'seller',
+      created_at: p.created_at,
+    })),
+  );
 });
 
 app.get('/payments/:id', requireAuth, async (c) => {

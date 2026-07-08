@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect } from 'react';
+import { useState, lazy, Suspense, useEffect, useRef } from 'react';
 import './styles/globals.css';
 
 import Navbar from './shared/layout/Navbar.jsx';
@@ -16,6 +16,8 @@ const ProfilePage = lazy(() => import('./features/profile/ProfilePage.jsx'));
 const NexumInterview = lazy(() => import('./features/nexum/NexumInterview.jsx'));
 const CyclesPage = lazy(() => import('./features/cycles/CyclesPage.jsx'));
 const CycleDetail = lazy(() => import('./features/cycles/CycleDetail.jsx'));
+const SettingsPage = lazy(() => import('./features/settings/SettingsPage.jsx'));
+const AdminPage = lazy(() => import('./features/admin/AdminPage.jsx'));
 
 const Loader = () => (
   <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)' }}>
@@ -41,11 +43,20 @@ function useHistory(initial = 'home') {
 }
 
 export default function App() {
-  const { user, loading: authLoading, isAuthenticated, login, logout } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, login, logout, refresh } = useAuth();
   const { isTMA, haptic, requestWriteAccess } = useTelegram();
   const { page, push, pop, reset, canBack } = useHistory(
     deepLinkIntentId ? ['home', 'intent-detail'] : 'home',
   );
+
+  // Honor the user's configured start screen once per session.
+  const startApplied = useRef(false);
+  useEffect(() => {
+    if (startApplied.current || !user || deepLinkIntentId) return;
+    startApplied.current = true;
+    if (user.settings?.default_tab === 'discover') reset('discover');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const [selectedIntent, setSelectedIntent] = useState(
     deepLinkIntentId ? { id: deepLinkIntentId } : null,
@@ -172,8 +183,13 @@ export default function App() {
               logout={logout}
               onNavigate={navigate}
               onSelectIntent={openIntent}
+              refresh={refresh}
             />
           )}
+          {page === 'settings' && (
+            <SettingsPage user={user} logout={logout} onBack={goBack} refresh={refresh} />
+          )}
+          {page === 'admin' && user?.isAdmin && <AdminPage onBack={goBack} />}
         </Suspense>
       </main>
 

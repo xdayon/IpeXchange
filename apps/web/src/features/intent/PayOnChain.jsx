@@ -1,6 +1,6 @@
-// Direct P2P checkout: quote from the Worker, transaction sent from the
-// buyer's own wallet on Base, receipt verified server-side. Render only
-// when Privy is enabled and outside the Telegram Mini App.
+// Direct P2P checkout on Base: quote from the Worker, transaction sent
+// from the buyer's own wallet (native ETH or ERC-20 USDC), receipt
+// verified server-side against the RPC before the payment settles.
 import { useState, useRef, useEffect } from 'react';
 import { Wallet, Loader2, Check, ExternalLink } from 'lucide-react';
 import { useWallets } from '@privy-io/react-auth';
@@ -8,10 +8,31 @@ import { createPayment, verifyPayment } from '../../api/payments.js';
 
 const POLL_MS = 4000;
 const MAX_POLLS = 30;
+const TOKEN_OPTIONS = [
+  { id: 'usdc', label: 'USDC', hint: 'stable, 1:1 with USD' },
+  { id: 'eth', label: 'ETH', hint: 'native ether' },
+];
 
-export default function PayWithEth({ intent, isAuthenticated, login, btnStyle }) {
+const pad64 = (hex) => hex.replace(/^0x/, '').padStart(64, '0');
+
+function txParams(quote, from) {
+  if (!quote.token_address) {
+    return { from, to: quote.to_wallet, value: `0x${BigInt(quote.amount_units).toString(16)}` };
+  }
+  const data = `0xa9059cbb${pad64(quote.to_wallet)}${pad64(BigInt(quote.amount_units).toString(16))}`;
+  return { from, to: quote.token_address, value: '0x0', data };
+}
+
+function sendErrorMessage(e) {
+  if (e?.code === 4001 || /reject|denied/i.test(e?.message ?? '')) return 'You rejected the transaction in your wallet.';
+  if (/insufficient/i.test(e?.message ?? '')) return 'Insufficient balance for this amount plus gas.';
+  return 'The transaction could not be sent. Try again.';
+}
+
+export default function PayOnChain({ intent, isAuthenticated, login, btnStyle }) {
   const { wallets } = useWallets();
   const [phase, setPhase] = useState('idle');
+  const [token, setToken] = useState('usdc');
   const [quote, setQuote] = useState(null);
   const [txHash, setTxHash] = useState(null);
   const [error, setError] = useState(null);
@@ -24,12 +45,13 @@ export default function PayWithEth({ intent, isAuthenticated, login, btnStyle })
     setPhase('error');
   };
 
-  const requestQuote = async () => {
+  const requestQuote = async (tok = token) => {
     if (!isAuthenticated) return login?.();
+    setToken(tok);
     setPhase('quoting');
     setError(null);
     try {
-      const q = await createPayment(intent.id);
+      const q = await createPayment(intent.id, tok);
       if (alive.current) { setQuote(q); setPhase('confirm'); }
     } catch (e) {
       fail(e.message || 'Could not prepare the payment.');
@@ -46,14 +68,10 @@ export default function PayWithEth({ intent, isAuthenticated, login, btnStyle })
       const provider = await wallet.getEthereumProvider();
       hash = await provider.request({
         method: 'eth_sendTransaction',
-        params: [{
-          from: wallet.address,
-          to: quote.to_wallet,
-          value: `0x${BigInt(quote.amount_wei).toString(16)}`,
-        }],
+        params: [txParams(quote, wallet.address)],
       });
-    } catch {
-      return fail('Transaction was rejected or could not be sent.');
+    } catch (e) {
+      return fail(sendErrorMessage(e));
     }
     if (!alive.current) return;
     setTxHash(hash);
@@ -89,20 +107,32 @@ export default function PayWithEth({ intent, isAuthenticated, login, btnStyle })
     );
   }
 
-  if (phase === 'confirm' || phase === 'sending' || phase === 'verifying') {
-    const busy = phase !== 'confirm';
+  if (phase === 'quoting' || phase === 'confirm' || phase === 'sending' || phase === 'verifying') {
+    const busy = phase === 'sending' || phase === 'verifying';
     return (
       <div style={{ padding: 16, background: 'var(--bg-card)', border: '1px solid var(--border-color)',
         borderRadius: 'var(--radius-lg)' }}>
+        <div className="filter-chips" style={{ marginBottom: 12 }}>
+          {TOKEN_OPTIONS.map((t) => (
+            <button key={t.id} className={`filter-chip ${token === t.id ? 'active' : ''}`}
+              disabled={busy || phase === 'quoting'} onClick={() => t.id !== token && requestQuote(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
           <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>You pay on Base</span>
-          <strong style={{ fontSize: 16 }}>{quote.amount_eth} ETH</strong>
+          <strong style={{ fontSize: 16 }}>
+            {phase === 'quoting' ? <Loader2 size={16} className="spin" /> : `${quote.amount_display} ${quote.symbol}`}
+          </strong>
         </div>
-        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>
-          ~${quote.amount_fiat} at ${Math.round(quote.eth_usd_price)}/ETH. Quote valid for 15 minutes.
-          Sent directly to the seller's wallet.
-        </p>
-        <button onClick={sendAndVerify} disabled={busy}
+        {phase !== 'quoting' && (
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>
+            ~${quote.amount_fiat} at ${Number(quote.token_usd_price).toLocaleString()}/{quote.symbol}. Quote valid
+            for 15 minutes. Sent directly to the seller's wallet and verified on-chain.
+          </p>
+        )}
+        <button onClick={sendAndVerify} disabled={busy || phase === 'quoting'}
           style={{ ...btnStyle, background: 'var(--accent-cyan)', color: 'var(--bg-dark)', opacity: busy ? 0.7 : 1 }}>
           {busy
             ? <><Loader2 size={20} className="spin" /> {phase === 'sending' ? 'Waiting for your wallet' : 'Verifying on Base'}</>
@@ -115,11 +145,9 @@ export default function PayWithEth({ intent, isAuthenticated, login, btnStyle })
 
   return (
     <div>
-      <button onClick={requestQuote} disabled={phase === 'quoting'}
+      <button onClick={() => requestQuote()}
         style={{ ...btnStyle, background: 'var(--accent-cyan)', color: 'var(--bg-dark)' }}>
-        {phase === 'quoting'
-          ? <Loader2 size={20} className="spin" />
-          : <><Wallet size={20} /> {isAuthenticated ? 'Pay with ETH' : 'Log in to pay with ETH'}</>}
+        <Wallet size={20} /> {isAuthenticated ? 'Pay with crypto' : 'Log in to pay with crypto'}
       </button>
       {phase === 'error' && (
         <p style={{ marginTop: 10, fontSize: 13, color: 'var(--accent-pink)', textAlign: 'center' }}>

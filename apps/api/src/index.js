@@ -8,8 +8,12 @@ import copilot from './routes/copilot.js';
 import telegram from './routes/telegram.js';
 import cycles from './routes/cycles.js';
 import payments from './routes/payments.js';
+import admin from './routes/admin.js';
+import { apiBodyLimit, apiSecureHeaders } from './middleware/security.js';
 
 const app = new Hono();
+
+app.use('/api/*', apiSecureHeaders, apiBodyLimit);
 
 app.get('/api/health', (c) =>
   c.json({ ok: true, service: 'ipexchange-api', time: new Date().toISOString() }),
@@ -24,6 +28,7 @@ app.route('/api', copilot);
 app.route('/api', telegram);
 app.route('/api', cycles);
 app.route('/api', payments);
+app.route('/api', admin);
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404));
 

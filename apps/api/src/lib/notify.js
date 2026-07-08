@@ -1,6 +1,18 @@
 import { getDb } from './supabase.js';
 import { sendMessage } from './telegram.js';
 
+// Users can mute notification groups from Settings; unset means on.
+const SETTING_BY_PREFIX = [
+  ['payment', 'notify_payments'],
+  ['cycle', 'notify_cycles'],
+  ['interest', 'notify_interest'],
+];
+
+function mutedByUser(user, type) {
+  const key = SETTING_BY_PREFIX.find(([prefix]) => type.startsWith(prefix))?.[1];
+  return key ? user.settings?.[key] === false : false;
+}
+
 // Persists a notification and best-effort delivers it as a Telegram DM
 // when the recipient has a linked chat that allows messages.
 export async function notify(env, { userId, type, payload, text }) {
@@ -18,10 +30,10 @@ export async function notify(env, { userId, type, payload, text }) {
   if (!text) return;
   const { data: user } = await db
     .from('users')
-    .select('telegram_id, telegram_dm_ok')
+    .select('telegram_id, telegram_dm_ok, settings')
     .eq('id', userId)
     .maybeSingle();
-  if (!user?.telegram_id || !user.telegram_dm_ok) return;
+  if (!user?.telegram_id || !user.telegram_dm_ok || mutedByUser(user, type)) return;
 
   // Plain text: user-provided content must not break Telegram entity parsing.
   const sent = await sendMessage(env, user.telegram_id, text);

@@ -4,7 +4,7 @@ import { fetchIntent, markInterest } from '../../api/intents.js';
 import { directionInfo, kindInfo, formatPrice, kindFieldChips } from './constants.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
 import IntentCover from '../../shared/ui/IntentCover.jsx';
-import PayWithEth from './PayWithEth.jsx';
+import PayOnChain from './PayOnChain.jsx';
 
 const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
 
@@ -154,10 +154,10 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
                 onClick={() => openLink(`${window.location.origin}/?intent=${intent.id}`)}
                 style={{ ...btnBase, background: 'var(--accent-cyan)', color: 'var(--bg-dark)' }}
               >
-                <Wallet size={20} /> Pay with ETH in your browser
+                <Wallet size={20} /> Pay with crypto in your browser
               </button>
             ) : (
-              <PayWithEth intent={intent} isAuthenticated={isAuthenticated} login={login} btnStyle={btnBase} />
+              <PayOnChain intent={intent} isAuthenticated={isAuthenticated} login={login} btnStyle={btnBase} />
             )}
           </div>
         )}

@@ -85,17 +85,35 @@ async function resolveUser(c) {
   return upsertUser(env, { privyDid, tgUser: tg?.user ?? null });
 }
 
+// Throttled activity ping: powers the active-user metrics on the admin
+// dashboard without a write per request.
+const LAST_SEEN_TTL_MS = 15 * 60 * 1000;
+
+function touchLastSeen(c, user) {
+  if (Date.now() - new Date(user.last_seen).getTime() < LAST_SEEN_TTL_MS) return;
+  const update = getDb(c.env)
+    .from('users')
+    .update({ last_seen: new Date().toISOString() })
+    .eq('id', user.id)
+    .then(() => {});
+  c.executionCtx?.waitUntil?.(update);
+}
+
 export async function requireAuth(c, next) {
   const user = await resolveUser(c);
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
   c.set('user', user);
+  touchLastSeen(c, user);
   await next();
 }
 
 export async function optionalAuth(c, next) {
   try {
     const user = await resolveUser(c);
-    if (user) c.set('user', user);
+    if (user) {
+      c.set('user', user);
+      touchLastSeen(c, user);
+    }
   } catch {
     // anonymous access is fine
   }
