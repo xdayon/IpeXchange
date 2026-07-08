@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Camera, X, DollarSign } from 'lucide-react';
 import { Field } from './ui.jsx';
 import { inputStyle, haptic } from './helpers.js';
+import StepIntentKindFields from './StepIntentKindFields.jsx';
 
 export default function StepIntentDetails({ form, onChange, direction }) {
   const fileRef = useRef(null);
@@ -85,6 +86,8 @@ export default function StepIntentDetails({ form, onChange, direction }) {
           </label>
         )}
       </Field>
+
+      <StepIntentKindFields kind={form.kind} form={form} onChange={onChange} />
     </div>
   );
 }

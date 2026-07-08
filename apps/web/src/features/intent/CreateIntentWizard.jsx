@@ -15,6 +15,13 @@ const INITIAL_FORM = {
   priceFiat: '',
   imageFile: null,
   imagePreview: null,
+  isContinuous: false,
+  condition: '',
+  brand: '',
+  duration: '',
+  format: '',
+  access: '',
+  level: '',
 };
 
 const STEP_LABELS = ['Type', 'Details', 'Publish'];
@@ -91,6 +98,10 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
   const [published, setPublished] = useState(null);
 
   const set = useCallback((key, value) => setForm((f) => ({ ...f, [key]: value })), []);
+  // Kind-specific answers do not carry over when the kind changes.
+  const setKind = useCallback((kind) => setForm((f) => ({
+    ...f, kind, isContinuous: false, condition: '', brand: '', duration: '', format: '', access: '', level: '',
+  })), []);
 
   if (!isAuthenticated) return <LoginGate login={login} />;
   if (published) {
@@ -124,6 +135,13 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
         description: form.description.trim() || null,
         price_fiat: form.priceFiat ? Number(form.priceFiat) : null,
         image_url: imageUrl,
+        is_continuous: form.isContinuous,
+        condition: form.condition || null,
+        brand: form.brand.trim() || null,
+        duration: form.duration.trim() || null,
+        format: form.format || null,
+        access: form.access || null,
+        level: form.level || null,
       });
       window?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
       setPublished(intent);
@@ -154,7 +172,7 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
       {step === 0 && onNexum && <NexumBanner onNexum={onNexum} />}
       {step === 0 && (
         <StepIntentType direction={form.direction} kind={form.kind}
-          onDirection={(v) => set('direction', v)} onKind={(v) => set('kind', v)} />
+          onDirection={(v) => set('direction', v)} onKind={setKind} />
       )}
       {step === 1 && <StepIntentDetails form={form} onChange={set} direction={form.direction} />}
       {step === 2 && <StepIntentReview form={form} />}

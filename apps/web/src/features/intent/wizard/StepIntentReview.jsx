@@ -1,11 +1,13 @@
 
-import { Sparkles } from 'lucide-react';
-import { directionInfo, kindInfo, formatPrice } from '../constants.js';
+import { Sparkles, Repeat } from 'lucide-react';
+import { directionInfo, kindInfo, formatPrice, kindFieldChips } from '../constants.js';
+import IntentCover from '../../../shared/ui/IntentCover.jsx';
 
 export default function StepIntentReview({ form }) {
   const dir = directionInfo(form.direction);
   const kind = kindInfo(form.kind);
   const price = formatPrice(form.priceFiat ? Number(form.priceFiat) : null);
+  const chips = kindFieldChips(form);
 
   return (
     <div className="page-enter">
@@ -18,12 +20,9 @@ export default function StepIntentReview({ form }) {
         borderRadius: 'var(--radius-xl)', border: `1px solid ${dir.color}40`,
         background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 24,
       }}>
-        {form.imagePreview && (
-          <img src={form.imagePreview} alt={form.title}
-            style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} />
-        )}
+        <IntentCover kind={form.kind} imageUrl={form.imagePreview} alt={form.title} height={200} />
         <div style={{ padding: '16px 20px 20px' }}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', textTransform: 'uppercase',
               letterSpacing: 0.5, borderRadius: 'var(--radius-full)', background: dir.bg, color: dir.color }}>
               {dir.label}
@@ -35,6 +34,20 @@ export default function StepIntentReview({ form }) {
                 {kind.label}
               </span>
             )}
+            {form.isContinuous && (
+              <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px',
+                borderRadius: 'var(--radius-full)', background: 'rgba(180,244,74,0.08)',
+                color: 'var(--accent-lime)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Repeat size={11} /> Stays active after trades
+              </span>
+            )}
+            {chips.map((chip) => (
+              <span key={chip} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px',
+                borderRadius: 'var(--radius-full)', background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-secondary)' }}>
+                {chip}
+              </span>
+            ))}
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, lineHeight: 1.2 }}>
             {form.title || 'Your intent title'}

@@ -82,6 +82,10 @@ body {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.stagger-enter {
+  opacity: 0;
+  animation: pageEnter 0.4s ease forwards;
+}
 
 /* ── Listings grid ────────────────────────────────────────────── */
 .market-grid {

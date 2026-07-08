@@ -25,7 +25,15 @@ function CycleCard({ cycle, userId, onSelect }) {
       {me && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
           color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
-          <span>You give <strong style={{ color: 'var(--accent-lime)' }}>{me.gives?.title}</strong></span>
+          <span>
+            You give <strong style={{ color: 'var(--accent-lime)' }}>{me.gives?.title}</strong>
+            {me.gives?.is_continuous && (
+              <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: 'var(--accent-lime)',
+                display: 'inline-flex', alignItems: 'center', gap: 3, verticalAlign: 'middle' }}>
+                <Repeat size={11} /> stays active
+              </span>
+            )}
+          </span>
           <ArrowRight size={13} style={{ flexShrink: 0 }} />
           <span>you receive <strong style={{ color: 'var(--accent-cyan)' }}>{me.receives?.title}</strong></span>
         </div>

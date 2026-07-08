@@ -17,3 +17,16 @@ export const kindInfo = (id) => KINDS.find((k) => k.id === id) ?? null;
 
 export const formatPrice = (value) =>
   value == null ? null : `$${Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+
+const FIELD_VALUE_LABELS = {
+  condition: { new: 'New', used: 'Used', refurbished: 'Refurbished' },
+  format: { in_person: 'In person', online: 'Online', hybrid: 'Hybrid' },
+  access: { one_time: 'One-time access', lifetime: 'Lifetime access' },
+  level: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+};
+
+// Works for API intents and for the wizard form (same keys, empty string = unset).
+export const kindFieldChips = (intent) =>
+  ['condition', 'brand', 'duration', 'format', 'access', 'level']
+    .filter((key) => intent[key])
+    .map((key) => FIELD_VALUE_LABELS[key]?.[intent[key]] ?? intent[key]);

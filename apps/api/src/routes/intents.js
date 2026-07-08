@@ -3,29 +3,27 @@ import { requireAuth } from '../middleware/auth.js';
 import { getDb } from '../lib/supabase.js';
 import { embed } from '../lib/gemini.js';
 import { matchAndNotify } from '../lib/matching.js';
+import {
+  DIRECTIONS, KINDS, STATUSES, CONTINUOUS_KINDS, EDITABLE, INTENT_FIELDS,
+  validateKindFields, kindFieldValues,
+} from '../lib/intentFields.js';
 
 const app = new Hono();
-
-const DIRECTIONS = ['want', 'offer'];
-const KINDS = ['good', 'digital', 'service', 'knowledge'];
-const EDITABLE = ['title', 'description', 'kind', 'category', 'price_fiat', 'image_url', 'status'];
-const STATUSES = ['active', 'fulfilled', 'archived'];
-
-const INTENT_FIELDS =
-  'id, user_id, direction, kind, title, description, category, price_fiat, image_url, status, source, created_at';
 
 app.post('/intents', requireAuth, async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Invalid JSON body' }, 400);
 
-  const { direction, kind, title, description, category, price_fiat, image_url, source } = body;
+  const { direction, kind, title, description, category, price_fiat, image_url, source, is_continuous } = body;
   if (!DIRECTIONS.includes(direction)) return c.json({ error: 'direction must be want or offer' }, 400);
   if (kind != null && !KINDS.includes(kind)) return c.json({ error: 'kind must be good, digital, service or knowledge' }, 400);
   if (!title || String(title).trim().length < 3) return c.json({ error: 'title is required (min 3 chars)' }, 400);
   if (price_fiat != null && (isNaN(Number(price_fiat)) || Number(price_fiat) < 0)) {
     return c.json({ error: 'price_fiat must be a non-negative number' }, 400);
   }
+  const fieldError = validateKindFields(body);
+  if (fieldError) return c.json({ error: fieldError }, 400);
 
   const embedding = await embed(c.env, `${title}\n${description ?? ''}`);
 
@@ -42,6 +40,8 @@ app.post('/intents', requireAuth, async (c) => {
       price_fiat: price_fiat != null ? Number(price_fiat) : null,
       image_url: image_url ?? null,
       source: source === 'copilot' || source === 'telegram' ? source : 'manual',
+      is_continuous: CONTINUOUS_KINDS.includes(kind) ? Boolean(is_continuous) : false,
+      ...kindFieldValues(body),
       embedding,
     })
     .select(INTENT_FIELDS)
@@ -85,15 +85,22 @@ app.patch('/intents/:id', requireAuth, async (c) => {
   if (patch.title != null && String(patch.title).trim().length < 3) {
     return c.json({ error: 'title is required (min 3 chars)' }, 400);
   }
+  const fieldError = validateKindFields(patch);
+  if (fieldError) return c.json({ error: fieldError }, 400);
 
   const db = getDb(c.env);
   const { data: existing } = await db
     .from('intents')
-    .select('id, user_id, title, description')
+    .select('id, user_id, kind, title, description')
     .eq('id', c.req.param('id'))
     .maybeSingle();
   if (!existing) return c.json({ error: 'Not found' }, 404);
   if (existing.user_id !== user.id) return c.json({ error: 'Forbidden' }, 403);
+
+  if ('is_continuous' in patch) {
+    const effectiveKind = patch.kind ?? existing.kind;
+    patch.is_continuous = CONTINUOUS_KINDS.includes(effectiveKind) ? Boolean(patch.is_continuous) : false;
+  }
 
   if (patch.title || patch.description !== undefined) {
     const title = patch.title ?? existing.title;

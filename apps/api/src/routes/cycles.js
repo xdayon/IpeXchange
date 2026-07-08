@@ -8,8 +8,8 @@ const app = new Hono();
 const PARTICIPANT_FIELDS = `
   id, user_id, position, acceptance, delivered_at, received_at,
   users ( id, display_name, avatar_url, telegram_username ),
-  gives:intents!trade_cycle_participants_gives_intent_id_fkey ( id, title, price_fiat, image_url ),
-  receives:intents!trade_cycle_participants_receives_intent_id_fkey ( id, title, price_fiat, image_url )
+  gives:intents!trade_cycle_participants_gives_intent_id_fkey ( id, title, price_fiat, image_url, is_continuous ),
+  receives:intents!trade_cycle_participants_receives_intent_id_fkey ( id, title, price_fiat, image_url, is_continuous )
 `;
 
 async function loadCycle(db, id) {

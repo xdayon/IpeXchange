@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, X, PackageCheck, PackageOpen } from 'lucide-react';
+import { ArrowLeft, Check, X, PackageCheck, PackageOpen, Repeat } from 'lucide-react';
 import { fetchCycle, respondToCycle, confirmCycleStep } from '../../api/cycles.js';
 import { statusInfo, myPart } from './constants.js';
 import { formatPrice } from '../intent/constants.js';
@@ -20,6 +20,12 @@ function TradeSide({ label, intent, color }) {
       <p style={{ fontSize: 14, fontWeight: 600 }}>{intent?.title}</p>
       {intent?.price_fiat != null && (
         <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{formatPrice(intent.price_fiat)}</p>
+      )}
+      {intent?.is_continuous && (
+        <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-lime)', marginTop: 4,
+          display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Repeat size={11} /> Stays active
+        </p>
       )}
     </div>
   );

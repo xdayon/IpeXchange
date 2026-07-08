@@ -6,7 +6,7 @@ import { embed } from '../lib/gemini.js';
 const app = new Hono();
 
 const CARD_FIELDS =
-  'id, user_id, direction, kind, title, description, category, price_fiat, image_url, created_at';
+  'id, user_id, direction, kind, title, description, category, price_fiat, image_url, created_at, is_continuous';
 
 // Public market feed. Anonymous search falls back to text match so Gemini
 // quota is only spent on logged-in users.

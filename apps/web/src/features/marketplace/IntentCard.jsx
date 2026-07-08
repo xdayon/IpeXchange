@@ -1,5 +1,7 @@
 
+import { Repeat } from 'lucide-react';
 import { directionInfo, kindInfo, formatPrice } from '../intent/constants.js';
+import IntentCover from '../../shared/ui/IntentCover.jsx';
 
 const styles = {
   card: {
@@ -11,12 +13,6 @@ const styles = {
     transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s',
     display: 'flex',
     flexDirection: 'column',
-  },
-  img: { width: '100%', height: 160, objectFit: 'cover', background: 'var(--bg-elevated)' },
-  placeholder: {
-    width: '100%', height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'linear-gradient(135deg, rgba(56,189,248,0.06), rgba(180,244,74,0.06))',
-    color: 'var(--text-secondary)',
   },
   body: { padding: '14px 16px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 },
   meta: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
@@ -60,11 +56,7 @@ export default function IntentCard({ intent, onClick }) {
         e.currentTarget.style.boxShadow = '';
       }}
     >
-      {intent.image_url ? (
-        <img src={intent.image_url} alt={intent.title} style={styles.img} loading="lazy" />
-      ) : (
-        <div style={styles.placeholder}>{KindIcon && <KindIcon size={28} strokeWidth={1.5} />}</div>
-      )}
+      <IntentCover kind={intent.kind} imageUrl={intent.image_url} alt={intent.title} height={160} />
       <div style={styles.body}>
         <div style={styles.meta}>
           <span style={styles.badge(dir)}>{dir.label}</span>
@@ -72,11 +64,18 @@ export default function IntentCard({ intent, onClick }) {
         </div>
         <h3 style={styles.title}>{intent.title}</h3>
         {intent.description && <p style={styles.desc}>{intent.description}</p>}
-        {kind && (
-          <span style={styles.kindTag}>
-            {KindIcon && <KindIcon size={12} />} {kind.label}
-          </span>
-        )}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {kind && (
+            <span style={styles.kindTag}>
+              {KindIcon && <KindIcon size={12} />} {kind.label}
+            </span>
+          )}
+          {intent.is_continuous && (
+            <span style={{ ...styles.kindTag, color: 'var(--accent-lime)', background: 'rgba(180,244,74,0.08)' }}>
+              <Repeat size={12} /> Stays active
+            </span>
+          )}
+        </div>
       </div>
     </article>
   );

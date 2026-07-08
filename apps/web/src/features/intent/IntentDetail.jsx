@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Handshake, Check, Loader2, Wallet } from 'lucide-react';
+import { ArrowLeft, Handshake, Check, Loader2, Wallet, Repeat } from 'lucide-react';
 import { fetchIntent, markInterest } from '../../api/intents.js';
-import { directionInfo, kindInfo, formatPrice } from './constants.js';
+import { directionInfo, kindInfo, formatPrice, kindFieldChips } from './constants.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
+import IntentCover from '../../shared/ui/IntentCover.jsx';
 import PayWithEth from './PayWithEth.jsx';
 
 const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
@@ -58,12 +59,9 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
         <ArrowLeft size={16} /> Back
       </button>
 
-      {intent.image_url && (
-        <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', marginBottom: 28 }}>
-          <img src={intent.image_url} alt={intent.title}
-            style={{ width: '100%', maxHeight: 380, objectFit: 'cover', display: 'block' }} />
-        </div>
-      )}
+      <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', marginBottom: 28 }}>
+        <IntentCover kind={intent.kind} imageUrl={intent.image_url} alt={intent.title} height={260} />
+      </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', textTransform: 'uppercase',
@@ -77,6 +75,20 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
             {kind.label}
           </span>
         )}
+        {intent.is_continuous && (
+          <span style={{ fontSize: 12, fontWeight: 600, padding: '4px 12px',
+            background: 'rgba(180,244,74,0.08)', color: 'var(--accent-lime)',
+            borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Repeat size={12} /> Stays active after trades
+          </span>
+        )}
+        {kindFieldChips(intent).map((chip) => (
+          <span key={chip} style={{ fontSize: 12, fontWeight: 600, padding: '4px 12px',
+            background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)',
+            borderRadius: 'var(--radius-full)' }}>
+            {chip}
+          </span>
+        ))}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
