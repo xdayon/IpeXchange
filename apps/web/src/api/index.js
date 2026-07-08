@@ -42,3 +42,26 @@ export async function apiFetch(path, options = {}) {
   }
   return res.json();
 }
+
+// POST that streams a plain-text body; onChunk receives the accumulated text.
+// Resolves with the full text once the stream ends.
+export async function apiStream(path, body, onChunk) {
+  const headers = { ...(await authHeaders()), 'Content-Type': 'application/json' };
+  const res = await fetch(`${BASE}${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    const err = new Error(data?.error || `API ${res.status}: ${res.statusText}`);
+    err.status = res.status;
+    throw err;
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let full = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    full += decoder.decode(value, { stream: true });
+    onChunk?.(full);
+  }
+  return full;
+}

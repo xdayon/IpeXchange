@@ -138,3 +138,9 @@ body {
 /* ── Pulse ────────────────────────────────────────────────────── */
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 .pulse { animation: pulse 2s ease-in-out infinite; }
+
+/* ── Lime glow (Nexum ready-to-reveal CTA) ────────────────────── */
+@keyframes glowLime {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(180, 244, 74, 0.35); }
+  50% { box-shadow: 0 0 18px 3px rgba(180, 244, 74, 0.5); }
+}

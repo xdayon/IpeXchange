@@ -43,6 +43,7 @@ const DRAFT_SCHEMA = {
       kind: { type: 'STRING', enum: ['good', 'digital', 'service', 'knowledge'] },
       title: { type: 'STRING' },
       description: { type: 'STRING' },
+      category: { type: 'STRING', nullable: true },
       price_fiat: { type: 'NUMBER', nullable: true },
       missing_fields: { type: 'ARRAY', items: { type: 'STRING' } },
     },
@@ -50,14 +51,15 @@ const DRAFT_SCHEMA = {
   },
 };
 
-const EXTRACTION_PROMPT = `You extract marketplace intents from free-form text spoken or written by a member of the Ipe City network.
+const EXTRACTION_PROMPT = `You extract marketplace intents from a member of the Ipe City network. The input is either free-form text or an interview transcript where lines starting with "Nexum:" are the interviewer and lines starting with "Member:" are the member. Extract intents ONLY from what the member said, using Nexum's questions as context to resolve short answers.
 
 Rules:
 - Extract EVERY distinct interest (direction "want": something they are looking for) and offer (direction "offer": something they bring - goods, digital products, services, work, consulting, knowledge) as a separate draft.
 - Output must be in English regardless of the input language.
-- Write a concise title (max 80 chars) and a helpful description expanding what was said.
+- Write a short, specific, market-ready title (max 80 chars) and a description of 2-4 complete sentences in the member's first-person voice with every concrete detail they gave. Never invent details.
+- category: one or two lowercase words ("electronics", "web development"); null when unclear.
 - NEVER invent a price. Only set price_fiat when the text states a value (convert to USD if another currency is given); otherwise use null and add "price_fiat" to missing_fields.
-- List in missing_fields anything that would make the intent clearer (e.g. "price_fiat", "condition", "timeframe").
+- List in missing_fields anything that would make the listing stronger (e.g. "price_fiat", "condition", "timeframe", "location").
 - If the text contains no extractable intent, return an empty array.`;
 
 // Returns an array of intent drafts, or null on failure.

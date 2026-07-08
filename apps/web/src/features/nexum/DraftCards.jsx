@@ -1,44 +1,7 @@
 import { useState } from 'react';
 import { Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
 import { publishDrafts } from '../../api/copilot.js';
-import { directionInfo, kindInfo } from '../intent/constants.js';
-import { inputStyle } from '../intent/wizard/helpers.js';
-
-function DraftCard({ draft, onChange, onToggle }) {
-  const dir = directionInfo(draft.direction);
-  return (
-    <div style={{
-      padding: 16, borderRadius: 'var(--radius-lg)', background: 'var(--bg-card)',
-      border: `1px solid ${draft.included ? dir.color + '55' : 'var(--border-color)'}`,
-      opacity: draft.included ? 1 : 0.5, transition: 'all 0.2s',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', textTransform: 'uppercase',
-          letterSpacing: 0.5, borderRadius: 'var(--radius-full)', background: dir.bg, color: dir.color }}>
-          {dir.label}
-        </span>
-        {draft.kind && (
-          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{kindInfo(draft.kind)?.label}</span>
-        )}
-        <label style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6,
-          fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>
-          <input type="checkbox" checked={draft.included} onChange={onToggle} /> Publish
-        </label>
-      </div>
-      <input style={{ ...inputStyle, marginBottom: 10, fontWeight: 600 }} value={draft.title}
-        maxLength={80} onChange={(e) => onChange('title', e.target.value)} />
-      <textarea style={{ ...inputStyle, minHeight: 64, resize: 'vertical', fontSize: 14 }}
-        value={draft.description ?? ''} maxLength={500}
-        onChange={(e) => onChange('description', e.target.value)} />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Value (USD, optional)</span>
-        <input type="number" min="0" style={{ ...inputStyle, width: 120, padding: '8px 12px', fontSize: 14 }}
-          value={draft.price_fiat ?? ''}
-          onChange={(e) => onChange('price_fiat', e.target.value === '' ? null : Number(e.target.value))} />
-      </div>
-    </div>
-  );
-}
+import DraftCard from './DraftCard.jsx';
 
 export default function DraftCards({ draft, onPublished }) {
   const [items, setItems] = useState(() => draft.drafts.map((d) => ({ ...d, included: true })));

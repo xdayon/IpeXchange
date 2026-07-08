@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
+import { streamText } from 'hono/streaming';
 import { requireAuth } from '../middleware/auth.js';
 import { getDb } from '../lib/supabase.js';
 import { embed, extractDrafts } from '../lib/gemini.js';
-import { transcribe, chat, extractDraftsGroq } from '../lib/groq.js';
-import { NEXUM_SYSTEM_PROMPT } from '../lib/nexum.js';
+import { transcribe, chatStream, readDeltas, extractDraftsGroq } from '../lib/groq.js';
+import { buildNexumPrompt } from '../lib/nexum.js';
 import { matchAndNotify } from '../lib/matching.js';
 
 const app = new Hono();
@@ -49,16 +50,35 @@ app.post('/copilot/interview', requireAuth, async (c) => {
     .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
   if (!(await allow(c, 'interview'))) return quotaError(c);
 
-  const reply = await chat(c.env, [{ role: 'system', content: NEXUM_SYSTEM_PROMPT }, ...clean]);
-  if (!reply) return c.json({ error: 'Nexum is unavailable right now' }, 502);
-  return c.json({ reply });
+  const user = c.get('user');
+  const { data: live } = await getDb(c.env)
+    .from('intents')
+    .select('direction, title')
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .limit(20);
+  const system = buildNexumPrompt({ name: user.display_name, intents: live ?? [] });
+
+  const upstream = await chatStream(c.env, [{ role: 'system', content: system }, ...clean]);
+  if (!upstream) return c.json({ error: 'Nexum is unavailable right now' }, 502);
+  return streamText(c, async (stream) => {
+    for await (const delta of readDeltas(upstream)) await stream.write(delta);
+  });
 });
 
 app.post('/copilot/drafts', requireAuth, async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => null);
-  const rawText = String(body?.raw_text ?? '').trim();
-  if (rawText.length < 10) return c.json({ error: 'raw_text is required (min 10 chars)' }, 400);
+  // Preferred input is the full interview transcript; raw_text stays for compat.
+  const turns = Array.isArray(body?.messages)
+    ? body.messages
+        .slice(-40)
+        .filter((m) => ['user', 'assistant'].includes(m?.role) && typeof m?.content === 'string')
+    : null;
+  const rawText = turns?.length
+    ? turns.map((m) => `${m.role === 'assistant' ? 'Nexum' : 'Member'}: ${m.content.slice(0, 2000)}`).join('\n')
+    : String(body?.raw_text ?? '').trim();
+  if (rawText.length < 10) return c.json({ error: 'messages or raw_text is required (min 10 chars)' }, 400);
   if (!(await allow(c, 'drafts'))) return quotaError(c);
 
   // Groq is the fast path; Gemini structured output is the fallback.
@@ -104,6 +124,7 @@ app.post('/copilot/drafts/:id/publish', requireAuth, async (c) => {
       kind: ['good', 'digital', 'service', 'knowledge'].includes(d.kind) ? d.kind : null,
       title: title.slice(0, 80),
       description: d.description ? String(d.description).trim() : null,
+      category: d.category ? String(d.category).trim().toLowerCase().slice(0, 40) : null,
       price_fiat: d.price_fiat != null && !isNaN(Number(d.price_fiat)) ? Number(d.price_fiat) : null,
       source: 'copilot',
       embedding: await embed(c.env, `${title}\n${d.description ?? ''}`),

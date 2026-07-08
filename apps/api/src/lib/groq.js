@@ -29,15 +29,19 @@ export async function transcribe(env, file) {
   }
 }
 
-const EXTRACT_PROMPT = `You extract marketplace intents from free-form text spoken or written by a member of the Ipe City network. Reply ONLY with a JSON object: {"drafts": [...]}.
+const EXTRACT_PROMPT = `You extract marketplace intents from a member of the Ipe City network. The input is either free-form text or an interview transcript where lines starting with "Nexum:" are the interviewer and lines starting with "Member:" are the member. Extract intents ONLY from what the member said, using Nexum's questions as context to resolve short answers ("yes, around $200"). Reply ONLY with a JSON object: {"drafts": [...]}.
 
-Each draft: {"direction": "want"|"offer", "kind": "good"|"digital"|"service"|"knowledge", "title": string (max 80 chars), "description": string, "price_fiat": number|null, "missing_fields": string[]}.
+Each draft: {"direction": "want"|"offer", "kind": "good"|"digital"|"service"|"knowledge", "title": string (max 80 chars), "description": string, "category": string|null, "price_fiat": number|null, "missing_fields": string[]}.
 
 Rules:
-- Extract EVERY distinct interest (direction "want": something they are looking for) and offer (direction "offer": something they bring - goods, digital products, services, work, consulting, knowledge) as a separate draft.
+- Extract EVERY distinct interest (direction "want": something they are looking for) and offer (direction "offer": something they bring - goods, digital products, services, work, consulting, knowledge) as a separate draft. Never merge unrelated things.
 - Output in English regardless of the input language.
-- NEVER invent a price. Only set price_fiat when the text states a value (converted to USD); otherwise null and add "price_fiat" to missing_fields.
-- List in missing_fields anything that would make the intent clearer.
+- title: short, specific and market-ready ("MacBook Pro 14 M3, 2024" rather than "laptop").
+- description: 2-4 complete sentences in the member's first-person voice, including every concrete detail they gave (condition, scope, format, experience, availability). Never invent details.
+- category: one or two lowercase words ("electronics", "web development", "language classes"); null when unclear.
+- NEVER invent a price. Only set price_fiat when the member stated a value (converted to USD); otherwise null and add "price_fiat" to missing_fields.
+- missing_fields: list what would make the listing stronger, e.g. "price_fiat", "condition", "timeframe", "location".
+- Skip anything the member says is already listed on the market.
 - No extractable intent: return {"drafts": []}.`;
 
 // Fast-path extraction on Groq JSON mode; returns array of drafts or null.
@@ -56,6 +60,54 @@ export async function extractDraftsGroq(env, rawText) {
     return Array.isArray(drafts) ? drafts : null;
   } catch {
     return null;
+  }
+}
+
+// Streaming variant: returns the upstream SSE Response, or null when unavailable.
+export async function chatStream(env, messages, { temperature = 0.7, maxTokens = 500 } = {}) {
+  if (!env.GROQ_API_KEY) return null;
+  try {
+    const res = await fetch(`${BASE}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${env.GROQ_API_KEY}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ model: CHAT_MODEL, messages, temperature, max_tokens: maxTokens, stream: true }),
+    });
+    if (!res.ok) {
+      console.error('Groq stream failed:', res.status, await res.text());
+      return null;
+    }
+    return res;
+  } catch (err) {
+    console.error('Groq stream error:', err);
+    return null;
+  }
+}
+
+// Yields content deltas from a Groq SSE response.
+export async function* readDeltas(upstream) {
+  const reader = upstream.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) return;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data:')) continue;
+      const payload = line.slice(5).trim();
+      if (payload === '[DONE]') return;
+      try {
+        const delta = JSON.parse(payload)?.choices?.[0]?.delta?.content;
+        if (delta) yield delta;
+      } catch {
+        // keepalive or partial frame
+      }
+    }
   }
 }
 

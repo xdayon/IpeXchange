@@ -15,7 +15,7 @@ const iconBtn = (active) => ({
 });
 
 export default function NexumInterview({ isAuthenticated, login, onBack, onMarket }) {
-  const { messages, orbState, setOrbState, error, draft, send, reveal, revealing, userTurns } = useInterview();
+  const { messages, orbState, setOrbState, error, draft, send, reveal, revealing, userTurns, ready } = useInterview();
   const { recording, supported, start, stop } = useRecorder();
   const { isTMA } = useTelegram();
   const [input, setInput] = useState('');
@@ -27,7 +27,7 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
 
   useEffect(() => {
     scrollToEnd();
-  }, [messages.length]);
+  }, [messages]);
 
   // Telegram updates --tg-viewport-stable-height when the keyboard opens;
   // re-anchor the chat to keep the latest message and the input visible.
@@ -55,8 +55,10 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
 
   if (published) return <PublishedScreen intents={published} onMarket={onMarket} />;
 
+  const busy = orbState === 'thinking' || orbState === 'speaking';
+
   const submitText = () => {
-    if (!input.trim()) return;
+    if (!input.trim() || busy) return;
     send(input);
     setInput('');
   };
@@ -128,18 +130,20 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
             <p style={{ fontSize: 13, color: 'var(--accent-pink)', textAlign: 'center', margin: '8px 0' }}>{error || micError}</p>
           )}
 
-          {userTurns >= 2 && (
-            <button onClick={reveal} disabled={revealing || orbState === 'thinking'} style={{
+          {(ready || userTurns >= 2) && (
+            <button onClick={reveal} disabled={revealing || busy} style={{
               margin: '10px 0', padding: '13px', borderRadius: 'var(--radius-md)',
-              border: '1px solid rgba(180,244,74,0.4)', background: 'rgba(180,244,74,0.08)',
-              color: 'var(--accent-lime)', fontWeight: 700, fontSize: 14,
+              border: '1px solid rgba(180,244,74,0.4)',
+              background: ready ? 'linear-gradient(135deg, var(--accent-lime), var(--accent-cyan))' : 'rgba(180,244,74,0.08)',
+              color: ready ? 'var(--bg-dark)' : 'var(--accent-lime)', fontWeight: 700, fontSize: 14,
               cursor: revealing ? 'wait' : 'pointer', opacity: revealing ? 0.85 : 1,
+              animation: ready && !revealing ? 'glowLime 1.8s ease-in-out infinite' : 'none',
               fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
               {revealing ? (
                 <>
                   <span style={{ width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
-                    border: '2px solid rgba(180,244,74,0.25)', borderTopColor: 'var(--accent-lime)',
+                    border: '2px solid rgba(180,244,74,0.25)', borderTopColor: ready ? 'var(--bg-dark)' : 'var(--accent-lime)',
                     animation: 'spin 0.8s linear infinite' }} />
                   Nexum is weaving your intents...
                 </>
@@ -166,7 +170,7 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
                 border: '1px solid var(--border-color)', borderRadius: 'var(--radius-full)',
                 color: 'var(--text-primary)', fontSize: 15, fontFamily: 'var(--font-sans)', outline: 'none' }}
             />
-            <button onClick={submitText} disabled={!input.trim() || orbState === 'thinking'} style={iconBtn(false)} title="Send">
+            <button onClick={submitText} disabled={!input.trim() || busy} style={iconBtn(false)} title="Send">
               <SendHorizontal size={19} />
             </button>
           </div>

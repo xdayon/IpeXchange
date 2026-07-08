@@ -1,10 +1,8 @@
-import { apiFetch } from './index.js';
+import { apiFetch, apiStream } from './index.js';
 
-export async function interviewTurn(messages) {
-  return apiFetch('/copilot/interview', {
-    method: 'POST',
-    body: JSON.stringify({ messages }),
-  }).then((d) => d.reply);
+// Streams Nexum's reply; onChunk receives the accumulated text as it arrives.
+export async function interviewTurn(messages, onChunk) {
+  return apiStream('/copilot/interview', { messages }, onChunk);
 }
 
 export async function transcribeAudio(blob) {
@@ -18,10 +16,10 @@ export async function transcribeAudio(blob) {
   return apiFetch('/copilot/transcribe', { method: 'POST', body: form }).then((d) => d.text);
 }
 
-export async function createDrafts(rawText) {
+export async function createDrafts(messages) {
   return apiFetch('/copilot/drafts', {
     method: 'POST',
-    body: JSON.stringify({ raw_text: rawText }),
+    body: JSON.stringify({ messages }),
   });
 }
 
