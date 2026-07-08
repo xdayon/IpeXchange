@@ -22,17 +22,16 @@ async function handleStart(env, message, param) {
       await sendMessage(env, chatId, 'This link has expired. Generate a new one from your profile in the app.');
       return;
     }
-    const { error } = await db
-      .from('users')
-      .update({
-        telegram_id: from.id,
-        telegram_username: from.username ?? null,
-        telegram_dm_ok: true,
-      })
-      .eq('id', userId);
-    if (error) {
-      // unique(telegram_id): this Telegram already belongs to another account
-      await sendMessage(env, chatId, 'This Telegram is already linked to a different IpeXchange account.');
+    const { data, error } = await db.rpc('link_telegram_account', {
+      p_user: userId,
+      p_tg_id: from.id,
+      p_tg_username: from.username ?? null,
+    });
+    if (error || !data?.ok) {
+      const msg = data?.error === 'owned_by_other_account'
+        ? 'This Telegram is already linked to a different IpeXchange account.'
+        : 'Could not link your account. Generate a new link from your profile in the app.';
+      await sendMessage(env, chatId, msg);
       return;
     }
     await sendMessage(env, chatId, 'Your Telegram is now linked. ' + WELCOME);

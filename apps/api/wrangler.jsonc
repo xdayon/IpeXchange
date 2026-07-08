@@ -12,6 +12,7 @@
     "enabled": true
   },
   "routes": [
+    { "pattern": "ipexchange.xyz", "custom_domain": true },
     { "pattern": "xchange.synapses.academy", "custom_domain": true }
   ]
   // Secrets (wrangler secret bulk): SUPABASE_URL, SUPABASE_SECRET_KEY,
