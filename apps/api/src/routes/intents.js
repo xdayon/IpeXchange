@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { getDb } from '../lib/supabase.js';
 import { embed } from '../lib/gemini.js';
 import { matchAndNotify } from '../lib/matching.js';
+import { countCompletedTrades } from '../lib/trades.js';
 import {
   DIRECTIONS, KINDS, STATUSES, CONTINUOUS_KINDS, EDITABLE, INTENT_FIELDS,
   validateKindFields, kindFieldValues,
@@ -69,6 +70,7 @@ app.get('/intents/:id', async (c) => {
   if (data.users) {
     data.users = { ...data.users, wallet: undefined, has_wallet: Boolean(data.users.wallet) };
   }
+  data.owner_completed_trades = await countCompletedTrades(c.env, data.user_id);
   return c.json(data);
 });
 

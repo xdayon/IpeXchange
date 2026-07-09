@@ -6,6 +6,7 @@ const STATS = [
   { key: 'fulfilled_intents', label: 'Fulfilled', color: 'var(--accent-lime)' },
   { key: 'interests_received', label: 'Interests received', color: 'var(--accent-indigo)' },
   { key: 'payments_received', label: 'Payments received', color: 'var(--accent-amber)' },
+  { key: 'completed_trades', label: 'Trades completed', color: 'var(--accent-lime)' },
 ];
 
 export default function ProfileStats() {

@@ -16,6 +16,10 @@ export async function fetchMyStats() {
   return apiFetch('/me/stats');
 }
 
+export async function fetchMyTrades() {
+  return apiFetch('/me/trades');
+}
+
 export async function requestTelegramLink() {
   return apiFetch('/me/telegram-link-token', { method: 'POST' });
 }
