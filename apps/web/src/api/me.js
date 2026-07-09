@@ -16,6 +16,10 @@ export async function fetchMyStats() {
   return apiFetch('/me/stats');
 }
 
+export async function claimReferral(ref) {
+  return apiFetch('/me/referral', { method: 'POST', body: JSON.stringify({ ref }) });
+}
+
 export async function requestTelegramLink() {
   return apiFetch('/me/telegram-link-token', { method: 'POST' });
 }

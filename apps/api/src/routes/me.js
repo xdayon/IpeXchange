@@ -5,6 +5,7 @@ import { getDb } from '../lib/supabase.js';
 import { createLinkToken } from '../lib/linktoken.js';
 import { walletBelongsToUser } from '../lib/privy.js';
 import { isAllowlistedAdmin } from '../lib/admin.js';
+import { notify } from '../lib/notify.js';
 
 const app = new Hono();
 
@@ -16,6 +17,8 @@ const SETTING_KEYS = new Set([
   'haptics',
   'default_tab',
 ]);
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const serialize = (u) => ({
   id: u.id,
@@ -29,6 +32,7 @@ const serialize = (u) => ({
   telegram_dm_ok: u.telegram_dm_ok,
   settings: u.settings ?? {},
   is_admin: u.is_admin === true,
+  referred_by: u.referred_by ?? null,
   created_at: u.created_at,
 });
 
@@ -100,6 +104,40 @@ app.put('/me/settings', requireAuth, rateLimit(30, 'me-settings'), async (c) => 
   return c.json({ ok: true, settings });
 });
 
+app.post('/me/referral', requireAuth, rateLimit(10, 'referral'), async (c) => {
+  const user = c.get('user');
+  const body = await c.req.json().catch(() => ({}));
+  const ref = String(body.ref ?? '').trim();
+  if (!UUID_RE.test(ref)) return c.json({ error: 'Invalid referral code' }, 400);
+  if (ref === user.id) return c.json({ error: 'You cannot refer yourself' }, 400);
+  if (user.referred_by) return c.json({ ok: false, reason: 'already_set' });
+
+  const db = getDb(c.env);
+  const { data: referrer } = await db.from('users').select('id').eq('id', ref).maybeSingle();
+  if (!referrer) return c.json({ error: 'Referral user not found' }, 400);
+
+  const { data: updated, error } = await db
+    .from('users')
+    .update({ referred_by: ref })
+    .eq('id', user.id)
+    .is('referred_by', null)
+    .select('id')
+    .maybeSingle();
+  if (error) return c.json({ error: 'Could not claim referral' }, 500);
+  if (!updated) return c.json({ ok: false, reason: 'already_set' });
+
+  const displayName = user.display_name || 'A new citizen';
+  c.executionCtx.waitUntil(
+    notify(c.env, {
+      userId: ref,
+      type: 'referral_joined',
+      payload: { display_name: user.display_name ?? null },
+      text: `${displayName} joined IpeXchange with your invite link.`,
+    }),
+  );
+  return c.json({ ok: true });
+});
+
 app.get('/me/stats', requireAuth, async (c) => {
   const user = c.get('user');
   const db = getDb(c.env);
@@ -108,7 +146,7 @@ app.get('/me/stats', requireAuth, async (c) => {
     for (const [k, v] of Object.entries(filter)) q = q.eq(k, v);
     return q.then((r) => r.count ?? 0);
   };
-  const [activeIntents, fulfilled, interestsReceived, paymentsReceived] = await Promise.all([
+  const [activeIntents, fulfilled, interestsReceived, paymentsReceived, referrals] = await Promise.all([
     count('intents', { user_id: user.id, status: 'active' }),
     count('intents', { user_id: user.id, status: 'fulfilled' }),
     db
@@ -117,12 +155,14 @@ app.get('/me/stats', requireAuth, async (c) => {
       .eq('intents.user_id', user.id)
       .then((r) => r.count ?? 0),
     count('payments', { seller_user_id: user.id, status: 'confirmed' }),
+    count('users', { referred_by: user.id }),
   ]);
   return c.json({
     active_intents: activeIntents,
     fulfilled_intents: fulfilled,
     interests_received: interestsReceived,
     payments_received: paymentsReceived,
+    referrals,
   });
 });
 

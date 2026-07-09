@@ -28,8 +28,13 @@ const Loader = () => (
 
 // Deep link used by the Mini App's openLink checkout handoff:
 // /?intent=<id> lands straight on the intent detail page.
-const deepLinkIntentId = new URLSearchParams(window.location.search).get('intent');
-if (deepLinkIntentId) window.history.replaceState({}, '', window.location.pathname);
+const searchParams = new URLSearchParams(window.location.search);
+const deepLinkIntentId = searchParams.get('intent');
+const referralRef = searchParams.get('ref');
+if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(referralRef)) {
+  localStorage.setItem('ipex-ref', referralRef);
+}
+if (deepLinkIntentId || referralRef) window.history.replaceState({}, '', window.location.pathname);
 
 // History stack for the Telegram BackButton
 function useHistory(initial = 'home') {
