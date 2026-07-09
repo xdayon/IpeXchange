@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { registerTokenProvider } from '../../api/index.js';
-import { fetchMe, saveWallet } from '../../api/me.js';
+import { claimReferral, fetchMe, saveWallet } from '../../api/me.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
 
 const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
@@ -23,6 +23,7 @@ function toAppUser(me, session) {
     telegramDmOk: me.telegram_dm_ok ?? false,
     settings: me.settings ?? {},
     isAdmin: me.is_admin === true,
+    referredBy: me.referred_by ?? null,
     createdAt: me.created_at ?? null,
     source: session.source,
   };
@@ -104,6 +105,14 @@ export function useAuth() {
       // Keep the payout address in sync with the Privy session wallet.
       const wallet = session.wallet?.toLowerCase();
       if (me && wallet && me.wallet !== wallet) saveWallet(wallet).catch(() => {});
+      const ref = localStorage.getItem('ipex-ref');
+      if (me && ref && !me.referred_by) {
+        claimReferral(ref)
+          .then(() => localStorage.removeItem('ipex-ref'))
+          .catch((err) => { if (err.status >= 400 && err.status < 500) localStorage.removeItem('ipex-ref'); });
+      } else if (me?.referred_by) {
+        localStorage.removeItem('ipex-ref');
+      }
     });
     return () => { cancelled = true; };
     // identity.session is rebuilt every render; keying on auth state avoids loops

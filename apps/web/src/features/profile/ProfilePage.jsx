@@ -1,6 +1,7 @@
 import { LogIn } from 'lucide-react';
 import ProfileHeader from './ProfileHeader.jsx';
 import ProfileStats from './ProfileStats.jsx';
+import InviteCard from './InviteCard.jsx';
 import TelegramLinkBanner from './TelegramLinkBanner.jsx';
 import MyIntents from './MyIntents.jsx';
 
@@ -23,6 +24,7 @@ export default function ProfilePage({ user, isAuthenticated, login, logout, onNa
     <div className="page-enter" style={{ padding: '28px 0 60px', maxWidth: 680, margin: '0 auto' }}>
       <ProfileHeader user={user} logout={logout} onNavigate={onNavigate} onSaved={refresh} />
       <ProfileStats />
+      <InviteCard user={user} />
       {!user?.telegramLinked && <TelegramLinkBanner />}
 
       <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>My Intents</h2>
