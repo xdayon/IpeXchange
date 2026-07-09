@@ -5,6 +5,7 @@ import { directionInfo, kindInfo, formatPrice, kindFieldChips } from './constant
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
 import IntentCover from '../../shared/ui/IntentCover.jsx';
 import PayOnChain from './PayOnChain.jsx';
+import ShareButton from '../../shared/ui/ShareButton.jsx';
 
 const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
 
@@ -53,11 +54,14 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
 
   return (
     <div className="page-enter" style={{ padding: '24px 0 40px', maxWidth: 680, margin: '0 auto' }}>
-      <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 8,
-        background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer',
-        marginBottom: 24, fontFamily: 'var(--font-sans)', fontSize: 14 }}>
-        <ArrowLeft size={16} /> Back
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 8,
+          background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer',
+          fontFamily: 'var(--font-sans)', fontSize: 14 }}>
+          <ArrowLeft size={16} /> Back
+        </button>
+        <ShareButton url={`${window.location.origin}/l/${intent.id}`} />
+      </div>
 
       <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', marginBottom: 28 }}>
         <IntentCover kind={intent.kind} imageUrl={intent.image_url} alt={intent.title} height={260} />

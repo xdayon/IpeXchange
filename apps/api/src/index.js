@@ -9,6 +9,7 @@ import telegram from './routes/telegram.js';
 import cycles from './routes/cycles.js';
 import payments from './routes/payments.js';
 import admin from './routes/admin.js';
+import share from './routes/share.js';
 import { apiBodyLimit, apiSecureHeaders } from './middleware/security.js';
 
 const app = new Hono();
@@ -29,6 +30,7 @@ app.route('/api', telegram);
 app.route('/api', cycles);
 app.route('/api', payments);
 app.route('/api', admin);
+app.route('/', share);
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404));
 
