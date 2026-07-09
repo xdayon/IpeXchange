@@ -10,7 +10,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
     "hono": "^4.7.0",
-    "jose": "^6.0.0"
+    "jose": "^6.0.0",
+    "workers-og": "^0.0.27"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

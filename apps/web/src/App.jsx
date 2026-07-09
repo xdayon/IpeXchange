@@ -28,8 +28,10 @@ const Loader = () => (
 
 // Deep link used by the Mini App's openLink checkout handoff:
 // /?intent=<id> lands straight on the intent detail page.
-const deepLinkIntentId = new URLSearchParams(window.location.search).get('intent');
-if (deepLinkIntentId) window.history.replaceState({}, '', window.location.pathname);
+// /l/<id> is the shareable OG-preview link served by the Worker; it lands here too.
+const shareLinkMatch = window.location.pathname.match(/^\/l\/([0-9a-f-]{36})$/i);
+const deepLinkIntentId = new URLSearchParams(window.location.search).get('intent') || shareLinkMatch?.[1] || null;
+if (deepLinkIntentId) window.history.replaceState({}, '', '/');
 
 // History stack for the Telegram BackButton
 function useHistory(initial = 'home') {
