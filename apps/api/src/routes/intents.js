@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
+import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { embed } from '../lib/gemini.js';
 import { matchAndNotify } from '../lib/matching.js';
@@ -11,7 +12,7 @@ import {
 
 const app = new Hono();
 
-app.post('/intents', requireAuth, async (c) => {
+app.post('/intents', requireAuth, rateLimit(20, 'intent-create'), async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Invalid JSON body' }, 400);
@@ -20,11 +21,18 @@ app.post('/intents', requireAuth, async (c) => {
   if (!DIRECTIONS.includes(direction)) return c.json({ error: 'direction must be want or offer' }, 400);
   if (kind != null && !KINDS.includes(kind)) return c.json({ error: 'kind must be good, digital, service or knowledge' }, 400);
   if (!title || String(title).trim().length < 3) return c.json({ error: 'title is required (min 3 chars)' }, 400);
+  if (String(title).trim().length > 120) return c.json({ error: 'title must be 120 characters or fewer' }, 400);
   if (price_fiat != null && (isNaN(Number(price_fiat)) || Number(price_fiat) < 0)) {
     return c.json({ error: 'price_fiat must be a non-negative number' }, 400);
   }
+  if (image_url != null && !String(image_url).startsWith(`${c.env.SUPABASE_URL}/storage/`)) {
+    return c.json({ error: 'Invalid image URL' }, 400);
+  }
   const fieldError = validateKindFields(body);
   if (fieldError) return c.json({ error: fieldError }, 400);
+
+  const trimmedDescription = description ? String(description).trim().slice(0, 4000) : null;
+  const normalizedCategory = category != null ? String(category).trim().toLowerCase().slice(0, 40) : null;
 
   const embedding = await embed(c.env, `${title}\n${description ?? ''}`);
 
@@ -36,8 +44,8 @@ app.post('/intents', requireAuth, async (c) => {
       direction,
       kind: kind ?? null,
       title: String(title).trim(),
-      description: description ? String(description).trim() : null,
-      category: category ?? null,
+      description: trimmedDescription,
+      category: normalizedCategory,
       price_fiat: price_fiat != null ? Number(price_fiat) : null,
       image_url: image_url ?? null,
       source: source === 'copilot' || source === 'telegram' ? source : 'manual',
@@ -74,7 +82,7 @@ app.get('/intents/:id', async (c) => {
   return c.json(data);
 });
 
-app.patch('/intents/:id', requireAuth, async (c) => {
+app.patch('/intents/:id', requireAuth, rateLimit(30, 'intent-edit'), async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Invalid JSON body' }, 400);
@@ -87,6 +95,14 @@ app.patch('/intents/:id', requireAuth, async (c) => {
   if (patch.title != null && String(patch.title).trim().length < 3) {
     return c.json({ error: 'title is required (min 3 chars)' }, 400);
   }
+  if (patch.title != null && String(patch.title).trim().length > 120) {
+    return c.json({ error: 'title must be 120 characters or fewer' }, 400);
+  }
+  if (patch.image_url != null && !String(patch.image_url).startsWith(`${c.env.SUPABASE_URL}/storage/`)) {
+    return c.json({ error: 'Invalid image URL' }, 400);
+  }
+  if (patch.description != null) patch.description = String(patch.description).trim().slice(0, 4000);
+  if (patch.category != null) patch.category = String(patch.category).trim().toLowerCase().slice(0, 40);
   const fieldError = validateKindFields(patch);
   if (fieldError) return c.json({ error: fieldError }, 400);
 

@@ -183,17 +183,24 @@ app.post('/me/telegram-link-token', requireAuth, rateLimit(10, 'tg-link'), async
   return c.json({ token, url: `https://t.me/${bot}?start=${token}` });
 });
 
-// Payout address for P2P payments. When a Privy app secret is configured
-// the address is verified against the caller's linked Privy wallets, so a
-// hijacked session cannot silently redirect payouts elsewhere.
+// Payout address for P2P payments. The address must be verified against
+// the caller's linked Privy wallets before it can be saved, so a hijacked
+// session cannot silently redirect payouts elsewhere. Verification is
+// mandatory: if it cannot run, the request is rejected rather than trusted.
 app.post('/me/wallet', requireAuth, rateLimit(10, 'wallet'), async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => ({}));
   const address = String(body.address ?? '').toLowerCase();
   if (!/^0x[0-9a-f]{40}$/.test(address)) return c.json({ error: 'Invalid wallet address' }, 400);
   if (user.wallet === address) return c.json({ ok: true, wallet: address });
+  if (!user.privy_did) {
+    return c.json({ error: 'Link a login account before setting a payout wallet' }, 403);
+  }
 
   const owned = await walletBelongsToUser(c.env, user.privy_did, address);
+  if (owned === null) {
+    return c.json({ error: 'Wallet verification is unavailable right now. Try again shortly.' }, 503);
+  }
   if (owned === false) {
     return c.json({ error: 'This wallet is not linked to your login account' }, 403);
   }

@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
+import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { notify } from '../lib/notify.js';
 
 const app = new Hono();
 
-app.post('/intents/:id/interest', requireAuth, async (c) => {
+app.post('/intents/:id/interest', requireAuth, rateLimit(15, 'interest'), async (c) => {
   const user = c.get('user');
   const db = getDb(c.env);
   const body = await c.req.json().catch(() => ({}));

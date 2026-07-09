@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { optionalAuth } from '../middleware/auth.js';
+import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { embed } from '../lib/gemini.js';
 
@@ -10,7 +11,7 @@ const CARD_FIELDS =
 
 // Public market feed. Anonymous search falls back to text match so Gemini
 // quota is only spent on logged-in users.
-app.get('/market', optionalAuth, async (c) => {
+app.get('/market', optionalAuth, rateLimit(60, 'market'), async (c) => {
   const db = getDb(c.env);
   const direction = c.req.query('direction');
   const kind = c.req.query('kind');
@@ -48,7 +49,10 @@ app.get('/market', optionalAuth, async (c) => {
   if (direction === 'want' || direction === 'offer') query = query.eq('direction', direction);
   if (['good', 'digital', 'service', 'knowledge'].includes(kind)) query = query.eq('kind', kind);
   if (category) query = query.eq('category', category);
-  if (q) query = query.or(`title.ilike.%${q.replaceAll('%', '')}%,description.ilike.%${q.replaceAll('%', '')}%`);
+  // Commas and parens are PostgREST filter delimiters inside .or(), so a
+  // search term containing them could inject extra filter clauses.
+  const safe = q ? q.replace(/[%,()]/g, ' ').trim().slice(0, 80) : '';
+  if (safe) query = query.or(`title.ilike.%${safe}%,description.ilike.%${safe}%`);
 
   const { data, error } = await query;
   if (error) {

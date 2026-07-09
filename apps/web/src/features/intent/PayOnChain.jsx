@@ -11,6 +11,8 @@ const MAX_POLLS = 30;
 const TOKEN_OPTIONS = [
   { id: 'usdc', label: 'USDC', hint: 'stable, 1:1 with USD' },
   { id: 'eth', label: 'ETH', hint: 'native ether' },
+  { id: 'eurc', label: 'EURC', hint: 'euro stablecoin' },
+  { id: 'cbbtc', label: 'cbBTC', hint: 'bitcoin on Base' },
 ];
 
 const pad64 = (hex) => hex.replace(/^0x/, '').padStart(64, '0');

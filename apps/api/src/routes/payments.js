@@ -7,6 +7,7 @@ import {
   BASE_CHAIN_ID,
   MIN_CONFIRMATIONS,
   TOKENS,
+  getBlockTimestamp,
   getConfirmations,
   getTokenUsdPrice,
   getTransaction,
@@ -119,11 +120,15 @@ app.post('/payments/:id/verify', requireAuth, rateLimit(60, 'pay-verify'), async
     if (new Date(payment.quote_expires_at).getTime() < Date.now()) {
       return c.json({ error: 'This quote expired. Request a new one.' }, 409);
     }
-    const { error } = await db
+    const { data: attached, error } = await db
       .from('payments')
       .update({ tx_hash: txHash, status: 'submitted' })
-      .eq('id', payment.id);
+      .eq('id', payment.id)
+      .is('tx_hash', null)
+      .select('id')
+      .maybeSingle();
     if (error) return c.json({ error: 'This transaction is already used by another payment' }, 409);
+    if (!attached) return c.json({ error: 'A different transaction is already attached' }, 409);
     payment.tx_hash = txHash;
     payment.status = 'submitted';
   }
@@ -134,6 +139,24 @@ app.post('/payments/:id/verify', requireAuth, rateLimit(60, 'pay-verify'), async
   ]);
   // Not indexed or not mined yet: stay submitted, the client keeps polling.
   if (!tx || !receipt) return c.json(serialize(payment));
+
+  const blockTimestamp = await getBlockTimestamp(c.env, receipt.blockNumber).catch(() => null);
+  if (blockTimestamp == null) return c.json(serialize(payment));
+  // A transaction mined well before the quote existed cannot be the one
+  // paying for it — reject it instead of accepting a stale/third-party tx.
+  if (blockTimestamp * 1000 < new Date(payment.created_at).getTime() - 120000) {
+    const { data: updated, error: failError } = await db
+      .from('payments')
+      .update({ status: 'failed' })
+      .eq('id', payment.id)
+      .select()
+      .single();
+    if (failError) {
+      console.error('Payment update failed:', failError);
+      return c.json({ error: 'Could not update the payment' }, 500);
+    }
+    return c.json(serialize(updated));
+  }
 
   const valid = paymentSatisfied({
     tx,
