@@ -33,6 +33,16 @@ async function fetchAsset(c, path) {
   return res.arrayBuffer();
 }
 
+// Chunked to stay under the argument-count limit of String.fromCharCode.
+function toBase64(buf) {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 8192) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  }
+  return btoa(bin);
+}
+
 app.get('/l/:id', async (c) => {
   const db = getDb(c.env);
   const { data: intent } = await db.from('intents').select(SHARE_FIELDS).eq('id', c.req.param('id')).single();
@@ -59,18 +69,22 @@ app.get('/l/:id', async (c) => {
     <meta name="twitter:image" content="${esc(imageUrl)}" />
   </head>`;
 
-  const html = shell.replace('</head>', metaTags);
+  // Drop the shell's generic og/twitter tags: crawlers honor the first occurrence.
+  const html = shell
+    .replace(/^\s*<meta (?:property="og:|name="twitter:)[^>]*>\n?/gm, '')
+    .replace('</head>', metaTags);
   return c.body(html, 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' });
 });
 
-app.get('/og/:id.png', async (c) => {
+app.get('/og/:file', async (c) => {
+  const id = c.req.param('file').replace(/\.png$/, '');
   const cache = caches.default;
   const cacheKey = new Request(c.req.url);
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
   const db = getDb(c.env);
-  const { data: intent } = await db.from('intents').select(SHARE_FIELDS).eq('id', c.req.param('id')).single();
+  const { data: intent } = await db.from('intents').select(SHARE_FIELDS).eq('id', id).single();
   if (!intent) return c.notFound();
 
   const [regular, bold, logoBuf] = await Promise.all([
@@ -78,7 +92,7 @@ app.get('/og/:id.png', async (c) => {
     fetchAsset(c, '/fonts/Inter-Bold.ttf'),
     fetchAsset(c, '/logo.png'),
   ]);
-  const logoDataUri = `data:image/png;base64,${btoa(String.fromCharCode(...new Uint8Array(logoBuf)))}`;
+  const logoDataUri = `data:image/png;base64,${toBase64(logoBuf)}`;
 
   const html = buildOgCardHtml(intent, { logoDataUri });
   const image = new ImageResponse(html, {

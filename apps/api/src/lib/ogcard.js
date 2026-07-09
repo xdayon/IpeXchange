@@ -33,7 +33,7 @@ export function buildOgCardHtml(intent, { logoDataUri }) {
             ${logoDataUri ? `<img src="${logoDataUri}" width="48" height="48" style="border-radius:12px;" />` : ''}
             <span style="display:flex; font-size:28px; font-weight:700; color:#F8FAFC;">IpeXchange</span>
           </div>
-          <div style="display:flex; padding:6px 16px; border:1px solid rgba(148,163,184,0.35); border-radius:9999px; color:#94A3B8; font-size:18px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:28px;">
+          <div style="display:flex; align-self:flex-start; padding:6px 16px; border:1px solid rgba(148,163,184,0.35); border-radius:9999px; color:#94A3B8; font-size:18px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:28px;">
             ${badge}
           </div>
           <div style="display:flex; font-size:56px; font-weight:800; color:#F8FAFC; line-height:1.15; margin-bottom:24px;">
