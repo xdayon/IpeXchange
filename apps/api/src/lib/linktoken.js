@@ -21,13 +21,22 @@ export async function createLinkToken(env, userId) {
   return `${payload}_${sig}`;
 }
 
+// Constant-time comparison of two equal-length hex strings, to avoid
+// leaking timing information about how much of the signature matched.
+function timingSafeEqualHex(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 export async function verifyLinkToken(env, token) {
   const parts = String(token ?? '').split('_');
   if (parts.length !== 3) return null;
   const [compactId, expStr, sig] = parts;
   if (!/^[0-9a-f]{32}$/.test(compactId)) return null;
   const expected = (await sign(env.LINK_TOKEN_SECRET, `${compactId}_${expStr}`)).slice(0, 24);
-  if (sig !== expected) return null;
+  if (!timingSafeEqualHex(sig, expected)) return null;
   if (Number(expStr) < Date.now() / 1000) return null;
   return `${compactId.slice(0, 8)}-${compactId.slice(8, 12)}-${compactId.slice(12, 16)}-${compactId.slice(16, 20)}-${compactId.slice(20)}`;
 }

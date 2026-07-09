@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
+import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { notifyCycle } from '../lib/matching.js';
 
@@ -64,7 +65,7 @@ app.get('/cycles/:id', requireAuth, async (c) => {
   return c.json(cycle);
 });
 
-app.post('/cycles/:id/respond', requireAuth, async (c) => {
+app.post('/cycles/:id/respond', requireAuth, rateLimit(30, 'cycle-act'), async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => null);
   if (typeof body?.accept !== 'boolean') return c.json({ error: 'accept must be a boolean' }, 400);
@@ -92,7 +93,7 @@ app.post('/cycles/:id/respond', requireAuth, async (c) => {
   return c.json(cycle);
 });
 
-app.post('/cycles/:id/confirm', requireAuth, async (c) => {
+app.post('/cycles/:id/confirm', requireAuth, rateLimit(30, 'cycle-act'), async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => null);
   if (!['delivered', 'received'].includes(body?.step)) {

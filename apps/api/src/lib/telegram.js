@@ -9,9 +9,18 @@ function toHex(bytes) {
   return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Constant-time comparison of two equal-length hex strings, to avoid
+// leaking timing information about how much of the signature matched.
+function timingSafeEqualHex(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 // Validates Telegram Mini App initData (HMAC scheme from the official docs).
 // Returns the parsed user object plus raw fields, or null if invalid/stale.
-export async function validateInitData(initData, botToken, maxAgeSeconds = 86400) {
+export async function validateInitData(initData, botToken, maxAgeSeconds = 21600) {
   if (!initData || !botToken) return null;
   try {
     const params = new URLSearchParams(initData);
@@ -24,7 +33,7 @@ export async function validateInitData(initData, botToken, maxAgeSeconds = 86400
       .join('\n');
     const secretKey = await hmacSha256(enc.encode('WebAppData'), botToken);
     const signature = toHex(await hmacSha256(secretKey, dataCheckString));
-    if (signature !== hash) return null;
+    if (!timingSafeEqualHex(signature, hash)) return null;
     const authDate = Number(params.get('auth_date'));
     if (!authDate || Date.now() / 1000 - authDate > maxAgeSeconds) return null;
     const user = JSON.parse(params.get('user') || 'null');

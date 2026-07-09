@@ -83,7 +83,7 @@ scripts/                 ← db-apply.js, seed.js
 - `intent_drafts` — Copilot drafts (raw_text, drafts jsonb, status)
 - `interest_marks` — intent_id, user_id, message (unique per pair)
 - `trade_cycles` + `trade_cycle_participants` — multi-hop state machine
-- `payments` — direct P2P ETH on Base: intent_id, buyer/seller, to_wallet, amount_fiat, eth_usd_price, amount_wei, tx_hash unique, status (quoted|submitted|confirmed|failed), quote_expires_at
+- `payments` — direct P2P crypto on Base (token: eth|usdc|eurc|cbbtc): intent_id, buyer/seller, to_wallet, amount_fiat, token_usd_price, amount_wei, tx_hash unique, status (quoted|submitted|confirmed|failed), quote_expires_at
 - `notifications` — user_id, type, payload jsonb, telegram_sent
 - `ai_usage` — daily per-user AI action counters
 - RPCs: `match_intents`, `find_intent_cycles`, `increment_ai_usage`; cycle state machine is atomic plpgsql — `persist_intent_cycle` (dedup by cycle_hash), `respond_to_cycle`, `confirm_cycle_step` (fulfills gives + wants on completion)

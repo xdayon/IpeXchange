@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { ImageResponse } from 'workers-og';
 import { getDb } from '../lib/supabase.js';
 import { buildOgCardHtml } from '../lib/ogcard.js';
+import { SPA_SECURITY_HEADERS } from '../middleware/security.js';
 
 const app = new Hono();
 
@@ -73,7 +74,11 @@ app.get('/l/:id', async (c) => {
   const html = shell
     .replace(/^\s*<meta (?:property="og:|name="twitter:)[^>]*>\n?/gm, '')
     .replace('</head>', metaTags);
-  return c.body(html, 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' });
+  return c.body(html, 200, {
+    'content-type': 'text/html; charset=utf-8',
+    'cache-control': 'public, max-age=300',
+    ...SPA_SECURITY_HEADERS,
+  });
 });
 
 app.get('/og/:file', async (c) => {

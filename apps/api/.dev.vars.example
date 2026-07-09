@@ -8,6 +8,8 @@ TELEGRAM_BOT_TOKEN=
 TELEGRAM_WEBHOOK_SECRET=
 # Privy app id from dashboard.privy.io
 PRIVY_APP_ID=
+# Required: payout wallet ownership checks (POST /me/wallet fails closed without it)
+PRIVY_APP_SECRET=
 # Random string; signs Telegram account-linking deep-link tokens
 LINK_TOKEN_SECRET=
 # Groq (primary LLM: Llama 3.3 chat/drafts + Whisper transcription)
@@ -16,3 +18,6 @@ GROQ_API_KEY=
 TELEGRAM_BOT_USERNAME=
 # Postgres connection string, used only by scripts/db-apply.js and seed
 DATABASE_URL=
+# Comma-separated admin bootstrap
+ADMIN_EMAILS=
+ADMIN_TELEGRAM_IDS=

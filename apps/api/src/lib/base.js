@@ -9,13 +9,32 @@ export const BASE_CHAIN_ID = 8453;
 export const MIN_CONFIRMATIONS = 2;
 
 // address null = native ETH; usdc is Circle's native issue on Base.
+// band = [min, max] sanity range for the token's USD spot price, so a
+// broken/poisoned price feed cannot silently mis-price a quote.
 export const TOKENS = {
-  eth: { symbol: 'ETH', decimals: 18, address: null, spot: 'ETH-USD' },
+  eth: { symbol: 'ETH', decimals: 18, address: null, spot: 'ETH-USD', band: [100, 1000000] },
   usdc: {
     symbol: 'USDC',
     decimals: 6,
     address: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
     spot: 'USDC-USD',
+    band: [0.9, 1.1],
+  },
+  eurc: {
+    symbol: 'EURC',
+    decimals: 6,
+    address: '0x60a3e35cc302bfa44cb288bc5a4f316fdb1adb42',
+    spot: 'EURC-USD',
+    band: [0.7, 2.0],
+  },
+  cbbtc: {
+    symbol: 'cbBTC',
+    decimals: 8,
+    address: '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf',
+    // cbBTC is 1:1 BTC-backed and Coinbase has no CBBTC-USD spot pair, so
+    // BTC-USD is the correct feed for it.
+    spot: 'BTC-USD',
+    band: [5000, 5000000],
   },
 };
 
@@ -47,7 +66,14 @@ export async function getTokenUsdPrice(token) {
   const body = await res.json();
   const price = Number(body?.data?.amount);
   if (!Number.isFinite(price) || price <= 0) throw new Error(`${token} price unavailable`);
+  const [min, max] = TOKENS[token].band;
+  if (price < min || price > max) throw new Error(`${token} price out of sane range`);
   return price;
+}
+
+export async function getBlockTimestamp(env, blockNumber) {
+  const block = await rpc(env, 'eth_getBlockByNumber', [blockNumber, false]);
+  return Number(BigInt(block.timestamp));
 }
 
 // 1e9 sub-unit precision keeps the quote float-safe end to end.
