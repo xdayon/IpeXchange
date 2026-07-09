@@ -146,6 +146,7 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
             <button
               onClick={handleInterest}
               disabled={sending}
+              className="pressable"
               style={{ ...btnBase, background: 'var(--accent-lime)', color: 'var(--bg-dark)' }}
             >
               {sending
@@ -163,6 +164,7 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
             {isTMA ? (
               <button
                 onClick={() => openLink(`${window.location.origin}/?intent=${intent.id}`)}
+                className="pressable"
                 style={{ ...btnBase, background: 'var(--accent-cyan)', color: 'var(--bg-dark)' }}
               >
                 <Wallet size={20} /> Pay with crypto in your browser

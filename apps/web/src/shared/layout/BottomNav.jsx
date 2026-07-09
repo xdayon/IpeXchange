@@ -48,12 +48,13 @@ export default function BottomNav({ page, onNavigate }) {
     <nav style={styles.nav} role="navigation" aria-label="Main navigation">
       {TABS.map(({ id, icon: Icon, label, fab }) =>
         fab ? (
-          <button key={id} style={styles.fabSlot} onClick={() => onNavigate(id)} aria-label="Publish an intent">
+          <button key={id} className="pressable" style={styles.fabSlot} onClick={() => onNavigate(id)} aria-label="Publish an intent">
             <span style={styles.fab}><Plus size={26} strokeWidth={2.5} /></span>
           </button>
         ) : (
           <button
             key={id}
+            className="pressable"
             style={styles.tab(page === id)}
             onClick={() => onNavigate(id)}
             aria-label={label}

@@ -43,18 +43,9 @@ export default function IntentCard({ intent, onClick }) {
 
   return (
     <article
+      className="intent-card hover-lift pressable"
       style={styles.card}
       onClick={() => onClick?.(intent)}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.borderColor = 'rgba(56,189,248,0.25)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-cyan)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = '';
-        e.currentTarget.style.borderColor = 'var(--border-color)';
-        e.currentTarget.style.boxShadow = '';
-      }}
     >
       <IntentCover kind={intent.kind} imageUrl={intent.image_url} alt={intent.title} height={160} />
       <div style={styles.body}>

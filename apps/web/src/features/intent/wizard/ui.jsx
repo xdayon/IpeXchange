@@ -45,6 +45,7 @@ export function NavRow({ onBack, onNext, nextLabel = 'Continue', nextIcon: NextI
       <button
         onClick={onNext}
         disabled={disabled || loading}
+        className="pressable"
         style={{
           flex: 1, height: 52, borderRadius: 'var(--radius-md)', border: 'none',
           background: disabled ? 'rgba(180,244,74,0.15)' : 'linear-gradient(135deg, var(--accent-lime), var(--accent-cyan))',

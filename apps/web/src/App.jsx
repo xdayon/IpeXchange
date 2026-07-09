@@ -14,6 +14,7 @@ const IntentDetail = lazy(() => import('./features/intent/IntentDetail.jsx'));
 const CreateIntentWizard = lazy(() => import('./features/intent/CreateIntentWizard.jsx'));
 const ProfilePage = lazy(() => import('./features/profile/ProfilePage.jsx'));
 const NexumInterview = lazy(() => import('./features/nexum/NexumInterview.jsx'));
+const NexumWidget = lazy(() => import('./features/nexum/NexumWidget.jsx'));
 const CyclesPage = lazy(() => import('./features/cycles/CyclesPage.jsx'));
 const CycleDetail = lazy(() => import('./features/cycles/CycleDetail.jsx'));
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage.jsx'));
@@ -201,6 +202,16 @@ export default function App() {
       </main>
 
       {showBottomNav && <BottomNav page={page} onNavigate={navigate} />}
+
+      <Suspense fallback={null}>
+        <NexumWidget
+          isAuthenticated={isAuthenticated}
+          login={login}
+          onMarket={() => reset('discover')}
+          visible={page !== 'nexum'}
+          aboveBottomNav={showBottomNav}
+        />
+      </Suspense>
     </div>
   );
 }

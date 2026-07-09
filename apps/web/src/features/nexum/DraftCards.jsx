@@ -40,6 +40,7 @@ export default function DraftCards({ draft, onPublished }) {
       <button
         onClick={publish}
         disabled={publishing || selected.length === 0}
+        className="pressable"
         style={{
           padding: '15px', borderRadius: 'var(--radius-md)', border: 'none',
           background: selected.length ? 'linear-gradient(135deg, var(--accent-lime), var(--accent-cyan))' : 'rgba(180,244,74,0.15)',

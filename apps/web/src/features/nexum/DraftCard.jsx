@@ -24,6 +24,7 @@ export default function DraftCard({ draft, onChange, onToggle }) {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <button onClick={() => onChange('direction', other.id)} title={`Switch to ${other.label}`}
+          className="pressable"
           style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', textTransform: 'uppercase',
             letterSpacing: 0.5, borderRadius: 'var(--radius-full)', background: dir.bg, color: dir.color,
             border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,

@@ -50,18 +50,18 @@ export default function Navbar({ user, isAuthenticated, login, onNavigate }) {
       </div>
 
       <div style={styles.actions}>
-        <button style={styles.publishBtn} onClick={() => onNavigate('create')}>
+        <button className="pressable" style={styles.publishBtn} onClick={() => onNavigate('create')}>
           + Publish
         </button>
         {isAuthenticated ? (
-          <div style={styles.avatar} onClick={() => onNavigate('profile')}
+          <div className="pressable" style={styles.avatar} onClick={() => onNavigate('profile')}
             role="button" tabIndex={0} title={user?.displayName || 'Profile'}>
             {user?.avatar
               ? <img src={user.avatar} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : initials}
           </div>
         ) : (
-          <button style={styles.loginBtn} onClick={() => login?.()}>
+          <button className="pressable" style={styles.loginBtn} onClick={() => login?.()}>
             <LogIn size={14} /> Log in
           </button>
         )}

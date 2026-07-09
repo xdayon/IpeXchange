@@ -2,6 +2,18 @@ import { useState, useCallback } from 'react';
 import { interviewTurn, createDrafts } from '../../api/copilot.js';
 
 const READY_MARK = '<<READY>>';
+const PILLS_RE = /<<\s*PILLS\s*:([^>]*)>>/i;
+
+function parsePills(fullText) {
+  const match = fullText.match(PILLS_RE);
+  if (!match) return [];
+  return match[1]
+    .split('|')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 4)
+    .map((s) => s.slice(0, 40));
+}
 
 const GREETING =
   'I am Nexum, the trade oracle of this market. I watch every thread of it at once. ' +
@@ -17,11 +29,13 @@ export function useInterview() {
   const [draft, setDraft] = useState(null);
   const [revealing, setRevealing] = useState(false);
   const [ready, setReady] = useState(false);
+  const [pills, setPills] = useState([]);
 
   const send = useCallback(async (text) => {
     const content = text.trim();
     if (!content) return;
     setError(null);
+    setPills([]);
     const history = [...messages, { role: 'user', content }];
     setMessages(history);
     setOrbState('thinking');
@@ -38,6 +52,7 @@ export function useInterview() {
       if (!reply) throw new Error('empty reply');
       setMessages([...history, { role: 'assistant', content: reply }]);
       if (full.includes(READY_MARK)) setReady(true);
+      else setPills(parsePills(full));
       setOrbState('idle');
     } catch (e) {
       setMessages(history);
@@ -69,5 +84,5 @@ export function useInterview() {
 
   const userTurns = messages.filter((m) => m.role === 'user').length;
 
-  return { messages, orbState, setOrbState, error, draft, setDraft, send, reveal, revealing, userTurns, ready };
+  return { messages, orbState, setOrbState, error, draft, setDraft, send, reveal, revealing, userTurns, ready, pills };
 }

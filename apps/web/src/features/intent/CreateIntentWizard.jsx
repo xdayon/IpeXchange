@@ -54,7 +54,7 @@ function SuccessScreen({ intent, onMarket, onCreateAnother }) {
         It is live on the network. The oracle is already looking for matches and trade cycles.
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <button onClick={onMarket} style={{ padding: '14px', borderRadius: 'var(--radius-md)', border: 'none',
+        <button onClick={onMarket} className="pressable" style={{ padding: '14px', borderRadius: 'var(--radius-md)', border: 'none',
           background: 'linear-gradient(135deg, var(--accent-lime), var(--accent-cyan))',
           color: 'var(--bg-dark)', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
           Browse the market
