@@ -13,12 +13,7 @@ const styles = {
     justifyContent: 'space-between',
   },
   logo: { display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' },
-  logoMark: {
-    width: 32, height: 32, borderRadius: 10,
-    background: 'linear-gradient(135deg, var(--accent-lime), var(--accent-cyan))',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 16, fontWeight: 800, color: 'var(--bg-dark)',
-  },
+  logoMark: { width: 32, height: 32, borderRadius: 10 },
   logoText: { fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' },
   actions: { display: 'flex', alignItems: 'center', gap: 12 },
   publishBtn: {
@@ -50,7 +45,7 @@ export default function Navbar({ user, isAuthenticated, login, onNavigate }) {
   return (
     <nav style={styles.nav}>
       <div style={styles.logo} onClick={() => onNavigate('home')} role="button" tabIndex={0}>
-        <div style={styles.logoMark}>X</div>
+        <img src="/logo.png" alt="IpeXchange" style={styles.logoMark} />
         <span style={styles.logoText}>IpeXchange</span>
       </div>
 

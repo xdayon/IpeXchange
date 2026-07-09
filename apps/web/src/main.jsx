@@ -11,7 +11,7 @@ const privyConfig = {
   appearance: {
     theme: 'dark',
     accentColor: '#B4F44A',
-    logo: undefined,
+    logo: '/logo.png',
   },
   embeddedWallets: { createOnLogin: 'users-without-wallets' },
   defaultChain: base,
