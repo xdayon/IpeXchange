@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Handshake, Check, Loader2, Wallet, Repeat } from 'lucide-react';
+import { ArrowLeft, Handshake, Check, Loader2, Wallet, Repeat, CheckCircle2 } from 'lucide-react';
 import { fetchIntent, markInterest } from '../../api/intents.js';
 import { directionInfo, kindInfo, formatPrice, kindFieldChips } from './constants.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
@@ -98,6 +98,13 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
             {intent.direction === 'offer' ? 'Offered by' : 'Wanted by'}{' '}
             <strong style={{ color: 'var(--text-primary)' }}>{owner?.display_name || 'A network member'}</strong>
           </p>
+          {intent.owner_completed_trades > 0 && (
+            <p style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4,
+              fontSize: 12, color: 'var(--accent-lime)' }}>
+              <CheckCircle2 size={13} /> {intent.owner_completed_trades}{' '}
+              {intent.owner_completed_trades === 1 ? 'trade' : 'trades'} completed
+            </p>
+          )}
         </div>
         {price && <div style={{ fontSize: 30, fontWeight: 800, color: 'var(--accent-lime)', whiteSpace: 'nowrap' }}>{price}</div>}
       </div>

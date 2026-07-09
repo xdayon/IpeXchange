@@ -6,6 +6,7 @@ import { createLinkToken } from '../lib/linktoken.js';
 import { walletBelongsToUser } from '../lib/privy.js';
 import { isAllowlistedAdmin } from '../lib/admin.js';
 import { notify } from '../lib/notify.js';
+import { countCompletedTrades, fetchRecentTrades } from '../lib/trades.js';
 
 const app = new Hono();
 
@@ -146,7 +147,7 @@ app.get('/me/stats', requireAuth, async (c) => {
     for (const [k, v] of Object.entries(filter)) q = q.eq(k, v);
     return q.then((r) => r.count ?? 0);
   };
-  const [activeIntents, fulfilled, interestsReceived, paymentsReceived, referrals] = await Promise.all([
+  const [activeIntents, fulfilled, interestsReceived, paymentsReceived, referrals, completedTrades] = await Promise.all([
     count('intents', { user_id: user.id, status: 'active' }),
     count('intents', { user_id: user.id, status: 'fulfilled' }),
     db
@@ -156,6 +157,7 @@ app.get('/me/stats', requireAuth, async (c) => {
       .then((r) => r.count ?? 0),
     count('payments', { seller_user_id: user.id, status: 'confirmed' }),
     count('users', { referred_by: user.id }),
+    countCompletedTrades(c.env, user.id),
   ]);
   return c.json({
     active_intents: activeIntents,
@@ -163,7 +165,14 @@ app.get('/me/stats', requireAuth, async (c) => {
     interests_received: interestsReceived,
     payments_received: paymentsReceived,
     referrals,
+    completed_trades: completedTrades,
   });
+});
+
+app.get('/me/trades', requireAuth, async (c) => {
+  const user = c.get('user');
+  const trades = await fetchRecentTrades(c.env, user.id);
+  return c.json({ trades });
 });
 
 app.post('/me/telegram-link-token', requireAuth, rateLimit(10, 'tg-link'), async (c) => {

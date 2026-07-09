@@ -4,6 +4,7 @@ import ProfileStats from './ProfileStats.jsx';
 import InviteCard from './InviteCard.jsx';
 import TelegramLinkBanner from './TelegramLinkBanner.jsx';
 import MyIntents from './MyIntents.jsx';
+import TradeHistory from './TradeHistory.jsx';
 
 export default function ProfilePage({ user, isAuthenticated, login, logout, onNavigate, onSelectIntent, refresh }) {
   if (!isAuthenticated) {
@@ -29,6 +30,7 @@ export default function ProfilePage({ user, isAuthenticated, login, logout, onNa
 
       <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>My Intents</h2>
       <MyIntents onSelectIntent={onSelectIntent} />
+      <TradeHistory />
 
       <button onClick={() => onNavigate('create')} style={{ marginTop: 24, width: '100%', padding: '13px',
         borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-active)',
