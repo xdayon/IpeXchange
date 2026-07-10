@@ -54,6 +54,9 @@ describe('intent input validation', () => {
   it('validates editable status, kind, and hosted images', () => {
     expect(validateIntentPatch({ status: 'deleted' }, supabaseUrl)).toBe('Invalid status');
     expect(validateIntentPatch({ kind: 'other' }, supabaseUrl)).toBe('Invalid kind');
+    expect(validateIntentPatch({ price_fiat: -1 }, supabaseUrl)).toBe(
+      'price_fiat must be a non-negative number',
+    );
     expect(validateIntentPatch({
       image_url: `${supabaseUrl}/storage/v1/object/public/listing-images/image.png`,
     }, supabaseUrl)).toBeNull();

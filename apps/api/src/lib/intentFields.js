@@ -55,6 +55,9 @@ export function validateIntentPatch(patch, supabaseUrl) {
   if (patch.title != null && String(patch.title).trim().length > 120) {
     return 'title must be 120 characters or fewer';
   }
+  if (patch.price_fiat != null && (isNaN(Number(patch.price_fiat)) || Number(patch.price_fiat) < 0)) {
+    return 'price_fiat must be a non-negative number';
+  }
   if (patch.image_url != null && !String(patch.image_url).startsWith(`${supabaseUrl}/storage/`)) {
     return 'Invalid image URL';
   }
