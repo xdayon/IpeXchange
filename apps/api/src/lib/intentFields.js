@@ -31,6 +31,36 @@ export function validateKindFields(body) {
   return null;
 }
 
+export function validateIntentCreate(body, supabaseUrl) {
+  const { direction, kind, title, price_fiat, image_url } = body;
+  if (!DIRECTIONS.includes(direction)) return 'direction must be want or offer';
+  if (kind != null && !KINDS.includes(kind)) return 'kind must be good, digital, service or knowledge';
+  if (!title || String(title).trim().length < 3) return 'title is required (min 3 chars)';
+  if (String(title).trim().length > 120) return 'title must be 120 characters or fewer';
+  if (price_fiat != null && (isNaN(Number(price_fiat)) || Number(price_fiat) < 0)) {
+    return 'price_fiat must be a non-negative number';
+  }
+  if (image_url != null && !String(image_url).startsWith(`${supabaseUrl}/storage/`)) {
+    return 'Invalid image URL';
+  }
+  return validateKindFields(body);
+}
+
+export function validateIntentPatch(patch, supabaseUrl) {
+  if (patch.status && !STATUSES.includes(patch.status)) return 'Invalid status';
+  if (patch.kind != null && !KINDS.includes(patch.kind)) return 'Invalid kind';
+  if (patch.title != null && String(patch.title).trim().length < 3) {
+    return 'title is required (min 3 chars)';
+  }
+  if (patch.title != null && String(patch.title).trim().length > 120) {
+    return 'title must be 120 characters or fewer';
+  }
+  if (patch.image_url != null && !String(patch.image_url).startsWith(`${supabaseUrl}/storage/`)) {
+    return 'Invalid image URL';
+  }
+  return validateKindFields(patch);
+}
+
 export function kindFieldValues(body) {
   const values = {};
   for (const key of KIND_FIELD_KEYS) {

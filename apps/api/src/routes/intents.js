@@ -6,8 +6,8 @@ import { embed } from '../lib/gemini.js';
 import { matchAndNotify } from '../lib/matching.js';
 import { countCompletedTrades } from '../lib/trades.js';
 import {
-  DIRECTIONS, KINDS, STATUSES, CONTINUOUS_KINDS, EDITABLE, INTENT_FIELDS,
-  validateKindFields, kindFieldValues,
+  DIRECTIONS, CONTINUOUS_KINDS, EDITABLE, INTENT_FIELDS,
+  validateIntentCreate, validateIntentPatch, kindFieldValues,
 } from '../lib/intentFields.js';
 
 const app = new Hono();
@@ -18,18 +18,8 @@ app.post('/intents', requireAuth, rateLimit(20, 'intent-create'), async (c) => {
   if (!body) return c.json({ error: 'Invalid JSON body' }, 400);
 
   const { direction, kind, title, description, category, price_fiat, image_url, source, is_continuous } = body;
-  if (!DIRECTIONS.includes(direction)) return c.json({ error: 'direction must be want or offer' }, 400);
-  if (kind != null && !KINDS.includes(kind)) return c.json({ error: 'kind must be good, digital, service or knowledge' }, 400);
-  if (!title || String(title).trim().length < 3) return c.json({ error: 'title is required (min 3 chars)' }, 400);
-  if (String(title).trim().length > 120) return c.json({ error: 'title must be 120 characters or fewer' }, 400);
-  if (price_fiat != null && (isNaN(Number(price_fiat)) || Number(price_fiat) < 0)) {
-    return c.json({ error: 'price_fiat must be a non-negative number' }, 400);
-  }
-  if (image_url != null && !String(image_url).startsWith(`${c.env.SUPABASE_URL}/storage/`)) {
-    return c.json({ error: 'Invalid image URL' }, 400);
-  }
-  const fieldError = validateKindFields(body);
-  if (fieldError) return c.json({ error: fieldError }, 400);
+  const validationError = validateIntentCreate(body, c.env.SUPABASE_URL);
+  if (validationError) return c.json({ error: validationError }, 400);
 
   const trimmedDescription = description ? String(description).trim().slice(0, 4000) : null;
   const normalizedCategory = category != null ? String(category).trim().toLowerCase().slice(0, 40) : null;
@@ -90,21 +80,10 @@ app.patch('/intents/:id', requireAuth, rateLimit(30, 'intent-edit'), async (c) =
   const patch = {};
   for (const key of EDITABLE) if (key in body) patch[key] = body[key];
   if (Object.keys(patch).length === 0) return c.json({ error: 'Nothing to update' }, 400);
-  if (patch.status && !STATUSES.includes(patch.status)) return c.json({ error: 'Invalid status' }, 400);
-  if (patch.kind != null && !KINDS.includes(patch.kind)) return c.json({ error: 'Invalid kind' }, 400);
-  if (patch.title != null && String(patch.title).trim().length < 3) {
-    return c.json({ error: 'title is required (min 3 chars)' }, 400);
-  }
-  if (patch.title != null && String(patch.title).trim().length > 120) {
-    return c.json({ error: 'title must be 120 characters or fewer' }, 400);
-  }
-  if (patch.image_url != null && !String(patch.image_url).startsWith(`${c.env.SUPABASE_URL}/storage/`)) {
-    return c.json({ error: 'Invalid image URL' }, 400);
-  }
+  const validationError = validateIntentPatch(patch, c.env.SUPABASE_URL);
+  if (validationError) return c.json({ error: validationError }, 400);
   if (patch.description != null) patch.description = String(patch.description).trim().slice(0, 4000);
   if (patch.category != null) patch.category = String(patch.category).trim().toLowerCase().slice(0, 40);
-  const fieldError = validateKindFields(patch);
-  if (fieldError) return c.json({ error: fieldError }, 400);
 
   const db = getDb(c.env);
   const { data: existing } = await db

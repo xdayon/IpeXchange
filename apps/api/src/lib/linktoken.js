@@ -2,6 +2,7 @@
 // /start deep link, so a web account can claim its Telegram identity.
 const enc = new TextEncoder();
 const TTL_SECONDS = 15 * 60;
+const SIGNATURE_HEX_LENGTH = 20;
 
 async function sign(secret, message) {
   const key = await crypto.subtle.importKey(
@@ -17,7 +18,7 @@ export async function createLinkToken(env, userId) {
   const exp = Math.floor(Date.now() / 1000) + TTL_SECONDS;
   const compactId = userId.replaceAll('-', '');
   const payload = `${compactId}_${exp}`;
-  const sig = (await sign(env.LINK_TOKEN_SECRET, payload)).slice(0, 24);
+  const sig = (await sign(env.LINK_TOKEN_SECRET, payload)).slice(0, SIGNATURE_HEX_LENGTH);
   return `${payload}_${sig}`;
 }
 
@@ -35,7 +36,10 @@ export async function verifyLinkToken(env, token) {
   if (parts.length !== 3) return null;
   const [compactId, expStr, sig] = parts;
   if (!/^[0-9a-f]{32}$/.test(compactId)) return null;
-  const expected = (await sign(env.LINK_TOKEN_SECRET, `${compactId}_${expStr}`)).slice(0, 24);
+  // Accept the previous 24-character signature until existing 15-minute
+  // tokens naturally expire; new 20-character signatures fit Telegram's limit.
+  if (![SIGNATURE_HEX_LENGTH, 24].includes(sig.length)) return null;
+  const expected = (await sign(env.LINK_TOKEN_SECRET, `${compactId}_${expStr}`)).slice(0, sig.length);
   if (!timingSafeEqualHex(sig, expected)) return null;
   if (Number(expStr) < Date.now() / 1000) return null;
   return `${compactId.slice(0, 8)}-${compactId.slice(8, 12)}-${compactId.slice(12, 16)}-${compactId.slice(16, 20)}-${compactId.slice(20)}`;

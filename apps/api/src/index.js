@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { createApp } from './app.js';
 import me from './routes/me.js';
 import intents from './routes/intents.js';
 import market from './routes/market.js';
@@ -10,15 +10,8 @@ import cycles from './routes/cycles.js';
 import payments from './routes/payments.js';
 import admin from './routes/admin.js';
 import share from './routes/share.js';
-import { apiBodyLimit, apiSecureHeaders } from './middleware/security.js';
 
-const app = new Hono();
-
-app.use('/api/*', apiSecureHeaders, apiBodyLimit);
-
-app.get('/api/health', (c) =>
-  c.json({ ok: true, service: 'ipexchange-api', time: new Date().toISOString() }),
-);
+const app = createApp();
 
 app.route('/api', market);
 app.route('/api', me);
@@ -31,12 +24,5 @@ app.route('/api', cycles);
 app.route('/api', payments);
 app.route('/api', admin);
 app.route('/', share);
-
-app.notFound((c) => c.json({ error: 'Not found' }, 404));
-
-app.onError((err, c) => {
-  console.error('Unhandled error:', err);
-  return c.json({ error: 'Internal error' }, 500);
-});
 
 export default app;
