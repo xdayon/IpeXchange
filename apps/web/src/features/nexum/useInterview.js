@@ -1,19 +1,7 @@
-import { useState, useCallback } from 'react';
-import { interviewTurn, createDrafts } from '../../api/copilot.js';
-
-const READY_MARK = '<<READY>>';
-const PILLS_RE = /<<\s*PILLS\s*:([^>]*)>>/i;
-
-function parsePills(fullText) {
-  const match = fullText.match(PILLS_RE);
-  if (!match) return [];
-  return match[1]
-    .split('|')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 4)
-    .map((s) => s.slice(0, 40));
-}
+import { useState, useCallback, useEffect, useRef } from 'react';
+import {
+  interviewTurn, createDrafts, setNexumMemory, trackNexumEvent,
+} from '../../api/copilot.js';
 
 const GREETING =
   'I am Nexum, the trade oracle of this market. I watch every thread of it at once. ' +
@@ -23,6 +11,8 @@ const GREETING =
 // Nexum ends its closing turn with READY_MARK; it is stripped from display
 // and flips `ready` so the UI can spotlight the reveal action.
 export function useInterview() {
+  const [sessionId] = useState(() => globalThis.crypto.randomUUID());
+  const openedTracked = useRef(false);
   const [messages, setMessages] = useState([{ role: 'assistant', content: GREETING }]);
   const [orbState, setOrbState] = useState('idle');
   const [error, setError] = useState(null);
@@ -30,6 +20,22 @@ export function useInterview() {
   const [revealing, setRevealing] = useState(false);
   const [ready, setReady] = useState(false);
   const [pills, setPills] = useState([]);
+  const [progress, setProgress] = useState({ interests: 0, offers: 0, detailed: 0 });
+  const [mappedIntents, setMappedIntents] = useState([]);
+  const [marketSignal, setMarketSignal] = useState(null);
+  const [rememberPreferences, setRememberPreferences] = useState(false);
+
+  const toggleMemory = useCallback(async () => {
+    const enabled = !rememberPreferences;
+    setRememberPreferences(enabled);
+    try { await setNexumMemory(enabled); } catch { setRememberPreferences(!enabled); }
+  }, [rememberPreferences]);
+
+  useEffect(() => {
+    if (openedTracked.current) return;
+    openedTracked.current = true;
+    trackNexumEvent(sessionId, 'opened').catch(() => {});
+  }, [sessionId]);
 
   const send = useCallback(async (text) => {
     const content = text.trim();
@@ -40,26 +46,25 @@ export function useInterview() {
     setMessages(history);
     setOrbState('thinking');
     try {
-      const full = await interviewTurn(history, (partial) => {
-        // Hold back the READY marker (and any partial tail of it) mid-stream.
-        const display = partial.split('<<')[0].trimEnd();
-        if (display) {
-          setOrbState('speaking');
-          setMessages([...history, { role: 'assistant', content: display }]);
-        }
-      });
-      const reply = full.split('<<')[0].trim();
-      if (!reply) throw new Error('empty reply');
-      setMessages([...history, { role: 'assistant', content: reply }]);
-      if (full.includes(READY_MARK)) setReady(true);
-      else setPills(parsePills(full));
+      const reply = await interviewTurn(sessionId, history);
+      if (!reply.reply) throw new Error('empty reply');
+      setOrbState('speaking');
+      setMessages([...history, { role: 'assistant', content: reply.reply }]);
+      setReady(reply.state.ready);
+      setPills(reply.pills ?? []);
+      setProgress(reply.state.progress);
+      setMappedIntents(reply.state.intents ?? []);
+      setMarketSignal(reply.market_signal);
+      if (history.filter((message) => message.role === 'user').length === 1) {
+        trackNexumEvent(sessionId, 'first_answer').catch(() => {});
+      }
       setOrbState('idle');
     } catch (e) {
       setMessages(history);
       setError(e.status === 429 ? e.message : 'Nexum lost the thread. Try again.');
       setOrbState('idle');
     }
-  }, [messages]);
+  }, [messages, sessionId]);
 
   const reveal = useCallback(async () => {
     const spoken = messages.filter((m) => m.role === 'user').map((m) => m.content).join('\n');
@@ -71,7 +76,7 @@ export function useInterview() {
     setRevealing(true);
     setOrbState('thinking');
     try {
-      const result = await createDrafts(messages);
+      const result = await createDrafts(messages, sessionId);
       setDraft(result);
       setOrbState('speaking');
     } catch (e) {
@@ -80,9 +85,14 @@ export function useInterview() {
     } finally {
       setRevealing(false);
     }
-  }, [messages]);
+  }, [messages, sessionId]);
 
   const userTurns = messages.filter((m) => m.role === 'user').length;
 
-  return { messages, orbState, setOrbState, error, draft, setDraft, send, reveal, revealing, userTurns, ready, pills };
+  return {
+    messages, orbState, setOrbState, error, draft, setDraft, send, reveal,
+    revealing, userTurns, ready, pills, progress,
+    mappedIntents, marketSignal, sessionId,
+    rememberPreferences, toggleMemory,
+  };
 }

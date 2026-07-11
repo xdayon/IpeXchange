@@ -1,19 +1,25 @@
 import { ArrowLeftRight, Lightbulb } from 'lucide-react';
 import { DIRECTIONS, KINDS, directionInfo } from '../intent/constants.js';
 import { inputStyle } from '../intent/wizard/helpers.js';
+import DraftStructuredFields from './DraftStructuredFields.jsx';
 
 const HINT_LABELS = {
   price_fiat: 'a value in USD',
   condition: 'the condition',
+  brand: 'the brand',
+  duration: 'the duration',
+  format: 'the format',
+  access: 'the access type',
+  level: 'the experience level',
   timeframe: 'a timeframe',
-  location: 'the location',
+  location_text: 'a location',
 };
 
 export default function DraftCard({ draft, onChange, onToggle }) {
   const dir = directionInfo(draft.direction);
   const other = DIRECTIONS.find((d) => d.id !== draft.direction);
   const hints = (draft.missing_fields ?? [])
-    .filter((f) => !(f === 'price_fiat' && draft.price_fiat != null))
+    .filter((field) => draft[field] == null)
     .map((f) => HINT_LABELS[f] ?? f.replace(/_/g, ' '));
 
   return (
@@ -47,12 +53,13 @@ export default function DraftCard({ draft, onChange, onToggle }) {
       <textarea style={{ ...inputStyle, minHeight: 64, resize: 'vertical', fontSize: 14 }}
         value={draft.description ?? ''} maxLength={500}
         onChange={(e) => onChange('description', e.target.value)} />
+      <DraftStructuredFields draft={draft} onChange={onChange} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
         <input placeholder="Category" maxLength={40}
           style={{ ...inputStyle, flex: 1, padding: '8px 12px', fontSize: 14 }}
           value={draft.category ?? ''}
           onChange={(e) => onChange('category', e.target.value || null)} />
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)', flexShrink: 0 }}>Value (USD)</span>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', flexShrink: 0 }}>Trade value (USD)</span>
         <input type="number" min="0" style={{ ...inputStyle, width: 110, padding: '8px 12px', fontSize: 14 }}
           value={draft.price_fiat ?? ''}
           onChange={(e) => onChange('price_fiat', e.target.value === '' ? null : Number(e.target.value))} />

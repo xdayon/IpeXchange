@@ -26,6 +26,12 @@ app.get('/admin/metrics', async (c) => {
   return c.json(data);
 });
 
+app.get('/admin/nexum-funnel', async (c) => {
+  const { data, error } = await getDb(c.env).rpc('nexum_funnel');
+  if (error) return c.json({ error: 'Could not load Nexum funnel' }, 500);
+  return c.json(data);
+});
+
 app.get('/admin/users', async (c) => {
   const limit = Math.min(Number(c.req.query('limit')) || 50, 100);
   const offset = Math.max(Number(c.req.query('offset')) || 0, 0);

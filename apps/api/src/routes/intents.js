@@ -5,9 +5,10 @@ import { getDb } from '../lib/supabase.js';
 import { embed } from '../lib/gemini.js';
 import { matchAndNotify } from '../lib/matching.js';
 import { countCompletedTrades } from '../lib/trades.js';
+import { intentEmbeddingText } from '../lib/copilotDrafts.js';
 import {
   DIRECTIONS, CONTINUOUS_KINDS, EDITABLE, INTENT_FIELDS,
-  validateIntentCreate, validateIntentPatch, kindFieldValues,
+  KIND_FIELD_KEYS, validateIntentCreate, validateIntentPatch, kindFieldValues,
 } from '../lib/intentFields.js';
 
 const app = new Hono();
@@ -24,7 +25,7 @@ app.post('/intents', requireAuth, rateLimit(20, 'intent-create'), async (c) => {
   const trimmedDescription = description ? String(description).trim().slice(0, 4000) : null;
   const normalizedCategory = category != null ? String(category).trim().toLowerCase().slice(0, 40) : null;
 
-  const embedding = await embed(c.env, `${title}\n${description ?? ''}`);
+  const embedding = await embed(c.env, intentEmbeddingText({ ...body, title, description }));
 
   const db = getDb(c.env);
   const { data, error } = await db
@@ -41,6 +42,17 @@ app.post('/intents', requireAuth, rateLimit(20, 'intent-create'), async (c) => {
       source: source === 'copilot' || source === 'telegram' ? source : 'manual',
       is_continuous: CONTINUOUS_KINDS.includes(kind) ? Boolean(is_continuous) : false,
       ...kindFieldValues(body),
+      concept_id: body.concept_id ?? null,
+      location_text: body.location_text ?? null,
+      location_radius_km: body.location_radius_km ?? null,
+      timeframe: body.timeframe ?? null,
+      quantity: body.quantity ?? null,
+      currency: body.currency ?? null,
+      value_flexibility: body.value_flexibility ?? null,
+      exchange_modes: Array.isArray(body.exchange_modes) ? body.exchange_modes : [],
+      delivery_modes: Array.isArray(body.delivery_modes) ? body.delivery_modes : [],
+      attributes: body.attributes ?? {}, constraints: body.constraints ?? {},
+      field_confidence: body.field_confidence ?? {}, expires_at: body.expires_at ?? null,
       embedding,
     })
     .select(INTENT_FIELDS)
@@ -88,7 +100,7 @@ app.patch('/intents/:id', requireAuth, rateLimit(30, 'intent-edit'), async (c) =
   const db = getDb(c.env);
   const { data: existing } = await db
     .from('intents')
-    .select('id, user_id, kind, title, description')
+    .select(INTENT_FIELDS)
     .eq('id', c.req.param('id'))
     .maybeSingle();
   if (!existing) return c.json({ error: 'Not found' }, 404);
@@ -99,10 +111,13 @@ app.patch('/intents/:id', requireAuth, rateLimit(30, 'intent-edit'), async (c) =
     patch.is_continuous = CONTINUOUS_KINDS.includes(effectiveKind) ? Boolean(patch.is_continuous) : false;
   }
 
-  if (patch.title || patch.description !== undefined) {
+  const semanticFields = [
+    'title', 'description', 'kind', 'category', 'is_continuous', ...KIND_FIELD_KEYS,
+  ];
+  if (semanticFields.some((field) => field in patch)) {
     const title = patch.title ?? existing.title;
     const description = patch.description !== undefined ? patch.description : existing.description;
-    patch.embedding = await embed(c.env, `${title}\n${description ?? ''}`);
+    patch.embedding = await embed(c.env, intentEmbeddingText({ ...existing, ...patch, title, description }));
   }
   patch.updated_at = new Date().toISOString();
 

@@ -5,9 +5,16 @@ import { useVoiceCapture } from './useVoiceCapture.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
 import DraftCards, { PublishedScreen } from './DraftCards.jsx';
 import ChatInputRow from './ChatInputRow.jsx';
+import InterviewProgress from './InterviewProgress.jsx';
+import QuickReplies from './QuickReplies.jsx';
+import LiveIntentMap from './LiveIntentMap.jsx';
 
 export default function NexumChat({ isAuthenticated, login, onMarket, variant = 'page', onOrbState }) {
-  const { messages, orbState, setOrbState, error, draft, send, reveal, revealing, userTurns, ready, pills } = useInterview();
+  const {
+    messages, orbState, setOrbState, error, draft, send, reveal, revealing,
+    userTurns, ready, pills, progress, mappedIntents, marketSignal,
+    rememberPreferences, toggleMemory,
+  } = useInterview();
   const { haptic } = useTelegram();
   const [input, setInput] = useState('');
   const [published, setPublished] = useState(null);
@@ -24,7 +31,7 @@ export default function NexumChat({ isAuthenticated, login, onMarket, variant = 
 
   useEffect(() => {
     scrollToEnd();
-  }, [messages]);
+  }, [messages, pills, ready]);
 
   useEffect(() => {
     const tg = window?.Telegram?.WebApp;
@@ -48,7 +55,7 @@ export default function NexumChat({ isAuthenticated, login, onMarket, variant = 
     );
   }
 
-  if (published) return <PublishedScreen intents={published} onMarket={onMarket} />;
+  if (published) return <PublishedScreen result={published} onMarket={onMarket} />;
 
   const submitText = () => {
     if (!input.trim() || busy) return;
@@ -90,27 +97,27 @@ export default function NexumChat({ isAuthenticated, login, onMarket, variant = 
             </p>
           )}
 
-          {(ready || userTurns >= 2) && (
-            <button onClick={reveal} disabled={revealing || busy} className="pressable" style={{
-              margin: '10px 0', padding: '13px', borderRadius: 'var(--radius-md)',
-              border: '1px solid rgba(180,244,74,0.4)',
-              background: ready ? 'linear-gradient(135deg, var(--accent-lime), var(--accent-cyan))' : 'rgba(180,244,74,0.08)',
-              color: ready ? 'var(--bg-dark)' : 'var(--accent-lime)', fontWeight: 700, fontSize: 14,
-              cursor: revealing ? 'wait' : 'pointer', opacity: revealing ? 0.85 : 1,
-              animation: ready && !revealing ? 'glowLime 1.8s ease-in-out infinite' : 'none',
-              fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
+          {userTurns > 0 && <InterviewProgress progress={progress} ready={ready} />}
+          <LiveIntentMap intents={mappedIntents} marketSignal={marketSignal}
+            rememberPreferences={rememberPreferences} onToggleMemory={toggleMemory} />
+
+          <QuickReplies pills={pills} busy={busy || voice.recording} onPill={sendPill} />
+
+          {ready && (
+            <div className="nexum-reveal-panel">
+              <span>Your profile is ready</span>
+              <p>Turn this conversation into structured market entries you can review before publishing.</p>
+              <button onClick={reveal} disabled={revealing || busy} className="nexum-reveal-button pressable">
               {revealing ? (
                 <>
-                  <span style={{ width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
-                    border: '2px solid rgba(180,244,74,0.25)', borderTopColor: ready ? 'var(--bg-dark)' : 'var(--accent-lime)',
-                    animation: 'spin 0.8s linear infinite' }} />
+                  <span className="nexum-reveal-spinner" />
                   Nexum is weaving your intents...
                 </>
               ) : (
                 <><Sparkles size={16} /> Reveal my intents</>
               )}
-            </button>
+              </button>
+            </div>
           )}
 
           <ChatInputRow
@@ -119,8 +126,6 @@ export default function NexumChat({ isAuthenticated, login, onMarket, variant = 
             submitText={submitText}
             busy={busy}
             onFocus={() => setTimeout(scrollToEnd, 250)}
-            pills={pills}
-            onPill={sendPill}
             voice={voice}
           />
         </>

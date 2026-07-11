@@ -1,11 +1,15 @@
 import { Hono } from 'hono';
-import { streamText } from 'hono/streaming';
 import { requireAuth } from '../middleware/auth.js';
 import { getDb } from '../lib/supabase.js';
 import { embed, extractDrafts } from '../lib/gemini.js';
-import { transcribe, chatStream, readDeltas, extractDraftsGroq } from '../lib/groq.js';
-import { buildNexumPrompt } from '../lib/nexum.js';
-import { matchAndNotify } from '../lib/matching.js';
+import { transcribe, extractDraftsGroq } from '../lib/groq.js';
+import { findCycles, matchAndNotify } from '../lib/matching.js';
+import {
+  intentEmbeddingText, normalizeCopilotDraft, normalizeDraftForReview,
+} from '../lib/copilotDrafts.js';
+import {
+  NEXUM_PROMPT_VERSION, refreshMarketSignal, runNexumTurn,
+} from '../lib/nexumEngine.js';
 
 const app = new Hono();
 
@@ -43,6 +47,8 @@ app.post('/copilot/transcribe', requireAuth, async (c) => {
 
 app.post('/copilot/interview', requireAuth, async (c) => {
   const body = await c.req.json().catch(() => null);
+  const sessionId = String(body?.session_id ?? '');
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId)) return c.json({ error: 'Valid session_id is required' }, 400);
   const messages = Array.isArray(body?.messages) ? body.messages.slice(-20) : null;
   if (!messages) return c.json({ error: 'messages array is required' }, 400);
   const clean = messages
@@ -51,19 +57,71 @@ app.post('/copilot/interview', requireAuth, async (c) => {
   if (!(await allow(c, 'interview'))) return quotaError(c);
 
   const user = c.get('user');
-  const { data: live } = await getDb(c.env)
+  const db = getDb(c.env);
+  let { data: session } = await db.from('nexum_sessions').select('*')
+    .eq('id', sessionId).eq('user_id', user.id).maybeSingle();
+  if (!session) {
+    const created = await db.from('nexum_sessions').insert({
+      id: sessionId, user_id: user.id, prompt_version: NEXUM_PROMPT_VERSION,
+    }).select().single();
+    if (created.error) return c.json({ error: 'Could not start Nexum session' }, 500);
+    session = created.data;
+  }
+  const { data: live } = await db
     .from('intents')
-    .select('direction, title')
+    .select('direction, kind, title, concept_id')
     .eq('user_id', user.id)
     .eq('status', 'active')
     .limit(20);
-  const system = buildNexumPrompt({ name: user.display_name, intents: live ?? [] });
-
-  const upstream = await chatStream(c.env, [{ role: 'system', content: system }, ...clean]);
-  if (!upstream) return c.json({ error: 'Nexum is unavailable right now' }, 502);
-  return streamText(c, async (stream) => {
-    for await (const delta of readDeltas(upstream)) await stream.write(delta);
+  const result = await runNexumTurn(c.env, {
+    name: user.display_name, live: live ?? [], messages: clean,
+    previous: session.state ?? {}, signal: session.market_signal,
+    memory: user.nexum_memory_enabled ? user.nexum_memory : {},
   });
+  if (!result?.reply) return c.json({ error: 'Nexum is unavailable right now' }, 502);
+  await db.from('nexum_sessions').update({
+    state: result.state, language: result.language,
+    turn_count: session.turn_count + 1, status: result.state.ready ? 'ready' : 'active',
+    prompt_version: NEXUM_PROMPT_VERSION, updated_at: new Date().toISOString(),
+  }).eq('id', session.id).eq('user_id', user.id);
+  c.executionCtx.waitUntil(Promise.all([
+    refreshMarketSignal(c.env, user.id, session.id, result.state, session.signal_signature),
+    db.from('nexum_events').insert({
+      user_id: user.id, session_id: session.id, event: 'turn_completed',
+      properties: { turn: session.turn_count + 1, ready: result.state.ready },
+    }),
+  ]));
+  return c.json({ session_id: session.id, market_signal: session.market_signal, ...result });
+});
+
+app.post('/copilot/memory', requireAuth, async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (typeof body?.enabled !== 'boolean') return c.json({ error: 'enabled is required' }, 400);
+  const { error } = await getDb(c.env).from('users')
+    .update({ nexum_memory_enabled: body.enabled }).eq('id', c.get('user').id);
+  if (error) return c.json({ error: 'Could not update memory preference' }, 500);
+  return c.json({ enabled: body.enabled });
+});
+
+app.post('/copilot/events', requireAuth, async (c) => {
+  const body = await c.req.json().catch(() => null);
+  const allowed = ['opened', 'first_answer', 'reveal_clicked', 'draft_edited', 'published', 'abandoned'];
+  if (!allowed.includes(body?.event)) return c.json({ error: 'Invalid event' }, 400);
+  const sessionId = /^[0-9a-f-]{36}$/i.test(body?.session_id) ? body.session_id : null;
+  const db = getDb(c.env);
+  if (sessionId) {
+    const { data: session } = await db.from('nexum_sessions').select('user_id')
+      .eq('id', sessionId).maybeSingle();
+    if (session && session.user_id !== c.get('user').id) return c.json({ error: 'Invalid session' }, 403);
+    if (!session) await db.from('nexum_sessions').insert({
+      id: sessionId, user_id: c.get('user').id, prompt_version: NEXUM_PROMPT_VERSION,
+    });
+  }
+  await db.from('nexum_events').insert({
+    user_id: c.get('user').id, session_id: sessionId, event: body.event,
+    properties: body?.properties && typeof body.properties === 'object' ? body.properties : {},
+  });
+  return c.json({ ok: true });
 });
 
 app.post('/copilot/drafts', requireAuth, async (c) => {
@@ -79,21 +137,39 @@ app.post('/copilot/drafts', requireAuth, async (c) => {
     ? turns.map((m) => `${m.role === 'assistant' ? 'Nexum' : 'Member'}: ${m.content.slice(0, 2000)}`).join('\n')
     : String(body?.raw_text ?? '').trim();
   if (rawText.length < 10) return c.json({ error: 'messages or raw_text is required (min 10 chars)' }, 400);
-  if (!(await allow(c, 'drafts'))) return quotaError(c);
-
-  // Groq is the fast path; Gemini structured output is the fallback.
-  const drafts = (await extractDraftsGroq(c.env, rawText)) ?? (await extractDrafts(c.env, rawText));
-  if (!drafts) return c.json({ error: 'Could not extract intents from the text' }, 502);
-
   const db = getDb(c.env);
+  const validSessionId = /^[0-9a-f-]{36}$/i.test(body?.session_id) ? body.session_id : null;
+  const { data: session } = validSessionId
+    ? await db.from('nexum_sessions').select('state, status')
+      .eq('id', validSessionId).eq('user_id', user.id).maybeSingle()
+    : { data: null };
+  let extracted = session?.status === 'ready' ? session.state?.intents : null;
+  if (!Array.isArray(extracted)) {
+    if (!(await allow(c, 'drafts'))) return quotaError(c);
+    extracted = (await extractDraftsGroq(c.env, rawText)) ?? (await extractDrafts(c.env, rawText));
+  }
+  if (!extracted) return c.json({ error: 'Could not extract intents from the text' }, 502);
+  const drafts = extracted.map(normalizeDraftForReview)
+    .filter((draft) => draft.direction && draft.title?.length >= 3)
+    .slice(0, 10);
+
   const { data, error } = await db
     .from('intent_drafts')
-    .insert({ user_id: user.id, raw_text: rawText.slice(0, 12000), drafts })
-    .select('id, drafts, status, created_at')
+    .insert({
+      user_id: user.id, raw_text: rawText.slice(0, 12000), drafts,
+      session_id: validSessionId,
+    })
+    .select('id, drafts, status, created_at, session_id')
     .single();
   if (error) {
     console.error('Draft insert failed:', error);
     return c.json({ error: 'Could not save drafts' }, 500);
+  }
+  if (validSessionId) {
+    await db.from('nexum_events').insert({
+      user_id: user.id, session_id: body.session_id, event: 'reveal_clicked',
+      properties: { draft_count: drafts.length },
+    });
   }
   return c.json(data, 201);
 });
@@ -107,7 +183,7 @@ app.post('/copilot/drafts/:id/publish', requireAuth, async (c) => {
   const db = getDb(c.env);
   const { data: draft } = await db
     .from('intent_drafts')
-    .select('id, user_id, status')
+    .select('id, user_id, status, session_id')
     .eq('id', c.req.param('id'))
     .maybeSingle();
   if (!draft || draft.user_id !== user.id) return c.json({ error: 'Not found' }, 404);
@@ -115,19 +191,13 @@ app.post('/copilot/drafts/:id/publish', requireAuth, async (c) => {
 
   const rows = [];
   for (const d of picked) {
-    if (!['want', 'offer'].includes(d?.direction)) continue;
-    const title = String(d.title ?? '').trim();
-    if (title.length < 3) continue;
+    const normalized = normalizeCopilotDraft(d);
+    if (!normalized.direction || !normalized.title || normalized.title.length < 3) continue;
     rows.push({
       user_id: user.id,
-      direction: d.direction,
-      kind: ['good', 'digital', 'service', 'knowledge'].includes(d.kind) ? d.kind : null,
-      title: title.slice(0, 80),
-      description: d.description ? String(d.description).trim() : null,
-      category: d.category ? String(d.category).trim().toLowerCase().slice(0, 40) : null,
-      price_fiat: d.price_fiat != null && !isNaN(Number(d.price_fiat)) ? Number(d.price_fiat) : null,
+      ...normalized,
       source: 'copilot',
-      embedding: await embed(c.env, `${title}\n${d.description ?? ''}`),
+      embedding: await embed(c.env, intentEmbeddingText(normalized)),
     });
   }
   if (!rows.length) return c.json({ error: 'No valid drafts to publish' }, 400);
@@ -142,8 +212,34 @@ app.post('/copilot/drafts/:id/publish', requireAuth, async (c) => {
   }
 
   await db.from('intent_drafts').update({ status: 'published' }).eq('id', draft.id);
-  c.executionCtx.waitUntil(matchAndNotify(c.env, user.id));
-  return c.json({ intents }, 201);
+  await db.from('nexum_events').insert({
+    user_id: user.id, session_id: draft.session_id,
+    event: 'published', properties: { intent_count: intents.length },
+  });
+  if (draft.session_id) await db.from('nexum_sessions')
+    .update({ status: 'published', updated_at: new Date().toISOString() })
+    .eq('id', draft.session_id).eq('user_id', user.id);
+  if (user.nexum_memory_enabled) {
+    const preference = rows.reduce((memory, intent) => ({
+      ...memory,
+      ...(intent.location_text ? { location_text: intent.location_text } : {}),
+      ...(intent.format ? { format: intent.format } : {}),
+      ...(intent.exchange_modes?.length ? { exchange_modes: intent.exchange_modes } : {}),
+      ...(intent.delivery_modes?.length ? { delivery_modes: intent.delivery_modes } : {}),
+    }), {});
+    await db.from('users').update({ nexum_memory: preference }).eq('id', user.id);
+  }
+  const cycles = await findCycles(c.env, user.id);
+  c.executionCtx.waitUntil(matchAndNotify(c.env, user.id, cycles));
+  const best = cycles[0] ?? null;
+  return c.json({
+    intents,
+    network_preview: {
+      cycle_count: cycles.length,
+      best_hops: best?.hops ?? null,
+      best_similarity: best?.min_similarity ?? null,
+    },
+  }, 201);
 });
 
 export default app;

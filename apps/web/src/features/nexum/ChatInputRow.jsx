@@ -4,27 +4,12 @@ import RecorderBar from './RecorderBar.jsx';
 
 export default function ChatInputRow({
   input, setInput, submitText, busy, onFocus,
-  pills, onPill, voice,
+  voice,
 }) {
   const { supported, recording, locked, canceling, elapsed, analyser, tooltip, onPointerDown, onPointerMove, onPointerUp, onTrashClick, onSendClick } = voice;
 
   return (
     <>
-      {pills.length > 0 && !busy && !recording && (
-        <div className="nexum-pills-row">
-          {pills.map((text, i) => (
-            <button
-              key={text + i}
-              className="nexum-pill"
-              style={{ animationDelay: `${i * 40}ms` }}
-              onClick={() => onPill(text)}
-            >
-              {text}
-            </button>
-          ))}
-        </div>
-      )}
-
       <div className="nexum-input-row" style={{ position: 'relative' }}>
         {recording && locked && (
           <button className="voice-trash pressable" onClick={onTrashClick} title="Discard recording">

@@ -1,8 +1,10 @@
-import { apiFetch, apiStream } from './index.js';
+import { apiFetch } from './index.js';
 
 // Streams Nexum's reply; onChunk receives the accumulated text as it arrives.
-export async function interviewTurn(messages, onChunk) {
-  return apiStream('/copilot/interview', { messages }, onChunk);
+export async function interviewTurn(sessionId, messages) {
+  return apiFetch('/copilot/interview', {
+    method: 'POST', body: JSON.stringify({ session_id: sessionId, messages }),
+  });
 }
 
 export async function transcribeAudio(blob) {
@@ -16,10 +18,22 @@ export async function transcribeAudio(blob) {
   return apiFetch('/copilot/transcribe', { method: 'POST', body: form }).then((d) => d.text);
 }
 
-export async function createDrafts(messages) {
+export async function createDrafts(messages, sessionId) {
   return apiFetch('/copilot/drafts', {
     method: 'POST',
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, session_id: sessionId }),
+  });
+}
+
+export async function trackNexumEvent(sessionId, event, properties = {}) {
+  return apiFetch('/copilot/events', {
+    method: 'POST', body: JSON.stringify({ session_id: sessionId, event, properties }),
+  });
+}
+
+export async function setNexumMemory(enabled) {
+  return apiFetch('/copilot/memory', {
+    method: 'POST', body: JSON.stringify({ enabled }),
   });
 }
 
@@ -27,5 +41,5 @@ export async function publishDrafts(draftId, drafts) {
   return apiFetch(`/copilot/drafts/${draftId}/publish`, {
     method: 'POST',
     body: JSON.stringify({ drafts }),
-  }).then((d) => d.intents);
+  });
 }
