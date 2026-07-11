@@ -8,7 +8,7 @@ import {
   intentEmbeddingText, normalizeCopilotDraft, normalizeDraftForReview,
 } from '../lib/copilotDrafts.js';
 import {
-  NEXUM_PROMPT_VERSION, refreshMarketSignal, runNexumTurn,
+  NEXUM_PROMPT_VERSION, runNexumTurn,
 } from '../lib/nexumEngine.js';
 
 const app = new Hono();
@@ -77,6 +77,7 @@ app.post('/copilot/interview', requireAuth, async (c) => {
     name: user.display_name, live: live ?? [], messages: clean,
     previous: session.state ?? {}, signal: session.market_signal,
     memory: user.nexum_memory_enabled ? user.nexum_memory : {},
+    turnCount: session.turn_count + 1,
   });
   if (!result?.reply) return c.json({ error: 'Nexum is unavailable right now' }, 502);
   await db.from('nexum_sessions').update({
@@ -85,13 +86,12 @@ app.post('/copilot/interview', requireAuth, async (c) => {
     prompt_version: NEXUM_PROMPT_VERSION, updated_at: new Date().toISOString(),
   }).eq('id', session.id).eq('user_id', user.id);
   c.executionCtx.waitUntil(Promise.all([
-    refreshMarketSignal(c.env, user.id, session.id, result.state, session.signal_signature),
     db.from('nexum_events').insert({
       user_id: user.id, session_id: session.id, event: 'turn_completed',
       properties: { turn: session.turn_count + 1, ready: result.state.ready },
     }),
   ]));
-  return c.json({ session_id: session.id, market_signal: session.market_signal, ...result });
+  return c.json({ session_id: session.id, ...result });
 });
 
 app.post('/copilot/memory', requireAuth, async (c) => {

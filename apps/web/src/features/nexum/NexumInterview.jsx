@@ -24,7 +24,7 @@ export default function NexumInterview({ isAuthenticated, login, onBack, onMarke
       </button>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8 }}>
-        <NexumOrb state={orbState} size={150} />
+        <NexumOrb state={orbState} size={96} />
         <p style={{ fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-secondary)', marginTop: -8 }}>
           Nexum
         </p>

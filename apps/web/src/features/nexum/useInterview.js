@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  interviewTurn, createDrafts, setNexumMemory, trackNexumEvent,
+  interviewTurn, createDrafts, trackNexumEvent,
 } from '../../api/copilot.js';
 
 const GREETING =
@@ -19,17 +19,10 @@ export function useInterview() {
   const [draft, setDraft] = useState(null);
   const [revealing, setRevealing] = useState(false);
   const [ready, setReady] = useState(false);
+  const [canReveal, setCanReveal] = useState(false);
   const [pills, setPills] = useState([]);
   const [progress, setProgress] = useState({ interests: 0, offers: 0, detailed: 0 });
   const [mappedIntents, setMappedIntents] = useState([]);
-  const [marketSignal, setMarketSignal] = useState(null);
-  const [rememberPreferences, setRememberPreferences] = useState(false);
-
-  const toggleMemory = useCallback(async () => {
-    const enabled = !rememberPreferences;
-    setRememberPreferences(enabled);
-    try { await setNexumMemory(enabled); } catch { setRememberPreferences(!enabled); }
-  }, [rememberPreferences]);
 
   useEffect(() => {
     if (openedTracked.current) return;
@@ -51,10 +44,10 @@ export function useInterview() {
       setOrbState('speaking');
       setMessages([...history, { role: 'assistant', content: reply.reply }]);
       setReady(reply.state.ready);
+      setCanReveal(reply.state.can_reveal ?? reply.state.ready);
       setPills(reply.pills ?? []);
       setProgress(reply.state.progress);
       setMappedIntents(reply.state.intents ?? []);
-      setMarketSignal(reply.market_signal);
       if (history.filter((message) => message.role === 'user').length === 1) {
         trackNexumEvent(sessionId, 'first_answer').catch(() => {});
       }
@@ -91,8 +84,7 @@ export function useInterview() {
 
   return {
     messages, orbState, setOrbState, error, draft, setDraft, send, reveal,
-    revealing, userTurns, ready, pills, progress,
-    mappedIntents, marketSignal, sessionId,
-    rememberPreferences, toggleMemory,
+    revealing, userTurns, ready, canReveal, pills, progress,
+    mappedIntents, sessionId,
   };
 }

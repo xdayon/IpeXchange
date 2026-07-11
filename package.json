@@ -17,7 +17,8 @@
     "build": "npm -w apps/web run build",
     "deploy": "npm -w apps/web run build && npm -w apps/api run deploy",
     "db:apply": "node scripts/db-apply.js",
-    "db:seed": "node scripts/seed.js"
+    "db:seed": "node scripts/seed.js",
+    "eval:nexum": "node scripts/nexum-eval-live.js"
   },
   "devDependencies": {
     "postgres": "^3.4.5",

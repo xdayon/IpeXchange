@@ -4,7 +4,7 @@ import { pillsForFocus } from '../src/lib/nexumPills.js';
 
 const usable = {
   direction: 'want', kind: 'good', title: 'Used road bike', description: 'For commuting',
-  category: 'bikes', concept_id: 'mobility', confidence: 0.9,
+  category: 'bikes', concept_id: 'mobility', condition: 'used', confidence: 0.9,
 };
 
 describe('deterministic Nexum state', () => {
@@ -28,7 +28,26 @@ describe('deterministic Nexum state', () => {
     expect(state.ready).toBe(false);
   });
 
-  it('uses schema pills instead of arbitrary model suggestions', () => {
-    expect(pillsForFocus('format', ['Maybe'])).toEqual(['Online', 'In person', 'Hybrid', 'Flexible']);
+  it('repairs common model enum synonyms before validating', () => {
+    const state = deriveInterviewState({
+      intents: [{ ...usable, direction: 'buy', kind: 'product' }],
+      side_status: { want: 'provided', offer: 'declined' },
+    });
+    expect(state.intents[0]).toMatchObject({ direction: 'want', kind: 'good' });
+    expect(state.ready).toBe(true);
+  });
+
+  it('preserves verified intents when a model turn omits them', () => {
+    const previous = deriveInterviewState({
+      intents: [usable], side_status: { want: 'provided', offer: 'unknown' },
+    });
+    const state = deriveInterviewState({ intents: [] }, previous, { turnCount: 2 });
+    expect(state.intents).toHaveLength(1);
+    expect(state.intents[0].title).toBe('Used road bike');
+  });
+
+  it('only returns localized pills for controlled questions', () => {
+    expect(pillsForFocus('format', 'pt-BR')).toEqual(['Online', 'Presencial', 'Híbrido', 'Flexível']);
+    expect(pillsForFocus('price_fiat', 'pt-BR')).toEqual([]);
   });
 });

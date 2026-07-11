@@ -7,13 +7,11 @@ import DraftCards, { PublishedScreen } from './DraftCards.jsx';
 import ChatInputRow from './ChatInputRow.jsx';
 import InterviewProgress from './InterviewProgress.jsx';
 import QuickReplies from './QuickReplies.jsx';
-import LiveIntentMap from './LiveIntentMap.jsx';
 
 export default function NexumChat({ isAuthenticated, login, onMarket, variant = 'page', onOrbState }) {
   const {
     messages, orbState, setOrbState, error, draft, send, reveal, revealing,
-    userTurns, ready, pills, progress, mappedIntents, marketSignal,
-    rememberPreferences, toggleMemory,
+    userTurns, ready, canReveal, pills, progress,
   } = useInterview();
   const { haptic } = useTelegram();
   const [input, setInput] = useState('');
@@ -76,7 +74,7 @@ export default function NexumChat({ isAuthenticated, login, onMarket, variant = 
         </div>
       ) : (
         <>
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto', padding: '8px 0' }}>
+          <div className="nexum-conversation">
             {messages.map((m, i) => (
               <div key={i} className="nexum-msg-enter" style={{
                 alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
@@ -88,37 +86,35 @@ export default function NexumChat({ isAuthenticated, login, onMarket, variant = 
                 {m.content}
               </div>
             ))}
+            {busy && <div className="nexum-thinking" aria-live="polite">Nexum is thinking...</div>}
+
+            {(error || voice.micError) && (
+              <p role="alert" style={{ fontSize: 13, color: 'var(--accent-pink)', textAlign: 'center', margin: '8px 0' }}>
+                {error || voice.micError}
+              </p>
+            )}
+
+            {userTurns > 0 && <InterviewProgress progress={progress} ready={ready} />}
+            {!ready && <QuickReplies pills={pills} busy={busy || voice.recording} onPill={sendPill} />}
+
+            {canReveal && (
+              <div className={`nexum-reveal-panel ${ready ? 'is-ready' : ''}`}>
+                <span>{ready ? 'Your intents are ready' : 'Review what Nexum understood'}</span>
+                <p>You will confirm and edit everything before anything is published.</p>
+                <button onClick={reveal} disabled={revealing || busy} className="nexum-reveal-button pressable">
+                {revealing ? (
+                  <>
+                    <span className="nexum-reveal-spinner" />
+                    Organizing your intents...
+                  </>
+                ) : (
+                  <><Sparkles size={16} /> Reveal my intents</>
+                )}
+                </button>
+              </div>
+            )}
             <div ref={endRef} />
           </div>
-
-          {(error || voice.micError) && (
-            <p style={{ fontSize: 13, color: 'var(--accent-pink)', textAlign: 'center', margin: '8px 0' }}>
-              {error || voice.micError}
-            </p>
-          )}
-
-          {userTurns > 0 && <InterviewProgress progress={progress} ready={ready} />}
-          <LiveIntentMap intents={mappedIntents} marketSignal={marketSignal}
-            rememberPreferences={rememberPreferences} onToggleMemory={toggleMemory} />
-
-          <QuickReplies pills={pills} busy={busy || voice.recording} onPill={sendPill} />
-
-          {ready && (
-            <div className="nexum-reveal-panel">
-              <span>Your profile is ready</span>
-              <p>Turn this conversation into structured market entries you can review before publishing.</p>
-              <button onClick={reveal} disabled={revealing || busy} className="nexum-reveal-button pressable">
-              {revealing ? (
-                <>
-                  <span className="nexum-reveal-spinner" />
-                  Nexum is weaving your intents...
-                </>
-              ) : (
-                <><Sparkles size={16} /> Reveal my intents</>
-              )}
-              </button>
-            </div>
-          )}
 
           <ChatInputRow
             input={input}
