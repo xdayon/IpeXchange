@@ -14,6 +14,14 @@ export async function verifyPayment(paymentId, txHash) {
   });
 }
 
+export async function preparePayment(paymentId) {
+  return apiFetch(`/payments/${paymentId}/prepare`, { method: 'POST' });
+}
+
+export async function cancelPreparedPayment(paymentId) {
+  return apiFetch(`/payments/${paymentId}/cancel`, { method: 'POST' });
+}
+
 export async function fetchMyPayments() {
   return apiFetch('/payments/mine');
 }

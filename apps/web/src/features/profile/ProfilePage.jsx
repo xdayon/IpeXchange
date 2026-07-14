@@ -5,8 +5,11 @@ import InviteCard from './InviteCard.jsx';
 import TelegramLinkBanner from './TelegramLinkBanner.jsx';
 import MyIntents from './MyIntents.jsx';
 import TradeHistory from './TradeHistory.jsx';
+import NotificationShortcut from '../notifications/NotificationShortcut.jsx';
 
-export default function ProfilePage({ user, isAuthenticated, login, logout, onNavigate, onSelectIntent, refresh }) {
+export default function ProfilePage({
+  user, isAuthenticated, login, logout, onNavigate, onSelectIntent, refresh, unreadCount,
+}) {
   if (!isAuthenticated) {
     return (
       <div className="empty-state" style={{ marginTop: 80 }}>
@@ -27,6 +30,7 @@ export default function ProfilePage({ user, isAuthenticated, login, logout, onNa
       <ProfileStats />
       <InviteCard user={user} />
       {!user?.telegramLinked && <TelegramLinkBanner />}
+      <NotificationShortcut unreadCount={unreadCount} onOpen={() => onNavigate('notifications')} />
 
       <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>My Intents</h2>
       <MyIntents onSelectIntent={onSelectIntent} />

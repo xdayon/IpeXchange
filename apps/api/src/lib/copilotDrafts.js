@@ -46,6 +46,14 @@ export function normalizeCopilotDraft(draft) {
   return normalized;
 }
 
+export function normalizeCopilotDrafts(drafts) {
+  if (!Array.isArray(drafts)) return null;
+  return drafts
+    .slice(0, 10)
+    .map(normalizeCopilotDraft)
+    .filter((draft) => draft.direction && draft.title?.length >= 3);
+}
+
 function validPositive(value, allowZero = false) {
   const number = Number(value);
   return value != null && Number.isFinite(number) && (allowZero ? number >= 0 : number > 0)

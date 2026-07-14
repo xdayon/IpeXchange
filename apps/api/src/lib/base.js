@@ -91,21 +91,42 @@ export function unitsToDecimalString(units, decimals) {
   return frac ? `${whole}.${frac}` : String(whole);
 }
 
-// A payment is satisfied by a successful native transfer for ETH, or by
-// a Transfer log emitted by the token contract itself for ERC-20 —
-// checking logs (not calldata) also covers smart-account wallets.
-export function paymentSatisfied({ tx, receipt, token, toWallet, amountUnits }) {
-  if (receipt.status !== '0x1') return false;
+export function paymentMinedDuringQuote(blockTimestamp, createdAt, expiresAt, toleranceMs = 0) {
+  const blockTimeMs = blockTimestamp * 1000;
+  return (
+    blockTimeMs >= new Date(createdAt).getTime() - toleranceMs &&
+    blockTimeMs <= new Date(expiresAt).getTime() + toleranceMs
+  );
+}
+
+function topicAddress(topic) {
+  if (!/^0x0{24}[0-9a-f]{40}$/i.test(topic ?? '')) return null;
+  return `0x${topic.slice(-40).toLowerCase()}`;
+}
+
+// Returns the address that actually supplied the quoted transfer. Native
+// transfers use the transaction sender; ERC-20 transfers use the indexed
+// `from` address in the matching Transfer log. The latter remains correct
+// when a smart account is executed by a bundler whose tx.from is unrelated.
+export function paymentSender({ tx, receipt, token, toWallet, amountUnits }) {
+  if (receipt.status !== '0x1') return null;
   const spec = TOKENS[token];
   if (!spec.address) {
-    return tx.to?.toLowerCase() === toWallet && BigInt(tx.value) >= BigInt(amountUnits);
+    if (tx.to?.toLowerCase() !== toWallet || BigInt(tx.value) < BigInt(amountUnits)) return null;
+    return /^0x[0-9a-f]{40}$/i.test(tx.from ?? '') ? tx.from.toLowerCase() : null;
   }
   const paddedTo = `0x000000000000000000000000${toWallet.slice(2)}`;
-  return (receipt.logs ?? []).some(
+  const transfer = (receipt.logs ?? []).find(
     (log) =>
       log.address?.toLowerCase() === spec.address &&
-      log.topics?.[0] === TRANSFER_TOPIC &&
+      log.topics?.[0]?.toLowerCase() === TRANSFER_TOPIC &&
       log.topics?.[2]?.toLowerCase() === paddedTo &&
       BigInt(log.data) >= BigInt(amountUnits),
   );
+  return topicAddress(transfer?.topics?.[1]);
+}
+
+// Boolean compatibility helper for callers that only need transfer validity.
+export function paymentSatisfied(args) {
+  return paymentSender(args) !== null;
 }

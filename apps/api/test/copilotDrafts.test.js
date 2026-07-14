@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  intentEmbeddingText, normalizeCopilotDraft, normalizeDraftForReview,
+  intentEmbeddingText, normalizeCopilotDraft, normalizeCopilotDrafts, normalizeDraftForReview,
 } from '../src/lib/copilotDrafts.js';
 
 describe('copilot draft normalization', () => {
@@ -24,6 +24,24 @@ describe('copilot draft normalization', () => {
     expect(draft.direction).toBeNull();
     expect(draft.format).toBeNull();
     expect(draft.price_fiat).toBeNull();
+  });
+
+  it('caps persisted publish fields and drops invalid drafts', () => {
+    const drafts = normalizeCopilotDrafts([
+      { direction: 'offer', title: '  Valid offer  ', description: 'x'.repeat(4100) },
+      { direction: 'invalid', title: 'Untrusted draft' },
+    ]);
+
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0].title).toBe('Valid offer');
+    expect(drafts[0].description).toHaveLength(4000);
+  });
+
+  it('requires an array and limits one publication to ten drafts', () => {
+    expect(normalizeCopilotDrafts(null)).toBeNull();
+    expect(normalizeCopilotDrafts(Array.from({ length: 12 }, (_, index) => ({
+      direction: 'want', title: `Interest ${index}`,
+    })))).toHaveLength(10);
   });
 
   it('limits review hints to fields the review can edit', () => {

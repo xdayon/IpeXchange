@@ -23,6 +23,7 @@ export const SPA_SECURITY_HEADERS = {
     'wss://relay.walletconnect.org wss://www.walletlink.org https://explorer-api.walletconnect.com ' +
     'https://pulse.walletconnect.org https://api.web3modal.org',
   'x-content-type-options': 'nosniff',
+  'strict-transport-security': 'max-age=31536000; includeSubDomains',
   'referrer-policy': 'strict-origin-when-cross-origin',
   'permissions-policy': 'microphone=(self), camera=(), geolocation=()',
 };

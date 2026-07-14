@@ -26,42 +26,61 @@ async function verifyPrivyToken(env, token) {
   }
 }
 
-async function upsertUser(env, { privyDid, tgUser }) {
-  const db = getDb(env);
+async function findUser(db, column, value) {
+  const { data, error } = await db.from('users').select('*').eq(column, value).maybeSingle();
+  if (error) throw error;
+  return data;
+}
 
+function telegramName(tgUser) {
+  return [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || null;
+}
+
+async function createPrivyUser(db, privyDid, tgUser) {
+  const insert = { privy_did: privyDid };
+  if (tgUser) insert.display_name = telegramName(tgUser);
+
+  const { data, error } = await db.from('users').insert(insert).select().single();
+  if (!error) return data;
+
+  // Another request may have created the same Privy user after our first read.
+  const concurrentUser = await findUser(db, 'privy_did', privyDid);
+  if (concurrentUser) return concurrentUser;
+  throw error;
+}
+
+export async function upsertUser(db, { privyDid, tgUser }) {
   if (privyDid) {
-    let { data: user } = await db.from('users').select('*').eq('privy_did', privyDid).maybeSingle();
-    if (!user) {
-      const insert = { privy_did: privyDid };
-      if (tgUser) {
-        insert.telegram_id = tgUser.id;
-        insert.telegram_username = tgUser.username ?? null;
-        insert.display_name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || null;
-      }
-      const { data, error } = await db.from('users').insert(insert).select().single();
+    let user = await findUser(db, 'privy_did', privyDid);
+    if (!user) user = await createPrivyUser(db, privyDid, tgUser);
+
+    const sameTelegram = String(user.telegram_id) === String(tgUser?.id);
+    if (tgUser && user.telegram_id != null && !sameTelegram) {
+      throw new Error('Telegram identity does not match the linked account');
+    }
+    if (tgUser && (user.telegram_id == null || sameTelegram)) {
+      const { data: result, error } = await db.rpc('link_telegram_account', {
+        p_user: user.id,
+        p_tg_id: tgUser.id,
+        p_tg_username: tgUser.username ?? null,
+      });
       if (error) throw error;
-      user = data;
-    } else if (tgUser && !user.telegram_id) {
-      const { data } = await db
-        .from('users')
-        .update({ telegram_id: tgUser.id, telegram_username: tgUser.username ?? null })
-        .eq('id', user.id)
-        .select()
-        .single();
-      user = data ?? user;
+      if (!result?.ok) throw new Error(`Telegram account link failed: ${result?.error ?? 'unknown'}`);
+      user = await findUser(db, 'id', user.id);
+      if (!user) throw new Error('Linked user was not found');
     }
     return user;
   }
 
   if (tgUser) {
-    const { data: user } = await db.from('users').select('*').eq('telegram_id', tgUser.id).maybeSingle();
+    const user = await findUser(db, 'telegram_id', tgUser.id);
     if (user) return user;
     const { data, error } = await db
       .from('users')
       .insert({
         telegram_id: tgUser.id,
         telegram_username: tgUser.username ?? null,
-        display_name: [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || null,
+        display_name: telegramName(tgUser),
         telegram_dm_ok: tgUser.allows_write_to_pm === true,
       })
       .select()
@@ -82,7 +101,7 @@ async function resolveUser(c) {
   const tg = initData ? await validateInitData(initData, env.TELEGRAM_BOT_TOKEN) : null;
 
   if (!privyDid && !tg) return null;
-  return upsertUser(env, { privyDid, tgUser: tg?.user ?? null });
+  return upsertUser(getDb(env), { privyDid, tgUser: tg?.user ?? null });
 }
 
 // Throttled activity ping: powers the active-user metrics on the admin

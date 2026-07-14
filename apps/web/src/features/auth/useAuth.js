@@ -7,6 +7,7 @@ import { usePrivy } from '@privy-io/react-auth';
 import { registerTokenProvider } from '../../api/index.js';
 import { claimReferral, fetchMe, saveWallet } from '../../api/me.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
+import { fetchWithAuthRetry, isTransientAuthError } from './authRecovery.js';
 
 const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
 
@@ -89,42 +90,70 @@ export function useAuth() {
   const identity = useIdentity();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const refresh = useCallback(() => setReloadKey((k) => k + 1), []);
+  const refresh = useCallback(() => {
+    setAuthError(null);
+    setReloadKey((k) => k + 1);
+  }, []);
 
   useEffect(() => {
     if (!identity.ready) return;
-    let cancelled = false;
+    if (!identity.authenticated) {
+      let cancelled = false;
+      Promise.resolve().then(() => {
+        if (cancelled) return;
+        setUser(null);
+        setAuthError(null);
+        setLoading(false);
+      });
+      return () => { cancelled = true; };
+    }
+
+    const controller = new AbortController();
     const session = identity.session ?? { source: 'unknown' };
-    const load = identity.authenticated ? fetchMe().catch(() => null) : Promise.resolve(null);
-    load.then((me) => {
-      if (cancelled) return;
-      setUser(me ? toAppUser(me, session) : null);
+    fetchWithAuthRetry(() => fetchMe({ signal: controller.signal }), {
+      signal: controller.signal,
+    }).then((me) => {
+      if (controller.signal.aborted) return;
+      setUser(toAppUser(me, session));
+      setAuthError(null);
       setLoading(false);
       // Keep the payout address in sync with the Privy session wallet.
       const wallet = session.wallet?.toLowerCase();
-      if (me && wallet && me.wallet !== wallet) saveWallet(wallet).catch(() => {});
+      if (wallet && me.wallet !== wallet) saveWallet(wallet).catch(() => {});
       const ref = localStorage.getItem('ipex-ref');
-      if (me && ref && !me.referred_by) {
+      if (ref && !me.referred_by) {
         claimReferral(ref)
           .then(() => localStorage.removeItem('ipex-ref'))
           .catch((err) => { if (err.status >= 400 && err.status < 500) localStorage.removeItem('ipex-ref'); });
-      } else if (me?.referred_by) {
+      } else if (me.referred_by) {
         localStorage.removeItem('ipex-ref');
       }
+    }).catch((error) => {
+      if (controller.signal.aborted) return;
+      // A Worker or network hiccup is not a logout. Keep any known app user and
+      // let the existing login action retry the profile load on first startup.
+      if (!isTransientAuthError(error)) setUser(null);
+      setAuthError(error);
+      setLoading(false);
     });
-    return () => { cancelled = true; };
+    return () => controller.abort();
     // identity.session is rebuilt every render; keying on auth state avoids loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identity.ready, identity.authenticated, reloadKey]);
 
+  const recoverOrLogin = authError && identity.authenticated ? refresh : identity.login;
+  const awaitingProfile = identity.authenticated && !user && !authError;
+
   return {
     user,
-    loading: loading && identity.ready !== false,
+    loading: !identity.ready || loading || awaitingProfile,
     isAuthenticated: Boolean(user),
-    login: identity.login,
+    login: recoverOrLogin,
     logout: identity.logout,
     refresh,
+    authError,
   };
 }

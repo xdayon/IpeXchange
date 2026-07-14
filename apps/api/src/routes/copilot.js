@@ -1,15 +1,13 @@
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
 import { getDb } from '../lib/supabase.js';
-import { embed, extractDrafts } from '../lib/gemini.js';
+import { extractDrafts } from '../lib/gemini.js';
 import { transcribe, extractDraftsGroq } from '../lib/groq.js';
-import { findCycles, matchAndNotify } from '../lib/matching.js';
-import {
-  intentEmbeddingText, normalizeCopilotDraft, normalizeDraftForReview,
-} from '../lib/copilotDrafts.js';
+import { normalizeDraftForReview } from '../lib/copilotDrafts.js';
 import {
   NEXUM_PROMPT_VERSION, runNexumTurn,
 } from '../lib/nexumEngine.js';
+import copilotPublish from './copilotPublish.js';
 
 const app = new Hono();
 
@@ -174,72 +172,6 @@ app.post('/copilot/drafts', requireAuth, async (c) => {
   return c.json(data, 201);
 });
 
-app.post('/copilot/drafts/:id/publish', requireAuth, async (c) => {
-  const user = c.get('user');
-  const body = await c.req.json().catch(() => null);
-  const picked = Array.isArray(body?.drafts) ? body.drafts.slice(0, 10) : null;
-  if (!picked?.length) return c.json({ error: 'drafts array is required' }, 400);
-
-  const db = getDb(c.env);
-  const { data: draft } = await db
-    .from('intent_drafts')
-    .select('id, user_id, status, session_id')
-    .eq('id', c.req.param('id'))
-    .maybeSingle();
-  if (!draft || draft.user_id !== user.id) return c.json({ error: 'Not found' }, 404);
-  if (draft.status !== 'draft') return c.json({ error: 'Draft already resolved' }, 409);
-
-  const rows = [];
-  for (const d of picked) {
-    const normalized = normalizeCopilotDraft(d);
-    if (!normalized.direction || !normalized.title || normalized.title.length < 3) continue;
-    rows.push({
-      user_id: user.id,
-      ...normalized,
-      source: 'copilot',
-      embedding: await embed(c.env, intentEmbeddingText(normalized)),
-    });
-  }
-  if (!rows.length) return c.json({ error: 'No valid drafts to publish' }, 400);
-
-  const { data: intents, error } = await db
-    .from('intents')
-    .insert(rows)
-    .select('id, direction, kind, title, price_fiat, status');
-  if (error) {
-    console.error('Draft publish failed:', error);
-    return c.json({ error: 'Could not publish intents' }, 500);
-  }
-
-  await db.from('intent_drafts').update({ status: 'published' }).eq('id', draft.id);
-  await db.from('nexum_events').insert({
-    user_id: user.id, session_id: draft.session_id,
-    event: 'published', properties: { intent_count: intents.length },
-  });
-  if (draft.session_id) await db.from('nexum_sessions')
-    .update({ status: 'published', updated_at: new Date().toISOString() })
-    .eq('id', draft.session_id).eq('user_id', user.id);
-  if (user.nexum_memory_enabled) {
-    const preference = rows.reduce((memory, intent) => ({
-      ...memory,
-      ...(intent.location_text ? { location_text: intent.location_text } : {}),
-      ...(intent.format ? { format: intent.format } : {}),
-      ...(intent.exchange_modes?.length ? { exchange_modes: intent.exchange_modes } : {}),
-      ...(intent.delivery_modes?.length ? { delivery_modes: intent.delivery_modes } : {}),
-    }), {});
-    await db.from('users').update({ nexum_memory: preference }).eq('id', user.id);
-  }
-  const cycles = await findCycles(c.env, user.id);
-  c.executionCtx.waitUntil(matchAndNotify(c.env, user.id, cycles));
-  const best = cycles[0] ?? null;
-  return c.json({
-    intents,
-    network_preview: {
-      cycle_count: cycles.length,
-      best_hops: best?.hops ?? null,
-      best_similarity: best?.min_similarity ?? null,
-    },
-  }, 201);
-});
+app.route('/copilot/drafts', copilotPublish);
 
 export default app;

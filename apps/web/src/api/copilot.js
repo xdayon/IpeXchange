@@ -38,8 +38,11 @@ export async function setNexumMemory(enabled) {
 }
 
 export async function publishDrafts(draftId, drafts) {
+  await apiFetch(`/copilot/drafts/${draftId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ drafts }),
+  });
   return apiFetch(`/copilot/drafts/${draftId}/publish`, {
     method: 'POST',
-    body: JSON.stringify({ drafts }),
   });
 }

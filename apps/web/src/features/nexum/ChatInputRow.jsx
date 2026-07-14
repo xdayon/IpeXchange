@@ -35,6 +35,7 @@ export default function ChatInputRow({
           <MicButton
             recording={recording}
             locked={locked}
+            disabled={busy}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}

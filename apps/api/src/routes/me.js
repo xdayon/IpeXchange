@@ -3,7 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { createLinkToken } from '../lib/linktoken.js';
-import { walletBelongsToUser } from '../lib/privy.js';
+import { syncPrivyEmail, walletBelongsToUser } from '../lib/privy.js';
 import { isAllowlistedAdmin } from '../lib/admin.js';
 import { notify } from '../lib/notify.js';
 import { countCompletedTrades, fetchRecentTrades } from '../lib/trades.js';
@@ -37,11 +37,12 @@ const serialize = (u) => ({
   created_at: u.created_at,
 });
 
-app.get('/me', requireAuth, (c) => {
+app.get('/me', requireAuth, async (c) => {
   const user = c.get('user');
+  const verifiedEmail = await syncPrivyEmail(c.env, getDb(c.env), user);
   // Bootstrap: allowlisted accounts get the admin flag on first login so
   // the dashboard entry actually shows up for them.
-  if (!user.is_admin && isAllowlistedAdmin(c.env, user)) {
+  if (!user.is_admin && isAllowlistedAdmin(c.env, user, verifiedEmail)) {
     user.is_admin = true;
     c.executionCtx.waitUntil(
       getDb(c.env).from('users').update({ is_admin: true }).eq('id', user.id).then(() => {}),

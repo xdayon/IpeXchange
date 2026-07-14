@@ -10,6 +10,7 @@ import cycles from './routes/cycles.js';
 import payments from './routes/payments.js';
 import admin from './routes/admin.js';
 import share from './routes/share.js';
+import notifications from './routes/notifications.js';
 
 const app = createApp();
 
@@ -23,6 +24,7 @@ app.route('/api', telegram);
 app.route('/api', cycles);
 app.route('/api', payments);
 app.route('/api', admin);
+app.route('/api', notifications);
 app.route('/', share);
 
 export default app;
