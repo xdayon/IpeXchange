@@ -4,6 +4,18 @@ export const QUOTE_SEND_BUFFER_MS = 30_000;
 
 const pad64 = (hex) => hex.replace(/^0x/, '').padStart(64, '0');
 
+export function walletLabel(wallet) {
+  const address = wallet?.address ?? '';
+  const short = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Unavailable';
+  const source = String(wallet?.walletClientType ?? wallet?.connectorType ?? 'wallet')
+    .replaceAll('_', ' ');
+  return `${source} (${short})`;
+}
+
+export function initialWalletAddress(wallets) {
+  return wallets.length === 1 ? wallets[0].address : '';
+}
+
 export function isQuoteExpired(quote, now = Date.now(), bufferMs = 0) {
   const expiresAt = Date.parse(quote?.quote_expires_at);
   return !Number.isFinite(expiresAt) || expiresAt <= now + bufferMs;

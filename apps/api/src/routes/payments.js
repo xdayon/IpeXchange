@@ -14,8 +14,11 @@ import {
   getTokenUsdPrice,
   getTransaction,
   getTransactionReceipt,
+  getTransactionTrace,
   paymentMinedDuringQuote,
   paymentSender,
+  smartAccountSender,
+  tracedNativePaymentSender,
   unitsToDecimalString,
   usdToUnits,
 } from '../lib/base.js';
@@ -201,13 +204,25 @@ app.post('/payments/:id/verify', requireAuth, rateLimit(60, 'pay-verify'), async
     return c.json(serialize(updated));
   }
 
-  const fromWallet = paymentSender({
+  let fromWallet = paymentSender({
     tx,
     receipt,
     token: payment.token,
     toWallet: payment.to_wallet,
     amountUnits: payment.amount_wei,
   });
+  const userOperationSender = payment.token === 'eth' ? smartAccountSender(receipt) : null;
+  if (!fromWallet && userOperationSender) {
+    let trace;
+    try {
+      trace = await getTransactionTrace(c.env, txHash);
+    } catch (traceError) {
+      console.error('Native smart-account trace unavailable:', traceError);
+      return c.json(serialize(payment));
+    }
+    const tracedSender = tracedNativePaymentSender(trace, payment.to_wallet, payment.amount_wei);
+    fromWallet = tracedSender === userOperationSender ? tracedSender : null;
+  }
   // Ride out potential reorgs before settling either way.
   if (fromWallet && (await getConfirmations(c.env, receipt).catch(() => 0)) < MIN_CONFIRMATIONS) {
     return c.json(serialize(payment));

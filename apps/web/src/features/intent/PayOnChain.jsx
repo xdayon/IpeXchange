@@ -1,9 +1,12 @@
 // Direct P2P checkout on Base: quote from the Worker, transaction sent
 // from the buyer's own wallet (native ETH or ERC-20 USDC), receipt
 // verified server-side against the RPC before the payment settles.
+import { useMemo, useState } from 'react';
 import { Wallet, Loader2, Check, ExternalLink, RefreshCw } from 'lucide-react';
 import { useWallets } from '@privy-io/react-auth';
 import { useOnChainPayment } from './useOnChainPayment.js';
+import { initialWalletAddress, walletLabel } from './paymentFlow.js';
+import './payment.css';
 
 const TOKEN_OPTIONS = [
   { id: 'usdc', label: 'USDC', hint: 'stable, 1:1 with USD' },
@@ -14,9 +17,30 @@ const TOKEN_OPTIONS = [
 
 export default function PayOnChain({ intent, isAuthenticated, login, btnStyle }) {
   const { wallets } = useWallets();
+  const [walletAddress, setWalletAddress] = useState('');
+  const effectiveWalletAddress = walletAddress || initialWalletAddress(wallets);
+  const wallet = useMemo(
+    () => wallets.find((candidate) => candidate.address === effectiveWalletAddress) ?? null,
+    [effectiveWalletAddress, wallets],
+  );
   const {
     error, phase, quote, requestQuote, retryVerification, sendAndVerify, token, txHash,
-  } = useOnChainPayment({ intentId: intent.id, isAuthenticated, login, wallet: wallets[0] });
+  } = useOnChainPayment({ intentId: intent.id, isAuthenticated, login, wallet });
+
+  const walletPicker = isAuthenticated && wallets.length > 0 && (
+    <label className="payment-wallet-picker">
+      Paying wallet
+      <select value={effectiveWalletAddress} onChange={(event) => setWalletAddress(event.target.value)}
+        disabled={phase === 'sending' || phase === 'verifying'} className="payment-wallet-select">
+        {wallets.length > 1 && <option value="">Choose a wallet</option>}
+        {wallets.map((candidate) => (
+          <option key={`${candidate.walletClientType}-${candidate.address}`} value={candidate.address}>
+            {walletLabel(candidate)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 
   const txLink = txHash && (
     <a href={`https://basescan.org/tx/${txHash}`} target="_blank" rel="noreferrer"
@@ -57,6 +81,7 @@ export default function PayOnChain({ intent, isAuthenticated, login, btnStyle })
     return (
       <div style={{ padding: 16, background: 'var(--bg-card)', border: '1px solid var(--border-color)',
         borderRadius: 'var(--radius-lg)' }}>
+        {walletPicker}
         <div className="filter-chips" style={{ marginBottom: 12 }}>
           {TOKEN_OPTIONS.map((t) => (
             <button key={t.id} className={`filter-chip ${token === t.id ? 'active' : ''}`}
@@ -77,8 +102,8 @@ export default function PayOnChain({ intent, isAuthenticated, login, btnStyle })
             for 15 minutes. Sent directly to the seller's wallet and verified on-chain.
           </p>
         )}
-        <button onClick={sendAndVerify} disabled={busy || phase === 'quoting'}
-          style={{ ...btnStyle, background: 'var(--accent-cyan)', color: 'var(--bg-dark)', opacity: busy ? 0.7 : 1 }}>
+        <button onClick={sendAndVerify} disabled={busy || phase === 'quoting' || !wallet}
+          style={{ ...btnStyle, background: 'var(--accent-cyan)', color: 'var(--bg-dark)', opacity: busy || !wallet ? 0.7 : 1 }}>
           {busy
             ? <><Loader2 size={20} className="spin" /> {phase === 'sending' ? 'Waiting for your wallet' : 'Verifying on Base'}</>
             : <><Wallet size={20} /> Confirm and pay</>}
@@ -90,6 +115,7 @@ export default function PayOnChain({ intent, isAuthenticated, login, btnStyle })
 
   return (
     <div>
+      {walletPicker}
       <button onClick={() => requestQuote()}
         style={{ ...btnStyle, background: 'var(--accent-cyan)', color: 'var(--bg-dark)' }}>
         <Wallet size={20} /> {isAuthenticated ? 'Pay with crypto' : 'Log in to pay with crypto'}

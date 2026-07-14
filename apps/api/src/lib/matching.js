@@ -11,8 +11,12 @@ const ORDINAL = { 2: '2-way', 3: '3-way' };
 // cycle_hash inside persist_intent_cycle) and notifies every member.
 export async function findCycles(env, userId) {
   const db = getDb(env);
-  const { error: expiryError } = await db.rpc('expire_payment_reservations');
-  if (expiryError) console.error('Payment reservation cleanup failed:', expiryError);
+  const [{ error: paymentExpiryError }, { error: cycleExpiryError }] = await Promise.all([
+    db.rpc('expire_payment_reservations'),
+    db.rpc('expire_stale_cycles'),
+  ]);
+  if (paymentExpiryError) console.error('Payment reservation cleanup failed:', paymentExpiryError);
+  if (cycleExpiryError) console.error('Cycle expiry failed:', cycleExpiryError);
   const { data: cycles, error } = await db.rpc('find_intent_cycles', { p_user_id: userId });
   if (error) {
     console.error('find_intent_cycles failed:', error);

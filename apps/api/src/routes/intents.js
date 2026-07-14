@@ -6,6 +6,7 @@ import { embed } from '../lib/gemini.js';
 import { matchAndNotify } from '../lib/matching.js';
 import { countCompletedTrades } from '../lib/trades.js';
 import { intentEmbeddingText } from '../lib/copilotDrafts.js';
+import { removeListingImage } from '../lib/listingImages.js';
 import {
   DIRECTIONS, CONTINUOUS_KINDS, EDITABLE, INTENT_FIELDS,
   KIND_FIELD_KEYS, validateIntentCreate, validateIntentPatch, kindFieldValues,
@@ -110,6 +111,8 @@ app.patch('/intents/:id', requireAuth, rateLimit(30, 'intent-edit'), async (c) =
     const effectiveKind = patch.kind ?? existing.kind;
     patch.is_continuous = CONTINUOUS_KINDS.includes(effectiveKind) ? Boolean(patch.is_continuous) : false;
   }
+  const archiveImage = patch.status === 'archived' ? existing.image_url : null;
+  if (archiveImage) patch.image_url = null;
 
   const semanticFields = [
     'title', 'description', 'kind', 'category', 'is_continuous', ...KIND_FIELD_KEYS,
@@ -131,6 +134,20 @@ app.patch('/intents/:id', requireAuth, rateLimit(30, 'intent-edit'), async (c) =
   if (error) {
     console.error('Intent update failed:', error);
     return c.json({ error: 'Could not update intent' }, 500);
+  }
+  if (archiveImage) {
+    try {
+      const removed = await removeListingImage(db, {
+        url: archiveImage,
+        supabaseUrl: c.env.SUPABASE_URL,
+        ownerId: user.id,
+      });
+      if (!removed) throw new Error('Image URL is outside the owner listing path');
+    } catch (cleanupError) {
+      console.error('Archived image cleanup failed:', cleanupError);
+      await db.from('intents').update({ image_url: archiveImage }).eq('id', existing.id);
+      return c.json({ error: 'Could not remove the archived intent image. Try again.' }, 500);
+    }
   }
   return c.json(data);
 });

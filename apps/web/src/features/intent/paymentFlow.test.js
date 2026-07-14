@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { isQuoteExpired, pollPaymentVerification } from './paymentFlow.js';
+import {
+  initialWalletAddress,
+  isQuoteExpired,
+  pollPaymentVerification,
+  walletLabel,
+} from './paymentFlow.js';
+
+describe('payment wallet selection', () => {
+  const first = { address: `0x${'1'.repeat(40)}`, walletClientType: 'privy' };
+  const second = { address: `0x${'2'.repeat(40)}`, walletClientType: 'metamask' };
+
+  it('auto-selects only when there is no wallet ambiguity', () => {
+    expect(initialWalletAddress([first])).toBe(first.address);
+    expect(initialWalletAddress([first, second])).toBe('');
+    expect(initialWalletAddress([])).toBe('');
+  });
+
+  it('labels the wallet source and shortened address', () => {
+    expect(walletLabel(first)).toBe('privy (0x1111...1111)');
+  });
+});
 
 describe('payment quote expiry', () => {
   const now = Date.parse('2026-07-14T12:00:00.000Z');

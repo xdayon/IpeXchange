@@ -5,75 +5,58 @@ conversation transcript.
 
 ## Objective
 
-- Implement the security review in risk order without touching `demo` or
-  `pre-reset-mvp`.
-- Findings 1-7, 9-16, 18-20, and the cycle-hash part of 17 are fixed locally.
+- Complete every actionable item from the security and quality review without
+  touching `demo` or recreating `pre-reset-mvp`.
 
 ## Current State
 
 - Branch: `feature/nexum-intelligence`
-- Last verified commit: `cbebb0e`
-- The working tree contains the security fixes and must be preserved.
-- Migrations 0015 through 0020 are authored but have not been DB-applied.
+- Last published commit: `64825b1`
+- Working tree contains the final follow-up fixes and must be preserved.
+- Migrations 0015 through 0021 are authored but not applied to a shared database.
 
-## Implemented Decisions
+## Implemented
 
-- Payment verification binds the on-chain sender to a Privy wallet belonging to
-  the buyer for native ETH and ERC-20 transfers.
-- Expired quotes cannot initiate a wallet send; a submitted hash is retained and
-  only reverification is offered, preventing accidental duplicate payment.
-- `intent_reservations` atomically gives a cycle or payment exclusive ownership
-  of an intent; abandoned no-hash reservations expire lazily.
-- Privy plus Telegram linking uses the atomic merge RPC, including payment and
-  referral foreign keys.
-- Seed deletion is scoped to seed users and destructive initial-schema replay
-  fails closed.
-- Authenticated users have a paginated in-app notification center, unread count,
-  mark-read actions, contextual navigation, and no polling.
-- Copilot publish consumes only normalized persisted drafts, applies rate and AI
-  quota limits, and atomically claims/inserts/finalizes with stale-claim recovery.
-- Semantic market search preserves direction, kind, category, exclusion, limit,
-  and offset filters.
-- Deep links validate UUIDs before authenticated API calls; share replacement is
-  callback-based and both public share endpoints require an active intent.
-- Interest messages are typed, trimmed, and capped at 280 characters.
-- Verified Privy email is synchronized server-side; `ADMIN_EMAILS` promotion
-  revalidates it and fails closed when Privy is unavailable.
-- Failed payments can only recheck their immutable submitted hash and recover
-  atomically when the original quote, buyer wallet, and Offer remain valid.
-- `/me` retries transient failures with bounded backoff and preserves a known
-  session; initial failures expose a retry action instead of a dead-end login.
-- Browser and Telegram navigation use History API state; page URLs, cycle URLs,
-  and canonical `/l/:id` links survive refresh and support Back/Forward.
-- Local AI quota dates use Florianopolis time; SPA responses include HSTS.
-- Upload/settings failures are visible and microphone input is disabled while busy.
-
-## Main Changed Areas
-
-- API payment, auth, Privy, matching, market, interest, Copilot, notification,
-  share, and security middleware modules plus focused tests.
-- Web payment hook/flow, deep links, notifications UI/API, image/settings error
-  handling, and Nexum microphone guard plus focused tests.
-- Safe DB apply/seed helpers and tests.
-- Migrations `0015_link_merge_fks.sql` through `0020_failed_payment_recovery.sql`.
+- Findings 1-7, 9-20 and the listed low-severity application issues are fixed.
+- Migration 0021 expires unanswered cycles after seven days, releases their
+  intents atomically, permits safe re-suggestion, and pins every application SQL
+  function to `public, pg_temp`.
+- Cycle expiry runs lazily during matching and cycle reads/actions, with no poller.
+- Checkout requires explicit wallet choice when multiple wallets are connected.
+- Native ERC-4337 ETH verification requires both a UserOperation sender and a
+  matching internal transfer trace; unavailable traces stay pending and safe.
+- Archived listing images are removed from the owner's Storage path; a failed
+  deletion restores the URL and returns a retryable error.
+- `ws` 8 consumers are overridden to 8.21.0; the WalletConnect component that
+  requires major 7 remains on 7.5.11. Privy was not downgraded.
 
 ## Verification
 
-- `npm run check` passes: lint, syntax, 105 tests, web build, Worker dry-run.
-- Build emits pre-existing Privy/Rolldown annotation and chunk-size warnings.
+- `npm run check` passes: lint, syntax, 112 tests, web build, Worker dry-run.
 - `git diff --check` passes.
-- Migrations were reviewed statically; no disposable local Postgres was available.
+- `npm audit --omit=dev --audit-level=high` reports no high or critical issues;
+  ten transitive moderate `uuid` findings remain behind Privy/MetaMask.
+- Migrations 0001-0021 apply from scratch on disposable PostgreSQL 17 + pgvector.
+- A transactional SQL test confirms cycle expiry, reservation release, intent
+  reactivation and insertion of a new cycle with the same hash.
+- PostgreSQL catalog inspection confirms all application functions have pinned
+  search paths.
+- The default Base public RPC supports neither `debug_traceTransaction` nor
+  `trace_transaction`; production needs a trace-capable `BASE_RPC_URL` before
+  enabling native ETH checkout from an ERC-4337 smart account.
 
-## Next Actions
+## External Follow-up
 
-- Apply migrations in a controlled non-production environment and exercise the
-  payment, account-link, reservation, Copilot, and notification flows end to end.
-- Request GitHub cached-object purge for the former PII tag, then finish finding
-  17 expiry and remaining low-severity items.
+- Apply migrations 0015-0021 to staging, exercise real integrations, then apply
+  them to production using the guarded `npm run db:apply` workflow and backups.
+- `pre-reset-mvp` is absent from the GitHub API and remote refs. GitHub documents
+  that cached SHA views can only be purged through a Support Portal ticket; ask
+  Support to purge cached views/references for `list_output.txt` in
+  `xdayon/IpeXchange` because it contains third-party PII. The earliest affected
+  unreachable commit is `443bb094b4243da2ef9b00859f269581d1420ef7`.
 
-## Open Risks
+## Notes
 
-- Finding 8: only `pre-reset-mvp` reached the PII file; the tag was deleted
-  locally and remotely. GitHub cache/object purge is still an external follow-up.
-- Automatic cycle expiry and the remaining low-severity items are not fixed.
-- Native ETH via ERC-4337 remains unsupported; ERC-20 smart-account transfers work.
+- The remaining npm audit items are moderate transitive `uuid` advisories. npm's
+  proposed forced fix downgrades Privy and must not be used.
+- Build warnings are third-party Privy/Rolldown annotations and chunk size only.

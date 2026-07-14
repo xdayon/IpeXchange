@@ -39,6 +39,7 @@ export const TOKENS = {
 };
 
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+const USER_OPERATION_TOPIC = '0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f';
 
 async function rpc(env, method, params) {
   const res = await fetch(env.BASE_RPC_URL || DEFAULT_RPC, {
@@ -54,6 +55,17 @@ async function rpc(env, method, params) {
 
 export const getTransaction = (env, hash) => rpc(env, 'eth_getTransactionByHash', [hash]);
 export const getTransactionReceipt = (env, hash) => rpc(env, 'eth_getTransactionReceipt', [hash]);
+export async function getTransactionTrace(env, hash) {
+  try {
+    return await rpc(
+      env,
+      'debug_traceTransaction',
+      [hash, { tracer: 'callTracer', tracerConfig: { onlyTopCall: false } }],
+    );
+  } catch {
+    return rpc(env, 'trace_transaction', [hash]);
+  }
+}
 
 export async function getConfirmations(env, receipt) {
   const head = BigInt(await rpc(env, 'eth_blockNumber', []));
@@ -102,6 +114,38 @@ export function paymentMinedDuringQuote(blockTimestamp, createdAt, expiresAt, to
 function topicAddress(topic) {
   if (!/^0x0{24}[0-9a-f]{40}$/i.test(topic ?? '')) return null;
   return `0x${topic.slice(-40).toLowerCase()}`;
+}
+
+export function smartAccountSender(receipt) {
+  const event = (receipt.logs ?? []).find(
+    (log) => log.topics?.[0]?.toLowerCase() === USER_OPERATION_TOPIC,
+  );
+  return topicAddress(event?.topics?.[2]);
+}
+
+function amountAtLeast(value, minimum) {
+  try {
+    return BigInt(value ?? 0) >= BigInt(minimum);
+  } catch {
+    return false;
+  }
+}
+
+// ERC-4337 native ETH payments are internal calls from the user's smart
+// account, while the outer transaction is sent by a bundler to an EntryPoint.
+export function tracedNativePaymentSender(trace, toWallet, amountUnits) {
+  const pending = Array.isArray(trace) ? [...trace] : trace ? [trace] : [];
+  while (pending.length) {
+    const call = pending.pop();
+    const action = call.action ?? call;
+    if (!call.error && action.to?.toLowerCase() === toWallet &&
+        amountAtLeast(action.value, amountUnits) &&
+        /^0x[0-9a-f]{40}$/i.test(action.from ?? '')) {
+      return action.from.toLowerCase();
+    }
+    pending.push(...(call.calls ?? []));
+  }
+  return null;
 }
 
 // Returns the address that actually supplied the quoted transfer. Native

@@ -27,9 +27,15 @@ async function loadCycle(db, id) {
   return data;
 }
 
+async function expireCycles(db) {
+  const { error } = await db.rpc('expire_stale_cycles');
+  if (error) console.error('Cycle expiry failed:', error);
+}
+
 app.get('/me/cycles', requireAuth, async (c) => {
   const user = c.get('user');
   const db = getDb(c.env);
+  await expireCycles(db);
 
   const { data: mine, error } = await db
     .from('trade_cycle_participants')
@@ -57,7 +63,9 @@ app.get('/me/cycles', requireAuth, async (c) => {
 
 app.get('/cycles/:id', requireAuth, async (c) => {
   const user = c.get('user');
-  const cycle = await loadCycle(getDb(c.env), c.req.param('id'));
+  const db = getDb(c.env);
+  await expireCycles(db);
+  const cycle = await loadCycle(db, c.req.param('id'));
   if (!cycle) return c.json({ error: 'Not found' }, 404);
   if (!cycle.participants.some((p) => p.user_id === user.id)) {
     return c.json({ error: 'Forbidden' }, 403);
@@ -71,6 +79,7 @@ app.post('/cycles/:id/respond', requireAuth, rateLimit(30, 'cycle-act'), async (
   if (typeof body?.accept !== 'boolean') return c.json({ error: 'accept must be a boolean' }, 400);
 
   const db = getDb(c.env);
+  await expireCycles(db);
   const { data: result, error } = await db.rpc('respond_to_cycle', {
     p_cycle: c.req.param('id'),
     p_user: user.id,

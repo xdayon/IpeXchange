@@ -4,6 +4,8 @@ import {
   paymentMinedDuringQuote,
   paymentSender,
   paymentSatisfied,
+  smartAccountSender,
+  tracedNativePaymentSender,
   unitsToDecimalString,
   usdToUnits,
 } from '../src/lib/base.js';
@@ -115,5 +117,37 @@ describe('paymentSatisfied', () => {
       tx: { to: recipient, value: '0x64' }, receipt: { status: '0x1' },
       token: 'eth', toWallet: recipient, amountUnits: '100',
     })).toBeNull();
+  });
+});
+
+describe('native smart-account transfers', () => {
+  const trace = {
+    from: `0x${'3'.repeat(40)}`,
+    to: `0x${'4'.repeat(40)}`,
+    value: '0x0',
+    calls: [{
+      from: payer.toUpperCase(),
+      to: recipient.toUpperCase(),
+      value: '0x64',
+    }],
+  };
+
+  it('extracts the smart account that made a sufficient internal ETH transfer', () => {
+    expect(tracedNativePaymentSender(trace, recipient, '100')).toBe(payer);
+    expect(tracedNativePaymentSender([{ action: trace.calls[0] }], recipient, '100')).toBe(payer);
+  });
+
+  it('extracts the sender from an ERC-4337 UserOperation event', () => {
+    const userOperationTopic = '0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f';
+    expect(smartAccountSender({
+      logs: [{ topics: [userOperationTopic, `0x${'0'.repeat(64)}`, `0x${'0'.repeat(24)}${payer.slice(2)}`] }],
+    })).toBe(payer);
+    expect(smartAccountSender({ logs: [] })).toBeNull();
+  });
+
+  it('rejects failed, underpaid, and misdirected internal calls', () => {
+    expect(tracedNativePaymentSender({ ...trace, calls: [{ ...trace.calls[0], error: 'reverted' }] }, recipient, '100')).toBeNull();
+    expect(tracedNativePaymentSender(trace, recipient, '101')).toBeNull();
+    expect(tracedNativePaymentSender(trace, `0x${'5'.repeat(40)}`, '100')).toBeNull();
   });
 });
