@@ -12,7 +12,7 @@ conversation transcript.
 ## Current State
 
 - Branch: `feature/nexum-intelligence`
-- Last verified commit: `f8c6be0`
+- Last verified commit: `cbebb0e`
 - The working tree contains the security fixes and must be preserved.
 - Migrations 0015 through 0020 are authored but have not been DB-applied.
 
@@ -68,12 +68,12 @@ conversation transcript.
 
 - Apply migrations in a controlled non-production environment and exercise the
   payment, account-link, reservation, Copilot, and notification flows end to end.
-- Reauthenticate `gh`, delete remote/local `pre-reset-mvp`, request GitHub cache
-  purge, then finish finding 17 expiry and remaining low-severity items.
+- Request GitHub cached-object purge for the former PII tag, then finish finding
+  17 expiry and remaining low-severity items.
 
 ## Open Risks
 
-- Finding 8 was authorized; only `pre-reset-mvp` reaches the PII file, but remote
-  deletion is blocked because local `gh` authentication is invalid.
+- Finding 8: only `pre-reset-mvp` reached the PII file; the tag was deleted
+  locally and remotely. GitHub cache/object purge is still an external follow-up.
 - Automatic cycle expiry and the remaining low-severity items are not fixed.
 - Native ETH via ERC-4337 remains unsupported; ERC-20 smart-account transfers work.
