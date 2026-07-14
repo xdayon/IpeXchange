@@ -11,9 +11,9 @@ conversation transcript.
 ## Current State
 
 - Branch: `feature/nexum-intelligence`
-- Last published commit: `64825b1`
-- Working tree contains the final follow-up fixes and must be preserved.
-- Migrations 0015 through 0021 are authored but not applied to a shared database.
+- Last published implementation commit: `438b341`
+- Migrations 0015 through 0021 are applied to the Supabase project configured in
+  `apps/api/.dev.vars` (`mzjdataxrqtlqufnvpmh`).
 
 ## Implemented
 
@@ -47,8 +47,8 @@ conversation transcript.
 
 ## External Follow-up
 
-- Apply migrations 0015-0021 to staging, exercise real integrations, then apply
-  them to production using the guarded `npm run db:apply` workflow and backups.
+- Exercise payment, account linking, reservations, Copilot and notifications
+  against the configured Supabase project before deploying the application.
 - `pre-reset-mvp` is absent from the GitHub API and remote refs. GitHub documents
   that cached SHA views can only be purged through a Support Portal ticket; ask
   Support to purge cached views/references for `list_output.txt` in
