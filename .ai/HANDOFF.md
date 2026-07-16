@@ -5,13 +5,19 @@ conversation transcript.
 
 ## Objective
 
-- Complete every actionable item from the security and quality review without
+- Finish the Privy Client ID rollout and decide the release path without
   touching `demo` or recreating `pre-reset-mvp`.
 
 ## Current State
 
 - Branch: `feature/nexum-intelligence`
 - Last published implementation commit: `438b341`
+- `apps/web/src/main.jsx` now reads `VITE_PRIVY_CLIENT_ID` and passes it to
+  `PrivyProvider`; the ignored `apps/web/.env` contains the public Client ID.
+- The change is validated locally but is not committed, pushed, merged, or
+  deployed yet.
+- Production is missing `PRIVY_APP_SECRET`; login JWT validation still works,
+  but verified email, payout-wallet ownership, and payment checks need it.
 - Migrations 0015 through 0021 are applied to the Supabase project configured in
   `apps/api/.dev.vars` (`mzjdataxrqtlqufnvpmh`).
 
@@ -32,7 +38,8 @@ conversation transcript.
 
 ## Verification
 
-- `npm run check` passes: lint, syntax, 112 tests, web build, Worker dry-run.
+- `npm run check` passes after the Client ID change: lint, syntax, 112 tests,
+  web build, Worker dry-run.
 - `git diff --check` passes.
 - `npm audit --omit=dev --audit-level=high` reports no high or critical issues;
   ten transitive moderate `uuid` findings remain behind Privy/MetaMask.
