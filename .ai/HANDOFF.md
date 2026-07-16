@@ -14,7 +14,8 @@ conversation transcript.
 - Last published implementation commit: `438b341`
 - `apps/web/src/main.jsx` now reads `VITE_PRIVY_CLIENT_ID` and passes it to
   `PrivyProvider`; the ignored `apps/web/.env` contains the public Client ID.
-- The change is validated locally but is not committed, pushed, merged, or
+- The Client ID change is committed as `34e73a1`, pushed, and included in draft
+  PR #2 (`feature/nexum-intelligence` to `main-mvp`); it is not merged or
   deployed yet.
 - Production is missing `PRIVY_APP_SECRET`; login JWT validation still works,
   but verified email, payout-wallet ownership, and payment checks need it.
