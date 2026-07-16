@@ -10,6 +10,11 @@ app.post('/intents/:id/interest', requireAuth, rateLimit(15, 'interest'), async 
   const user = c.get('user');
   const db = getDb(c.env);
   const body = await c.req.json().catch(() => ({}));
+  if (body.message != null && typeof body.message !== 'string') {
+    return c.json({ error: 'message must be a string' }, 400);
+  }
+  const message = body.message?.trim() || null;
+  if (message?.length > 280) return c.json({ error: 'message must be 280 characters or fewer' }, 400);
 
   const { data: intent } = await db
     .from('intents')
@@ -22,7 +27,7 @@ app.post('/intents/:id/interest', requireAuth, rateLimit(15, 'interest'), async 
   const { data: mark, error } = await db
     .from('interest_marks')
     .upsert(
-      { intent_id: intent.id, user_id: user.id, message: body.message ?? null },
+      { intent_id: intent.id, user_id: user.id, message },
       { onConflict: 'intent_id,user_id' },
     )
     .select()
@@ -35,7 +40,7 @@ app.post('/intents/:id/interest', requireAuth, rateLimit(15, 'interest'), async 
   const who = user.display_name || 'Someone';
   const dm =
     `${who} is interested in your intent "${intent.title}".` +
-    (body.message ? `\n\nTheir message: ${String(body.message).slice(0, 280)}` : '') +
+    (message ? `\n\nTheir message: ${message}` : '') +
     '\n\nOpen IpeXchange to follow up.';
   c.executionCtx.waitUntil(
     notify(c.env, {
@@ -46,7 +51,7 @@ app.post('/intents/:id/interest', requireAuth, rateLimit(15, 'interest'), async 
         intent_title: intent.title,
         from_user_id: user.id,
         from_display_name: user.display_name,
-        message: body.message ?? null,
+        message,
       },
       text: dm,
     }),

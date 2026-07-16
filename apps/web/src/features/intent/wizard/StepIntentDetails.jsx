@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Camera, X, DollarSign } from 'lucide-react';
 import { Field } from './ui.jsx';
 import { inputStyle, haptic } from './helpers.js';
@@ -6,9 +6,18 @@ import StepIntentKindFields from './StepIntentKindFields.jsx';
 
 export default function StepIntentDetails({ form, onChange, direction }) {
   const fileRef = useRef(null);
+  const [imageError, setImageError] = useState(null);
 
   const handleFile = (file) => {
-    if (!file?.type?.startsWith('image/')) return;
+    if (!file?.type?.startsWith('image/')) {
+      setImageError('Choose a valid image file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError('Images must be 5MB or smaller.');
+      return;
+    }
+    setImageError(null);
     onChange('imageFile', file);
     onChange('imagePreview', URL.createObjectURL(file));
     haptic('light');
@@ -58,6 +67,9 @@ export default function StepIntentDetails({ form, onChange, direction }) {
       </Field>
 
       <Field label="Photo" hint="optional, 1 image up to 5MB">
+        {imageError && (
+          <p style={{ color: 'var(--accent-pink)', fontSize: 13, marginBottom: 10 }}>{imageError}</p>
+        )}
         {form.imagePreview ? (
           <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
             <img src={form.imagePreview} alt="preview"

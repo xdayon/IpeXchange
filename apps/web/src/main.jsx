@@ -5,6 +5,7 @@ import { base } from 'viem/chains';
 import App from './App.jsx';
 
 const PRIVY_APP_ID = import.meta.env.VITE_PRIVY_APP_ID;
+const PRIVY_CLIENT_ID = import.meta.env.VITE_PRIVY_CLIENT_ID;
 
 const privyConfig = {
   loginMethods: ['email', 'wallet', 'telegram'],
@@ -19,7 +20,7 @@ const privyConfig = {
 };
 
 const app = PRIVY_APP_ID ? (
-  <PrivyProvider appId={PRIVY_APP_ID} config={privyConfig}>
+  <PrivyProvider appId={PRIVY_APP_ID} clientId={PRIVY_CLIENT_ID} config={privyConfig}>
     <App />
   </PrivyProvider>
 ) : (

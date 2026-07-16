@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import './styles/globals.css';
 
 import Navbar from './shared/layout/Navbar.jsx';
@@ -7,6 +7,11 @@ import BottomNav from './shared/layout/BottomNav.jsx';
 import { useAuth } from './features/auth/useAuth.js';
 import { useTelegram } from './shared/hooks/useTelegram.js';
 import { confirmDmOk } from './api/me.js';
+import { useNotifications } from './features/notifications/useNotifications.js';
+import './features/notifications/notifications.css';
+import { isUuid } from './shared/deepLinks.js';
+import { routeFromLocation } from './shared/navigation.js';
+import { useAppHistory } from './shared/hooks/useAppHistory.js';
 
 const HomePage = lazy(() => import('./features/home/HomePage.jsx'));
 const MarketFeed = lazy(() => import('./features/marketplace/MarketFeed.jsx'));
@@ -19,6 +24,7 @@ const CyclesPage = lazy(() => import('./features/cycles/CyclesPage.jsx'));
 const CycleDetail = lazy(() => import('./features/cycles/CycleDetail.jsx'));
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage.jsx'));
 const AdminPage = lazy(() => import('./features/admin/AdminPage.jsx'));
+const NotificationPage = lazy(() => import('./features/notifications/NotificationPage.jsx'));
 
 const Loader = () => (
   <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)' }}>
@@ -31,46 +37,31 @@ const Loader = () => (
 // /?intent=<id> lands straight on the intent detail page.
 // /l/<id> is the shareable OG-preview link served by the Worker; it lands here too.
 const searchParams = new URLSearchParams(window.location.search);
-const shareLinkMatch = window.location.pathname.match(/^\/l\/([0-9a-f-]{36})$/i);
-const deepLinkIntentId = searchParams.get('intent') || shareLinkMatch?.[1] || null;
+const initialRoute = routeFromLocation(window.location.search, window.location.pathname);
 const referralRef = searchParams.get('ref');
-if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(referralRef)) {
+if (isUuid(referralRef)) {
   localStorage.setItem('ipex-ref', referralRef);
-}
-if (deepLinkIntentId || referralRef) window.history.replaceState({}, '', '/');
-
-// History stack for the Telegram BackButton
-function useHistory(initial = 'home') {
-  const [stack, setStack] = useState(() => (Array.isArray(initial) ? initial : [initial]));
-  const page = stack[stack.length - 1];
-  const push = (p) => setStack((s) => [...s, p]);
-  const pop = () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
-  const reset = (p) => setStack([p]);
-  const canBack = stack.length > 1;
-  return { page, push, pop, reset, canBack };
 }
 
 export default function App() {
   const { user, loading: authLoading, isAuthenticated, login, logout, refresh } = useAuth();
   const { isTMA, haptic, requestWriteAccess } = useTelegram();
-  const { page, push, pop, reset, canBack } = useHistory(
-    deepLinkIntentId ? ['home', 'intent-detail'] : 'home',
-  );
+  const { route, push, replace, pop, canBack } = useAppHistory(initialRoute);
+  const { page, data: routeData } = route;
+  const notificationCenter = useNotifications(user?.id, page === 'notifications');
 
   // Honor the user's configured start screen once per session.
   const startApplied = useRef(false);
   useEffect(() => {
-    if (startApplied.current || !user || deepLinkIntentId) return;
+    if (startApplied.current || !user || initialRoute.page !== 'home') return;
     startApplied.current = true;
-    if (user.settings?.default_tab === 'discover') reset('discover');
+    if (user.settings?.default_tab === 'discover') replace('discover');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const [selectedIntent, setSelectedIntent] = useState(
-    deepLinkIntentId ? { id: deepLinkIntentId } : null,
-  );
-  const [selectedCycleId, setSelectedCycleId] = useState(null);
-  const [createDirection, setCreateDirection] = useState(null);
+  const selectedIntent = routeData.intent ?? null;
+  const selectedCycleId = routeData.cycleId ?? null;
+  const createDirection = routeData.direction ?? null;
 
   useEffect(() => {
     const tg = window?.Telegram?.WebApp;
@@ -101,12 +92,7 @@ export default function App() {
 
   const navigate = (dest, data = {}) => {
     haptic('light');
-    if (dest === 'intent-detail' && data.intent) setSelectedIntent(data.intent);
-    if (dest === 'cycle-detail' && data.cycleId) setSelectedCycleId(data.cycleId);
-    if (dest === 'create') setCreateDirection(data.direction ?? null);
-    if (['home', 'discover', 'cycles', 'profile'].includes(dest)) { setSelectedIntent(null); reset(dest); return; }
-    push(dest);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    push(dest, data);
   };
 
   const goBack = () => { haptic('light'); pop(); };
@@ -135,7 +121,10 @@ export default function App() {
   return (
     <div className="app-root">
       <SplashIntro />
-      {showTopNav && <Navbar user={user} isAuthenticated={isAuthenticated} login={login} onNavigate={navigate} />}
+      {showTopNav && (
+        <Navbar user={user} isAuthenticated={isAuthenticated} login={login}
+          onNavigate={navigate} unreadCount={notificationCenter.unreadCount} />
+      )}
 
       <main style={contentStyle}>
         <Suspense fallback={<Loader />}>
@@ -160,7 +149,7 @@ export default function App() {
               login={login}
               initialDirection={createDirection}
               onBack={goBack}
-              onMarket={() => reset('discover')}
+              onMarket={() => replace('discover')}
               onNexum={() => navigate('nexum')}
             />
           )}
@@ -169,7 +158,7 @@ export default function App() {
               isAuthenticated={isAuthenticated}
               login={login}
               onBack={goBack}
-              onMarket={() => reset('discover')}
+              onMarket={() => replace('discover')}
             />
           )}
           {page === 'cycles' && (
@@ -192,7 +181,11 @@ export default function App() {
               onNavigate={navigate}
               onSelectIntent={openIntent}
               refresh={refresh}
+              unreadCount={notificationCenter.unreadCount}
             />
+          )}
+          {page === 'notifications' && (
+            <NotificationPage center={notificationCenter} onBack={goBack} onNavigate={navigate} />
           )}
           {page === 'settings' && (
             <SettingsPage user={user} logout={logout} onBack={goBack} refresh={refresh} />
@@ -207,7 +200,7 @@ export default function App() {
         <NexumWidget
           isAuthenticated={isAuthenticated}
           login={login}
-          onMarket={() => reset('discover')}
+          onMarket={() => replace('discover')}
           visible={page !== 'nexum'}
           aboveBottomNav={showBottomNav}
         />

@@ -3,14 +3,20 @@ import { requireAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { isAllowlistedAdmin } from '../lib/admin.js';
+import { syncPrivyEmail } from '../lib/privy.js';
 
 const app = new Hono();
 
 async function requireAdmin(c, next) {
   const user = c.get('user');
   if (!user.is_admin) {
-    if (!isAllowlistedAdmin(c.env, user)) return c.json({ error: 'Not found' }, 404);
-    await getDb(c.env).from('users').update({ is_admin: true }).eq('id', user.id);
+    const db = getDb(c.env);
+    const verifiedEmail = await syncPrivyEmail(c.env, db, user);
+    if (!isAllowlistedAdmin(c.env, user, verifiedEmail)) {
+      return c.json({ error: 'Not found' }, 404);
+    }
+    const { error } = await db.from('users').update({ is_admin: true }).eq('id', user.id);
+    if (error) return c.json({ error: 'Could not grant admin access' }, 500);
   }
   await next();
 }
@@ -23,6 +29,12 @@ app.get('/admin/metrics', async (c) => {
     console.error('admin_metrics failed:', error);
     return c.json({ error: 'Could not load metrics' }, 500);
   }
+  return c.json(data);
+});
+
+app.get('/admin/nexum-funnel', async (c) => {
+  const { data, error } = await getDb(c.env).rpc('nexum_funnel');
+  if (error) return c.json({ error: 'Could not load Nexum funnel' }, 500);
   return c.json(data);
 });
 

@@ -1,7 +1,7 @@
 import { apiFetch } from './index.js';
 
-export async function fetchMe() {
-  return apiFetch('/me');
+export async function fetchMe(options = {}) {
+  return apiFetch('/me', options);
 }
 
 export async function updateProfile(patch) {

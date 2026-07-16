@@ -45,6 +45,22 @@ const DRAFT_SCHEMA = {
       description: { type: 'STRING' },
       category: { type: 'STRING', nullable: true },
       price_fiat: { type: 'NUMBER', nullable: true },
+      condition: { type: 'STRING', enum: ['new', 'used', 'refurbished'], nullable: true },
+      brand: { type: 'STRING', nullable: true },
+      duration: { type: 'STRING', nullable: true },
+      format: { type: 'STRING', enum: ['in_person', 'online', 'hybrid'], nullable: true },
+      access: { type: 'STRING', enum: ['one_time', 'lifetime'], nullable: true },
+      level: { type: 'STRING', enum: ['beginner', 'intermediate', 'advanced'], nullable: true },
+      is_continuous: { type: 'BOOLEAN' },
+      concept_id: { type: 'STRING', nullable: true },
+      location_text: { type: 'STRING', nullable: true },
+      location_radius_km: { type: 'NUMBER', nullable: true },
+      timeframe: { type: 'STRING', nullable: true },
+      quantity: { type: 'NUMBER', nullable: true },
+      currency: { type: 'STRING', nullable: true },
+      value_flexibility: { type: 'STRING', enum: ['fixed', 'flexible', 'unknown'], nullable: true },
+      exchange_modes: { type: 'ARRAY', items: { type: 'STRING' } },
+      delivery_modes: { type: 'ARRAY', items: { type: 'STRING' } },
       missing_fields: { type: 'ARRAY', items: { type: 'STRING' } },
     },
     required: ['direction', 'kind', 'title', 'description', 'missing_fields'],
@@ -59,7 +75,9 @@ Rules:
 - Write a short, specific, market-ready title (max 80 chars) and a description of 2-4 complete sentences in the member's first-person voice with every concrete detail they gave. Never invent details.
 - category: one or two lowercase words ("electronics", "web development"); null when unclear.
 - NEVER invent a price. Only set price_fiat when the text states a value (convert to USD if another currency is given); otherwise use null and add "price_fiat" to missing_fields.
-- List in missing_fields anything that would make the listing stronger (e.g. "price_fiat", "condition", "timeframe", "location").
+- Preserve condition, brand, duration, format, access, level and whether a service or knowledge intent is recurring when stated. Use null when absent and never infer unsupported details.
+- Preserve concept_id, location, timeframe, quantity, currency, value flexibility and exchange or delivery preferences when stated.
+- List only important missing fields editable in review: "price_fiat", "condition", "brand", "duration", "format", "access" or "level".
 - If the text contains no extractable intent, return an empty array.`;
 
 // Returns an array of intent drafts, or null on failure.

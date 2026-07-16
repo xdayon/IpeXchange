@@ -1,3 +1,5 @@
+import { CONCEPT_IDS, conceptForKind } from './intentTaxonomy.js';
+
 export const DIRECTIONS = ['want', 'offer'];
 export const KINDS = ['good', 'digital', 'service', 'knowledge'];
 export const STATUSES = ['active', 'fulfilled', 'archived'];
@@ -14,12 +16,16 @@ export const KIND_FIELD_KEYS = ['condition', 'brand', 'duration', 'format', 'acc
 
 export const EDITABLE = [
   'title', 'description', 'kind', 'category', 'price_fiat', 'image_url', 'status',
-  'is_continuous', ...KIND_FIELD_KEYS,
+  'is_continuous', 'concept_id', 'location_text', 'location_radius_km', 'timeframe',
+  'quantity', 'currency', 'value_flexibility', 'exchange_modes', 'delivery_modes',
+  'attributes', 'constraints', 'field_confidence', 'expires_at', ...KIND_FIELD_KEYS,
 ];
 
 export const INTENT_FIELDS =
   'id, user_id, direction, kind, title, description, category, price_fiat, image_url, ' +
-  'status, source, created_at, is_continuous, condition, brand, duration, format, access, level';
+  'status, source, created_at, is_continuous, condition, brand, duration, format, access, level, ' +
+  'concept_id, location_text, location_radius_km, timeframe, quantity, currency, value_flexibility, ' +
+  'exchange_modes, delivery_modes, attributes, constraints, field_confidence, expires_at';
 
 export function validateKindFields(body) {
   for (const [field, allowed] of Object.entries(KIND_FIELD_ENUMS)) {
@@ -28,7 +34,60 @@ export function validateKindFields(body) {
       return `${field} must be one of: ${allowed.join(', ')}`;
     }
   }
+  if (body.concept_id != null && !CONCEPT_IDS.includes(body.concept_id)) return 'Invalid concept_id';
+  if (body.concept_id != null && body.kind != null && !conceptForKind(body.concept_id, body.kind)) {
+    return 'concept_id is incompatible with kind';
+  }
+  if (body.location_radius_km != null
+    && (!Number.isFinite(Number(body.location_radius_km)) || Number(body.location_radius_km) < 0)) {
+    return 'location_radius_km must be a non-negative number';
+  }
+  if (body.quantity != null && (!Number.isFinite(Number(body.quantity)) || Number(body.quantity) <= 0)) {
+    return 'quantity must be a positive number';
+  }
+  if (body.value_flexibility != null
+    && !['fixed', 'flexible', 'unknown'].includes(body.value_flexibility)) {
+    return 'Invalid value_flexibility';
+  }
+  for (const field of ['exchange_modes', 'delivery_modes']) {
+    if (body[field] != null && (!Array.isArray(body[field]) || body[field].length > 4)) {
+      return `${field} must be an array with up to 4 values`;
+    }
+  }
   return null;
+}
+
+export function validateIntentCreate(body, supabaseUrl) {
+  const { direction, kind, title, price_fiat, image_url } = body;
+  if (!DIRECTIONS.includes(direction)) return 'direction must be want or offer';
+  if (kind != null && !KINDS.includes(kind)) return 'kind must be good, digital, service or knowledge';
+  if (!title || String(title).trim().length < 3) return 'title is required (min 3 chars)';
+  if (String(title).trim().length > 120) return 'title must be 120 characters or fewer';
+  if (price_fiat != null && (isNaN(Number(price_fiat)) || Number(price_fiat) < 0)) {
+    return 'price_fiat must be a non-negative number';
+  }
+  if (image_url != null && !String(image_url).startsWith(`${supabaseUrl}/storage/`)) {
+    return 'Invalid image URL';
+  }
+  return validateKindFields(body);
+}
+
+export function validateIntentPatch(patch, supabaseUrl) {
+  if (patch.status && !STATUSES.includes(patch.status)) return 'Invalid status';
+  if (patch.kind != null && !KINDS.includes(patch.kind)) return 'Invalid kind';
+  if (patch.title != null && String(patch.title).trim().length < 3) {
+    return 'title is required (min 3 chars)';
+  }
+  if (patch.title != null && String(patch.title).trim().length > 120) {
+    return 'title must be 120 characters or fewer';
+  }
+  if (patch.price_fiat != null && (isNaN(Number(patch.price_fiat)) || Number(patch.price_fiat) < 0)) {
+    return 'price_fiat must be a non-negative number';
+  }
+  if (patch.image_url != null && !String(patch.image_url).startsWith(`${supabaseUrl}/storage/`)) {
+    return 'Invalid image URL';
+  }
+  return validateKindFields(patch);
 }
 
 export function kindFieldValues(body) {

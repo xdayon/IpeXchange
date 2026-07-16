@@ -31,7 +31,8 @@ export async function transcribe(env, file) {
 
 const EXTRACT_PROMPT = `You extract marketplace intents from a member of the Ipe City network. The input is either free-form text or an interview transcript where lines starting with "Nexum:" are the interviewer and lines starting with "Member:" are the member. Extract intents ONLY from what the member said, using Nexum's questions as context to resolve short answers ("yes, around $200"). Reply ONLY with a JSON object: {"drafts": [...]}.
 
-Each draft: {"direction": "want"|"offer", "kind": "good"|"digital"|"service"|"knowledge", "title": string (max 80 chars), "description": string, "category": string|null, "price_fiat": number|null, "missing_fields": string[]}.
+Each draft: {"direction":"want"|"offer","kind":"good"|"digital"|"service"|"knowledge","title":string,"description":string,"category":string|null,"concept_id":string|null,"price_fiat":number|null,"condition":string|null,"brand":string|null,"duration":string|null,"format":string|null,"access":string|null,"level":string|null,"is_continuous":boolean,"location_text":string|null,"location_radius_km":number|null,"timeframe":string|null,"quantity":number|null,"currency":string|null,"value_flexibility":"fixed"|"flexible"|"unknown"|null,"exchange_modes":string[],"delivery_modes":string[],"missing_fields":string[]}.
+concept_id must be one of: electronics, mobility, home_goods, food, software, digital_media, development, design, wellness, professional, education, mentoring, languages, other_good, other_digital, other_service, other_knowledge.
 
 Rules:
 - Extract EVERY distinct interest (direction "want": something they are looking for) and offer (direction "offer": something they bring - goods, digital products, services, work, consulting, knowledge) as a separate draft. Never merge unrelated things.
@@ -39,8 +40,9 @@ Rules:
 - title: short, specific and market-ready ("MacBook Pro 14 M3, 2024" rather than "laptop").
 - description: 2-4 complete sentences in the member's first-person voice, including every concrete detail they gave (condition, scope, format, experience, availability). Never invent details.
 - category: one or two lowercase words ("electronics", "web development", "language classes"); null when unclear.
+- Preserve structured details only when explicitly stated or unambiguously resolved by the interview question. Use null otherwise. is_continuous is true only for recurring service or knowledge offers/interests.
 - NEVER invent a price. Only set price_fiat when the member stated a value (converted to USD); otherwise null and add "price_fiat" to missing_fields.
-- missing_fields: list what would make the listing stronger, e.g. "price_fiat", "condition", "timeframe", "location".
+- missing_fields: include only important editable information that is absent, including price_fiat, condition, brand, duration, format, access, level, timeframe or location_text.
 - Skip anything the member says is already listed on the market.
 - No extractable intent: return {"drafts": []}.`;
 

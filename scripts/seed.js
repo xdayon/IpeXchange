@@ -1,6 +1,8 @@
 // Seeds dev users and intents that form a 2-hop cycle, a 3-hop cycle
 // and one value-unbalanced pair, then prints find_intent_cycles output.
 // Usage: SUPABASE_URL=... SUPABASE_SECRET_KEY=... GEMINI_API_KEY=... npm run db:seed
+import { postgrestInPath } from './db-safety.js';
+
 const { SUPABASE_URL, SUPABASE_SECRET_KEY, GEMINI_API_KEY } = process.env;
 if (!SUPABASE_URL || !SUPABASE_SECRET_KEY || !GEMINI_API_KEY) {
   console.error('Set SUPABASE_URL, SUPABASE_SECRET_KEY and GEMINI_API_KEY.');
@@ -63,9 +65,29 @@ const INTENTS = () => [
 ];
 
 console.log('Cleaning previous seed data...');
-// Cycles reference intents without cascade; clear them first (dev database).
-await rest('/trade_cycles?id=not.is.null', { method: 'DELETE' });
-await rest('/users?email=like.seed-*@test.local', { method: 'DELETE' });
+const seedUserPath = postgrestInPath(
+  'users',
+  'email',
+  SEED_USERS.map((user) => user.email),
+  'id',
+);
+const existingUsers = await rest(seedUserPath);
+const userIds = existingUsers.map((user) => user.id);
+
+// Cycle participant intent references do not cascade. Remove only cycles tied
+// to reserved seed users, then delete exactly those users.
+if (userIds.length > 0) {
+  const participants = await rest(
+    postgrestInPath('trade_cycle_participants', 'user_id', userIds, 'cycle_id'),
+  );
+  const cyclePath = postgrestInPath(
+    'trade_cycles',
+    'id',
+    participants.map((participant) => participant.cycle_id),
+  );
+  if (cyclePath) await rest(cyclePath, { method: 'DELETE' });
+  await rest(postgrestInPath('users', 'id', userIds), { method: 'DELETE' });
+}
 
 console.log('Creating users...');
 const users = await rest('/users', { method: 'POST', body: JSON.stringify(SEED_USERS) });

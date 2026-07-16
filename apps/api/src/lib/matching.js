@@ -9,16 +9,28 @@ const ORDINAL = { 2: '2-way', 3: '3-way' };
 // Runs after an intent is published (via ctx.waitUntil): asks Postgres
 // for rings through this user, persists unseen ones (dedup by
 // cycle_hash inside persist_intent_cycle) and notifies every member.
-export async function matchAndNotify(env, userId) {
+export async function findCycles(env, userId) {
   const db = getDb(env);
+  const [{ error: paymentExpiryError }, { error: cycleExpiryError }] = await Promise.all([
+    db.rpc('expire_payment_reservations'),
+    db.rpc('expire_stale_cycles'),
+  ]);
+  if (paymentExpiryError) console.error('Payment reservation cleanup failed:', paymentExpiryError);
+  if (cycleExpiryError) console.error('Cycle expiry failed:', cycleExpiryError);
   const { data: cycles, error } = await db.rpc('find_intent_cycles', { p_user_id: userId });
   if (error) {
     console.error('find_intent_cycles failed:', error);
-    return;
+    return [];
   }
+  return cycles ?? [];
+}
+
+export async function matchAndNotify(env, userId, candidates = null) {
+  const db = getDb(env);
+  const cycles = candidates ?? await findCycles(env, userId);
 
   let created = 0;
-  for (const cycle of cycles ?? []) {
+  for (const cycle of cycles) {
     if (created >= MAX_NEW_CYCLES) break;
     const { data: result, error: persistError } = await db.rpc('persist_intent_cycle', {
       p_cycle: cycle,

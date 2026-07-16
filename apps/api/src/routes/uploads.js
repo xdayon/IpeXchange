@@ -2,10 +2,10 @@ import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
+import { LISTING_IMAGE_BUCKET } from '../lib/listingImages.js';
 
 const app = new Hono();
 
-const BUCKET = 'listing-images';
 const MAX_BYTES = 5 * 1024 * 1024;
 const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
 
@@ -38,7 +38,7 @@ app.post('/uploads', requireAuth, rateLimit(10, 'uploads'), async (c) => {
 
   const db = getDb(c.env);
   const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await db.storage.from(BUCKET).upload(path, buffer, {
+  const { error } = await db.storage.from(LISTING_IMAGE_BUCKET).upload(path, buffer, {
     contentType: file.type,
     upsert: false,
   });
@@ -47,7 +47,7 @@ app.post('/uploads', requireAuth, rateLimit(10, 'uploads'), async (c) => {
     return c.json({ error: 'Upload failed' }, 500);
   }
 
-  const { data } = db.storage.from(BUCKET).getPublicUrl(path);
+  const { data } = db.storage.from(LISTING_IMAGE_BUCKET).getPublicUrl(path);
   return c.json({ url: data.publicUrl, path }, 201);
 });
 

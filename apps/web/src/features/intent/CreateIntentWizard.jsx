@@ -159,11 +159,7 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
     try {
       let imageUrl = null;
       if (form.imageFile) {
-        try {
-          imageUrl = (await uploadImage(form.imageFile)).url;
-        } catch {
-          // image is best-effort; publish the intent anyway
-        }
+        imageUrl = (await uploadImage(form.imageFile)).url;
       }
       const intent = await createIntent({
         direction: form.direction,

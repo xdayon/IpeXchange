@@ -9,12 +9,25 @@
   "scripts": {
     "dev": "npm -w apps/web run dev",
     "dev:api": "npm -w apps/api run dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "syntax": "find apps/api/src scripts -name '*.js' -print0 | xargs -0 -n1 node --check",
+    "lint": "npm -w apps/web run lint && npm run syntax",
+    "check": "npm run lint && npm test && npm run build && npm -w apps/api run check",
     "build": "npm -w apps/web run build",
     "deploy": "npm -w apps/web run build && npm -w apps/api run deploy",
     "db:apply": "node scripts/db-apply.js",
-    "db:seed": "node scripts/seed.js"
+    "db:seed": "node scripts/seed.js",
+    "eval:nexum": "node scripts/nexum-eval-live.js"
   },
   "devDependencies": {
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "ws": "8.21.0",
+    "@walletconnect/jsonrpc-ws-connection": {
+      "ws": "7.5.11"
+    }
   }
 }

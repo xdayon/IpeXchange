@@ -13,6 +13,8 @@ const CARD_FIELDS =
 // quota is only spent on logged-in users.
 app.get('/market', optionalAuth, rateLimit(60, 'market'), async (c) => {
   const db = getDb(c.env);
+  const { error: expiryError } = await db.rpc('expire_payment_reservations');
+  if (expiryError) console.error('Payment reservation cleanup failed:', expiryError);
   const direction = c.req.query('direction');
   const kind = c.req.query('kind');
   const category = c.req.query('category');
@@ -27,9 +29,13 @@ app.get('/market', optionalAuth, rateLimit(60, 'market'), async (c) => {
     if (vector) {
       const { data, error } = await db.rpc('match_intents', {
         query_embedding: vector,
-        p_direction: direction === 'want' ? 'want' : 'offer',
+        p_direction: direction === 'want' || direction === 'offer' ? direction : null,
+        p_kind: ['good', 'digital', 'service', 'knowledge'].includes(kind) ? kind : null,
+        p_category: category || null,
+        p_exclude_user: viewer.id,
         match_threshold: 0.55,
         match_count: limit,
+        match_offset: offset,
       });
       if (!error) {
         return c.json({ intents: (data ?? []).filter((i) => i.user_id !== viewer.id), mode: 'semantic' });

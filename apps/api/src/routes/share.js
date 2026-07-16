@@ -2,11 +2,10 @@ import { Hono } from 'hono';
 import { ImageResponse } from 'workers-og';
 import { getDb } from '../lib/supabase.js';
 import { buildOgCardHtml } from '../lib/ogcard.js';
+import { fetchPublicIntent, injectShareMetaTags } from '../lib/share.js';
 import { SPA_SECURITY_HEADERS } from '../middleware/security.js';
 
 const app = new Hono();
-
-const SHARE_FIELDS = 'id, title, description, price_fiat, image_url, kind, direction, status';
 
 function esc(str) {
   return String(str ?? '').replace(/[&<>"']/g, (c) => ({
@@ -46,8 +45,8 @@ function toBase64(buf) {
 
 app.get('/l/:id', async (c) => {
   const db = getDb(c.env);
-  const { data: intent } = await db.from('intents').select(SHARE_FIELDS).eq('id', c.req.param('id')).single();
-  if (!intent || intent.status !== 'active') return c.redirect('/', 302);
+  const intent = await fetchPublicIntent(db, c.req.param('id'));
+  if (!intent) return c.redirect('/', 302);
 
   const shellRes = await c.env.ASSETS.fetch(new URL('/', c.req.url));
   const shell = await shellRes.text();
@@ -71,9 +70,7 @@ app.get('/l/:id', async (c) => {
   </head>`;
 
   // Drop the shell's generic og/twitter tags: crawlers honor the first occurrence.
-  const html = shell
-    .replace(/^\s*<meta (?:property="og:|name="twitter:)[^>]*>\n?/gm, '')
-    .replace('</head>', metaTags);
+  const html = injectShareMetaTags(shell, metaTags);
   return c.body(html, 200, {
     'content-type': 'text/html; charset=utf-8',
     'cache-control': 'public, max-age=300',
@@ -83,14 +80,14 @@ app.get('/l/:id', async (c) => {
 
 app.get('/og/:file', async (c) => {
   const id = c.req.param('file').replace(/\.png$/, '');
+  const db = getDb(c.env);
+  const intent = await fetchPublicIntent(db, id);
+  if (!intent) return c.notFound();
+
   const cache = caches.default;
   const cacheKey = new Request(c.req.url);
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
-
-  const db = getDb(c.env);
-  const { data: intent } = await db.from('intents').select(SHARE_FIELDS).eq('id', id).single();
-  if (!intent) return c.notFound();
 
   const [regular, bold, logoBuf] = await Promise.all([
     fetchAsset(c, '/fonts/Inter-Regular.ttf'),

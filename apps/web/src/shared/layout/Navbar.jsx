@@ -1,5 +1,5 @@
 
-import { LogIn } from 'lucide-react';
+import { Bell, LogIn } from 'lucide-react';
 
 const styles = {
   nav: {
@@ -39,7 +39,7 @@ const styles = {
   },
 };
 
-export default function Navbar({ user, isAuthenticated, login, onNavigate }) {
+export default function Navbar({ user, isAuthenticated, login, onNavigate, unreadCount = 0 }) {
   const initials = user?.displayName?.slice(0, 1)?.toUpperCase() || '?';
 
   return (
@@ -54,12 +54,19 @@ export default function Navbar({ user, isAuthenticated, login, onNavigate }) {
           + Publish
         </button>
         {isAuthenticated ? (
-          <div className="pressable" style={styles.avatar} onClick={() => onNavigate('profile')}
-            role="button" tabIndex={0} title={user?.displayName || 'Profile'}>
-            {user?.avatar
-              ? <img src={user.avatar} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : initials}
-          </div>
+          <>
+            <button className="notification-nav-button pressable" onClick={() => onNavigate('notifications')}
+              aria-label={`Notifications, ${unreadCount} unread`}>
+              <Bell size={17} />
+              {unreadCount > 0 && <span className="notification-badge">{Math.min(unreadCount, 99)}</span>}
+            </button>
+            <div className="pressable" style={styles.avatar} onClick={() => onNavigate('profile')}
+              role="button" tabIndex={0} title={user?.displayName || 'Profile'}>
+              {user?.avatar
+                ? <img src={user.avatar} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : initials}
+            </div>
+          </>
         ) : (
           <button className="pressable" style={styles.loginBtn} onClick={() => login?.()}>
             <LogIn size={14} /> Log in

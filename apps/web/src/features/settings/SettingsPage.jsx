@@ -45,12 +45,19 @@ function Toggle({ on, onChange }) {
 
 export default function SettingsPage({ user, logout, onBack, refresh }) {
   const [settings, setSettings] = useState(user?.settings ?? {});
+  const [saveError, setSaveError] = useState(null);
   const val = (key, fallback = true) => settings[key] ?? fallback;
 
   const set = (key, value) => {
+    const previous = settings[key];
     setSettings((s) => ({ ...s, [key]: value }));
+    setSaveError(null);
     if (key === 'haptics') localStorage.setItem(HAPTICS_OFF_KEY, value ? '' : '1');
-    saveSettings({ [key]: value }).then(() => refresh?.()).catch(() => {});
+    saveSettings({ [key]: value }).then(() => refresh?.()).catch(() => {
+      setSettings((current) => ({ ...current, [key]: previous }));
+      if (key === 'haptics') localStorage.setItem(HAPTICS_OFF_KEY, previous === false ? '1' : '');
+      setSaveError('Could not save this setting. Try again.');
+    });
   };
 
   const tabBtn = (id, label, Icon) => (
@@ -68,6 +75,9 @@ export default function SettingsPage({ user, logout, onBack, refresh }) {
         <ArrowLeft size={16} /> Back
       </button>
       <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 24 }}>Settings</h1>
+      {saveError && (
+        <p style={{ color: 'var(--accent-pink)', fontSize: 13, marginBottom: 16 }}>{saveError}</p>
+      )}
 
       <Section title="Notifications" icon={Bell}>
         <Row label="Interest alerts" hint="Telegram message when someone marks interest in your intents"

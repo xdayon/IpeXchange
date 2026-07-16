@@ -1,13 +1,13 @@
 // Direct P2P checkout on Base: quote from the Worker, transaction sent
 // from the buyer's own wallet (native ETH or ERC-20 USDC), receipt
 // verified server-side against the RPC before the payment settles.
-import { useState, useRef, useEffect } from 'react';
-import { Wallet, Loader2, Check, ExternalLink } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Wallet, Loader2, Check, ExternalLink, RefreshCw } from 'lucide-react';
 import { useWallets } from '@privy-io/react-auth';
-import { createPayment, verifyPayment } from '../../api/payments.js';
+import { useOnChainPayment } from './useOnChainPayment.js';
+import { initialWalletAddress, walletLabel } from './paymentFlow.js';
+import './payment.css';
 
-const POLL_MS = 4000;
-const MAX_POLLS = 30;
 const TOKEN_OPTIONS = [
   { id: 'usdc', label: 'USDC', hint: 'stable, 1:1 with USD' },
   { id: 'eth', label: 'ETH', hint: 'native ether' },
@@ -15,81 +15,32 @@ const TOKEN_OPTIONS = [
   { id: 'cbbtc', label: 'cbBTC', hint: 'bitcoin on Base' },
 ];
 
-const pad64 = (hex) => hex.replace(/^0x/, '').padStart(64, '0');
-
-function txParams(quote, from) {
-  if (!quote.token_address) {
-    return { from, to: quote.to_wallet, value: `0x${BigInt(quote.amount_units).toString(16)}` };
-  }
-  const data = `0xa9059cbb${pad64(quote.to_wallet)}${pad64(BigInt(quote.amount_units).toString(16))}`;
-  return { from, to: quote.token_address, value: '0x0', data };
-}
-
-function sendErrorMessage(e) {
-  if (e?.code === 4001 || /reject|denied/i.test(e?.message ?? '')) return 'You rejected the transaction in your wallet.';
-  if (/insufficient/i.test(e?.message ?? '')) return 'Insufficient balance for this amount plus gas.';
-  return 'The transaction could not be sent. Try again.';
-}
-
 export default function PayOnChain({ intent, isAuthenticated, login, btnStyle }) {
   const { wallets } = useWallets();
-  const [phase, setPhase] = useState('idle');
-  const [token, setToken] = useState('usdc');
-  const [quote, setQuote] = useState(null);
-  const [txHash, setTxHash] = useState(null);
-  const [error, setError] = useState(null);
-  const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
+  const [walletAddress, setWalletAddress] = useState('');
+  const effectiveWalletAddress = walletAddress || initialWalletAddress(wallets);
+  const wallet = useMemo(
+    () => wallets.find((candidate) => candidate.address === effectiveWalletAddress) ?? null,
+    [effectiveWalletAddress, wallets],
+  );
+  const {
+    error, phase, quote, requestQuote, retryVerification, sendAndVerify, token, txHash,
+  } = useOnChainPayment({ intentId: intent.id, isAuthenticated, login, wallet });
 
-  const fail = (message) => {
-    if (!alive.current) return;
-    setError(message);
-    setPhase('error');
-  };
-
-  const requestQuote = async (tok = token) => {
-    if (!isAuthenticated) return login?.();
-    setToken(tok);
-    setPhase('quoting');
-    setError(null);
-    try {
-      const q = await createPayment(intent.id, tok);
-      if (alive.current) { setQuote(q); setPhase('confirm'); }
-    } catch (e) {
-      fail(e.message || 'Could not prepare the payment.');
-    }
-  };
-
-  const sendAndVerify = async () => {
-    const wallet = wallets[0];
-    if (!wallet) return fail('No wallet available on this account.');
-    setPhase('sending');
-    let hash;
-    try {
-      await wallet.switchChain(quote.chain_id);
-      const provider = await wallet.getEthereumProvider();
-      hash = await provider.request({
-        method: 'eth_sendTransaction',
-        params: [txParams(quote, wallet.address)],
-      });
-    } catch (e) {
-      return fail(sendErrorMessage(e));
-    }
-    if (!alive.current) return;
-    setTxHash(hash);
-    setPhase('verifying');
-    for (let i = 0; i < MAX_POLLS && alive.current; i++) {
-      try {
-        const p = await verifyPayment(quote.id, hash);
-        if (p.status === 'confirmed') return alive.current && setPhase('paid');
-        if (p.status === 'failed') return fail('The transaction failed on-chain.');
-      } catch (e) {
-        return fail(e.message || 'Could not verify the payment.');
-      }
-      await new Promise((r) => setTimeout(r, POLL_MS));
-    }
-    fail('Verification is taking longer than expected. Check the transaction on BaseScan.');
-  };
+  const walletPicker = isAuthenticated && wallets.length > 0 && (
+    <label className="payment-wallet-picker">
+      Paying wallet
+      <select value={effectiveWalletAddress} onChange={(event) => setWalletAddress(event.target.value)}
+        disabled={phase === 'sending' || phase === 'verifying'} className="payment-wallet-select">
+        {wallets.length > 1 && <option value="">Choose a wallet</option>}
+        {wallets.map((candidate) => (
+          <option key={`${candidate.walletClientType}-${candidate.address}`} value={candidate.address}>
+            {walletLabel(candidate)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 
   const txLink = txHash && (
     <a href={`https://basescan.org/tx/${txHash}`} target="_blank" rel="noreferrer"
@@ -109,11 +60,28 @@ export default function PayOnChain({ intent, isAuthenticated, login, btnStyle })
     );
   }
 
+  if (phase === 'verify-error' || phase === 'failed') {
+    return (
+      <div style={{ textAlign: 'center' }}>
+        <p style={{ marginBottom: 10, fontSize: 13, color: 'var(--accent-pink)' }}>{error}</p>
+        <button onClick={retryVerification}
+          style={{ ...btnStyle, background: 'var(--accent-cyan)', color: 'var(--bg-dark)' }}>
+          <RefreshCw size={20} /> Recheck transaction
+        </button>
+        <div style={{ marginTop: 10 }}>{txLink}</div>
+        <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+          This checks the same submitted transaction and will not send funds again.
+        </p>
+      </div>
+    );
+  }
+
   if (phase === 'quoting' || phase === 'confirm' || phase === 'sending' || phase === 'verifying') {
     const busy = phase === 'sending' || phase === 'verifying';
     return (
       <div style={{ padding: 16, background: 'var(--bg-card)', border: '1px solid var(--border-color)',
         borderRadius: 'var(--radius-lg)' }}>
+        {walletPicker}
         <div className="filter-chips" style={{ marginBottom: 12 }}>
           {TOKEN_OPTIONS.map((t) => (
             <button key={t.id} className={`filter-chip ${token === t.id ? 'active' : ''}`}
@@ -134,8 +102,8 @@ export default function PayOnChain({ intent, isAuthenticated, login, btnStyle })
             for 15 minutes. Sent directly to the seller's wallet and verified on-chain.
           </p>
         )}
-        <button onClick={sendAndVerify} disabled={busy || phase === 'quoting'}
-          style={{ ...btnStyle, background: 'var(--accent-cyan)', color: 'var(--bg-dark)', opacity: busy ? 0.7 : 1 }}>
+        <button onClick={sendAndVerify} disabled={busy || phase === 'quoting' || !wallet}
+          style={{ ...btnStyle, background: 'var(--accent-cyan)', color: 'var(--bg-dark)', opacity: busy || !wallet ? 0.7 : 1 }}>
           {busy
             ? <><Loader2 size={20} className="spin" /> {phase === 'sending' ? 'Waiting for your wallet' : 'Verifying on Base'}</>
             : <><Wallet size={20} /> Confirm and pay</>}
@@ -147,6 +115,7 @@ export default function PayOnChain({ intent, isAuthenticated, login, btnStyle })
 
   return (
     <div>
+      {walletPicker}
       <button onClick={() => requestQuote()}
         style={{ ...btnStyle, background: 'var(--accent-cyan)', color: 'var(--bg-dark)' }}>
         <Wallet size={20} /> {isAuthenticated ? 'Pay with crypto' : 'Log in to pay with crypto'}

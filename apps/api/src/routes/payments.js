@@ -3,6 +3,8 @@ import { requireAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { notify } from '../lib/notify.js';
+import { paymentVerificationRequest } from '../lib/paymentVerification.js';
+import { walletBelongsToUser } from '../lib/privy.js';
 import {
   BASE_CHAIN_ID,
   MIN_CONFIRMATIONS,
@@ -12,7 +14,11 @@ import {
   getTokenUsdPrice,
   getTransaction,
   getTransactionReceipt,
-  paymentSatisfied,
+  getTransactionTrace,
+  paymentMinedDuringQuote,
+  paymentSender,
+  smartAccountSender,
+  tracedNativePaymentSender,
   unitsToDecimalString,
   usdToUnits,
 } from '../lib/base.js';
@@ -20,8 +26,7 @@ import {
 const app = new Hono();
 
 const QUOTE_TTL_MS = 15 * 60 * 1000;
-const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
-
+const BLOCK_TIME_TOLERANCE_MS = 2 * 60 * 1000;
 const serialize = (p) => ({
   id: p.id,
   intent_id: p.intent_id,
@@ -96,6 +101,37 @@ app.post('/payments', requireAuth, rateLimit(10, 'pay-quote'), async (c) => {
   return c.json(serialize(payment), 201);
 });
 
+app.post('/payments/:id/prepare', requireAuth, rateLimit(20, 'pay-prepare'), async (c) => {
+  const user = c.get('user');
+  const { data: result, error } = await getDb(c.env).rpc('prepare_payment', {
+    p_payment: c.req.param('id'),
+    p_buyer: user.id,
+  });
+  if (error) {
+    console.error('Payment preparation failed:', error);
+    return c.json({ error: 'Could not reserve this offer for payment' }, 500);
+  }
+  if (result?.error === 'not_found') return c.json({ error: 'Not found' }, 404);
+  if (result?.error === 'quote_expired') return c.json({ error: 'This quote expired. Request a new one.' }, 409);
+  if (result?.error) return c.json({ error: 'This offer is no longer available' }, 409);
+  return c.json({ ok: true });
+});
+
+app.post('/payments/:id/cancel', requireAuth, rateLimit(20, 'pay-cancel'), async (c) => {
+  const user = c.get('user');
+  const { data: result, error } = await getDb(c.env).rpc('cancel_prepared_payment', {
+    p_payment: c.req.param('id'),
+    p_buyer: user.id,
+  });
+  if (error) {
+    console.error('Payment cancellation failed:', error);
+    return c.json({ error: 'Could not release this payment' }, 500);
+  }
+  if (result?.error === 'not_found') return c.json({ error: 'Not found' }, 404);
+  if (result?.error) return c.json({ error: 'This payment can no longer be cancelled' }, 409);
+  return c.json({ ok: true });
+});
+
 app.post('/payments/:id/verify', requireAuth, rateLimit(60, 'pay-verify'), async (c) => {
   const user = c.get('user');
   const db = getDb(c.env);
@@ -107,23 +143,27 @@ app.post('/payments/:id/verify', requireAuth, rateLimit(60, 'pay-verify'), async
     .eq('id', c.req.param('id'))
     .maybeSingle();
   if (!payment || payment.buyer_user_id !== user.id) return c.json({ error: 'Not found' }, 404);
-  if (payment.status === 'confirmed') return c.json(serialize(payment));
-  if (payment.status === 'failed') return c.json({ error: 'This payment already failed' }, 409);
-
-  const txHash = String(body.tx_hash ?? payment.tx_hash ?? '').toLowerCase();
-  if (!TX_HASH_RE.test(txHash)) return c.json({ error: 'A valid tx_hash is required' }, 400);
-  if (payment.tx_hash && payment.tx_hash !== txHash) {
+  const request = paymentVerificationRequest(payment, body.tx_hash);
+  if (request.alreadyConfirmed) return c.json(serialize(payment));
+  if (request.error === 'invalid_hash') return c.json({ error: 'A valid tx_hash is required' }, 400);
+  if (request.error === 'different_hash') {
     return c.json({ error: 'A different transaction is already attached' }, 409);
   }
+  if (request.error === 'not_recoverable') {
+    return c.json({ error: 'This failed payment has no submitted transaction to recheck' }, 409);
+  }
+  if (request.error) {
+    return c.json({ error: 'Prepare this payment before submitting a transaction' }, 409);
+  }
 
-  if (!payment.tx_hash) {
-    if (new Date(payment.quote_expires_at).getTime() < Date.now()) {
-      return c.json({ error: 'This quote expired. Request a new one.' }, 409);
-    }
+  const { recovering, txHash } = request;
+
+  if (request.attachHash) {
     const { data: attached, error } = await db
       .from('payments')
       .update({ tx_hash: txHash, status: 'submitted' })
       .eq('id', payment.id)
+      .eq('status', 'submitted')
       .is('tx_hash', null)
       .select('id')
       .maybeSingle();
@@ -142,55 +182,91 @@ app.post('/payments/:id/verify', requireAuth, rateLimit(60, 'pay-verify'), async
 
   const blockTimestamp = await getBlockTimestamp(c.env, receipt.blockNumber).catch(() => null);
   if (blockTimestamp == null) return c.json(serialize(payment));
-  // A transaction mined well before the quote existed cannot be the one
-  // paying for it — reject it instead of accepting a stale/third-party tx.
-  if (blockTimestamp * 1000 < new Date(payment.created_at).getTime() - 120000) {
-    const { data: updated, error: failError } = await db
-      .from('payments')
-      .update({ status: 'failed' })
-      .eq('id', payment.id)
-      .select()
-      .single();
+  // Attach late-reported hashes so sent funds remain traceable, but only
+  // settle transfers mined during the quote window (plus clock tolerance).
+  if (!paymentMinedDuringQuote(
+    blockTimestamp,
+    payment.created_at,
+    payment.quote_expires_at,
+    BLOCK_TIME_TOLERANCE_MS,
+  )) {
+    if (recovering) return c.json(serialize(payment));
+    const { data: updated, error: failError } = await db.rpc('settle_payment', {
+      p_payment: payment.id,
+      p_valid: false,
+      p_from_wallet: null,
+    });
     if (failError) {
       console.error('Payment update failed:', failError);
       return c.json({ error: 'Could not update the payment' }, 500);
     }
+    if (updated?.error) return c.json({ error: 'Payment reservation was lost' }, 409);
     return c.json(serialize(updated));
   }
 
-  const valid = paymentSatisfied({
+  let fromWallet = paymentSender({
     tx,
     receipt,
     token: payment.token,
     toWallet: payment.to_wallet,
     amountUnits: payment.amount_wei,
   });
+  const userOperationSender = payment.token === 'eth' ? smartAccountSender(receipt) : null;
+  if (!fromWallet && userOperationSender) {
+    let trace;
+    try {
+      trace = await getTransactionTrace(c.env, txHash);
+    } catch (traceError) {
+      console.error('Native smart-account trace unavailable:', traceError);
+      return c.json(serialize(payment));
+    }
+    const tracedSender = tracedNativePaymentSender(trace, payment.to_wallet, payment.amount_wei);
+    fromWallet = tracedSender === userOperationSender ? tracedSender : null;
+  }
   // Ride out potential reorgs before settling either way.
-  if (valid && (await getConfirmations(c.env, receipt).catch(() => 0)) < MIN_CONFIRMATIONS) {
+  if (fromWallet && (await getConfirmations(c.env, receipt).catch(() => 0)) < MIN_CONFIRMATIONS) {
     return c.json(serialize(payment));
   }
 
-  const patch = valid
-    ? { status: 'confirmed', from_wallet: tx.from?.toLowerCase() ?? null, confirmed_at: new Date().toISOString() }
-    : { status: 'failed' };
-  const { data: updated, error } = await db
-    .from('payments')
-    .update(patch)
-    .eq('id', payment.id)
-    .select()
-    .single();
+  let valid = false;
+  if (fromWallet) {
+    const owned = await walletBelongsToUser(c.env, user.privy_did, fromWallet);
+    if (owned === null) {
+      return c.json({ error: 'Wallet verification is unavailable right now. Try again shortly.' }, 503);
+    }
+    valid = owned;
+  }
+
+  if (recovering && !valid) return c.json(serialize(payment));
+
+  const settlement = recovering
+    ? ['recover_failed_payment', {
+      p_payment: payment.id,
+      p_buyer: user.id,
+      p_from_wallet: fromWallet,
+    }]
+    : ['settle_payment', {
+      p_payment: payment.id,
+      p_valid: valid,
+      p_from_wallet: valid ? fromWallet : null,
+    }];
+  const { data: updated, error } = await db.rpc(...settlement);
   if (error) {
     console.error('Payment update failed:', error);
     return c.json({ error: 'Could not update the payment' }, 500);
   }
+  if (updated?.error === 'intent_unavailable') {
+    return c.json({ error: 'This offer is no longer available for payment recovery' }, 409);
+  }
+  if (updated?.error) return c.json({ error: 'Payment reservation was lost' }, 409);
 
-  if (valid) {
+  if (valid && !updated.already_settled) {
     const who = user.display_name || 'A member';
     const amount = `${unitsToDecimalString(payment.amount_wei, TOKENS[payment.token].decimals)} ${TOKENS[payment.token].symbol}`;
     const dm =
       `${who} paid ${amount} (~$${Number(payment.amount_fiat)}) for your offer "${payment.intents?.title}" on Base.` +
       `\n\nTransaction: https://basescan.org/tx/${txHash}` +
-      '\n\nDeliver as agreed, then mark the intent fulfilled in your profile.';
+      '\n\nDeliver as agreed. The offer reservation has been settled.';
     c.executionCtx.waitUntil(
       notify(c.env, {
         userId: payment.seller_user_id,
