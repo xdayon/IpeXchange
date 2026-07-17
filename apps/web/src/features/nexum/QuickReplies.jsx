@@ -3,7 +3,7 @@ export default function QuickReplies({ pills, busy, onPill }) {
 
   return (
     <div className="nexum-quick-replies">
-      <span>Suggested answers</span>
+      <span>Quick replies</span>
       <div className="nexum-pills-row">
         {pills.map((text, index) => (
           <button

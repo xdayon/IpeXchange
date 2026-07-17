@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import './styles/globals.css';
 
 import Navbar from './shared/layout/Navbar.jsx';
@@ -6,12 +6,13 @@ import SplashIntro from './shared/ui/SplashIntro.jsx';
 import BottomNav from './shared/layout/BottomNav.jsx';
 import { useAuth } from './features/auth/useAuth.js';
 import { useTelegram } from './shared/hooks/useTelegram.js';
-import { confirmDmOk } from './api/me.js';
+import { confirmDmOk, saveSettings } from './api/me.js';
 import { useNotifications } from './features/notifications/useNotifications.js';
 import './features/notifications/notifications.css';
 import { isUuid } from './shared/deepLinks.js';
 import { routeFromLocation } from './shared/navigation.js';
 import { useAppHistory } from './shared/hooks/useAppHistory.js';
+import Onboarding, { ONBOARDING_VERSION } from './features/onboarding/Onboarding.jsx';
 
 const HomePage = lazy(() => import('./features/home/HomePage.jsx'));
 const MarketFeed = lazy(() => import('./features/marketplace/MarketFeed.jsx'));
@@ -49,6 +50,12 @@ export default function App() {
   const { route, push, replace, pop, canBack } = useAppHistory(initialRoute);
   const { page, data: routeData } = route;
   const notificationCenter = useNotifications(user?.id, page === 'notifications');
+  const [tutorialMode, setTutorialMode] = useState(null);
+  const [tutorialDismissedFor, setTutorialDismissedFor] = useState(null);
+  const isRootPage = ['home', 'discover', 'cycles', 'profile'].includes(page);
+  const needsFirstTutorial = user && isRootPage && tutorialDismissedFor !== user.id
+    && Number(user.settings?.onboarding_version ?? 0) < ONBOARDING_VERSION;
+  const activeTutorialMode = tutorialMode ?? (needsFirstTutorial ? 'first-login' : null);
 
   // Honor the user's configured start screen once per session.
   const startApplied = useRef(false);
@@ -98,6 +105,16 @@ export default function App() {
   const goBack = () => { haptic('light'); pop(); };
   const openIntent = (intent) => navigate('intent-detail', { intent });
 
+  const completeTutorial = async (destination) => {
+    if (tutorialMode !== 'replay') {
+      await saveSettings({ onboarding_version: ONBOARDING_VERSION });
+      refresh?.();
+    }
+    setTutorialDismissedFor(user?.id ?? null);
+    setTutorialMode(null);
+    if (destination) navigate(destination);
+  };
+
   if (authLoading) return <Loader />;
 
   // Top navbar is web-only (Telegram provides its own header chrome).
@@ -141,6 +158,7 @@ export default function App() {
               isAuthenticated={isAuthenticated}
               login={login}
               onBack={goBack}
+              onEdit={(intent) => navigate('edit-intent', { intent })}
             />
           )}
           {page === 'create' && (
@@ -151,6 +169,15 @@ export default function App() {
               onBack={goBack}
               onMarket={() => replace('discover')}
               onNexum={() => navigate('nexum')}
+            />
+          )}
+          {page === 'edit-intent' && selectedIntent && (
+            <CreateIntentWizard
+              isAuthenticated={isAuthenticated}
+              login={login}
+              initialIntent={selectedIntent}
+              onBack={goBack}
+              onMarket={() => replace('discover')}
             />
           )}
           {page === 'nexum' && (
@@ -188,7 +215,8 @@ export default function App() {
             <NotificationPage center={notificationCenter} onBack={goBack} onNavigate={navigate} />
           )}
           {page === 'settings' && (
-            <SettingsPage user={user} logout={logout} onBack={goBack} refresh={refresh} />
+            <SettingsPage user={user} logout={logout} onBack={goBack} refresh={refresh}
+              onReplayTutorial={() => setTutorialMode('replay')} />
           )}
           {page === 'admin' && user?.isAdmin && <AdminPage onBack={goBack} />}
         </Suspense>
@@ -205,6 +233,10 @@ export default function App() {
           aboveBottomNav={showBottomNav}
         />
       </Suspense>
+
+      {activeTutorialMode && user && (
+        <Onboarding replay={activeTutorialMode === 'replay'} onComplete={completeTutorial} />
+      )}
     </div>
   );
 }

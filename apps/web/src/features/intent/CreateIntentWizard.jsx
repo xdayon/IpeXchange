@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { ArrowLeft, Sparkles, CheckCircle2, LogIn, SquarePen, ChevronRight } from 'lucide-react';
-import { createIntent, uploadImage } from '../../api/intents.js';
+import { createIntent, updateIntent, uploadImage } from '../../api/intents.js';
 import StepIntentType from './wizard/StepIntentType.jsx';
 import StepIntentDetails from './wizard/StepIntentDetails.jsx';
 import StepIntentReview from './wizard/StepIntentReview.jsx';
@@ -13,6 +13,8 @@ const INITIAL_FORM = {
   title: '',
   description: '',
   priceFiat: '',
+  transactionMode: 'exchange',
+  acceptedPaymentTokens: ['usdc'],
   imageFile: null,
   imagePreview: null,
   isContinuous: false,
@@ -43,15 +45,18 @@ function LoginGate({ login }) {
   );
 }
 
-function SuccessScreen({ intent, onMarket, onCreateAnother }) {
+function SuccessScreen({ intent, onMarket, onCreateAnother, editing }) {
+  const buyNow = intent.direction === 'offer' && ['buy_now', 'both'].includes(intent.transaction_mode);
+  const exchange = intent.direction !== 'offer' || intent.transaction_mode !== 'buy_now';
   return (
     <div className="page-enter" style={{ textAlign: 'center', padding: '60px 0', maxWidth: 360, margin: '0 auto' }}>
       <CheckCircle2 size={56} color="var(--accent-lime)" className="pop-in" style={{ margin: '0 auto 20px', display: 'block' }} />
       <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>
-        {intent.direction === 'offer' ? 'Offer' : 'Interest'} <span className="text-gradient-lime">published</span>
+        {intent.direction === 'offer' ? 'Offer' : 'Interest'} <span className="text-gradient-lime">{editing ? 'updated' : 'published'}</span>
       </h2>
       <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 32 }}>
-        It is live on the network. The oracle is already looking for matches and trade cycles.
+        It is live on the market. {exchange && 'Nexum is looking for direct and group trade connections.'}
+        {buyNow && ' Buyers can also pay with your accepted tokens on Base.'}
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <button onClick={onMarket} className="pressable" style={{ padding: '14px', borderRadius: 'var(--radius-md)', border: 'none',
@@ -59,11 +64,13 @@ function SuccessScreen({ intent, onMarket, onCreateAnother }) {
           color: 'var(--bg-dark)', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
           Browse the market
         </button>
-        <button onClick={onCreateAnother} style={{ background: 'none', border: 'none',
-          color: 'var(--accent-cyan)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-          fontFamily: 'var(--font-sans)', padding: 8 }}>
-          Publish another intent
-        </button>
+        {!editing && (
+          <button onClick={onCreateAnother} style={{ background: 'none', border: 'none',
+            color: 'var(--accent-cyan)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', padding: 8 }}>
+            Publish another Interest or Offer
+          </button>
+        )}
       </div>
     </div>
   );
@@ -122,10 +129,32 @@ function ModeChooser({ onBack, onNexum, onManual }) {
   );
 }
 
-export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthenticated, login, initialDirection }) {
+function formFromIntent(intent, initialDirection) {
+  if (!intent) return { ...INITIAL_FORM, direction: initialDirection || INITIAL_FORM.direction };
+  return {
+    ...INITIAL_FORM,
+    direction: intent.direction,
+    kind: intent.kind,
+    title: intent.title ?? '',
+    description: intent.description ?? '',
+    priceFiat: intent.price_fiat ?? '',
+    transactionMode: intent.transaction_mode ?? 'exchange',
+    acceptedPaymentTokens: intent.accepted_payment_tokens?.length
+      ? intent.accepted_payment_tokens : ['usdc'],
+    imagePreview: intent.image_url ?? null,
+    isContinuous: Boolean(intent.is_continuous),
+    condition: intent.condition ?? '', brand: intent.brand ?? '', duration: intent.duration ?? '',
+    format: intent.format ?? '', access: intent.access ?? '', level: intent.level ?? '',
+  };
+}
+
+export default function CreateIntentWizard({
+  onBack, onMarket, onNexum, isAuthenticated, login, initialDirection, initialIntent = null,
+}) {
+  const editing = Boolean(initialIntent?.id);
   const [step, setStep] = useState(0);
-  const [mode, setMode] = useState(onNexum ? null : 'manual');
-  const [form, setForm] = useState({ ...INITIAL_FORM, direction: initialDirection || INITIAL_FORM.direction });
+  const [mode, setMode] = useState(editing || !onNexum ? 'manual' : null);
+  const [form, setForm] = useState(() => formFromIntent(initialIntent, initialDirection));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [published, setPublished] = useState(null);
@@ -141,6 +170,7 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
     return (
       <SuccessScreen
         intent={published}
+        editing={editing}
         onMarket={onMarket}
         onCreateAnother={() => { setForm(INITIAL_FORM); setStep(0); setPublished(null); }}
       />
@@ -151,7 +181,10 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
     return <ModeChooser onBack={onBack} onNexum={onNexum} onManual={() => { haptic('light'); setMode('manual'); }} />;
   }
 
-  const canProceed = step === 0 ? Boolean(form.direction && form.kind) : form.title.trim().length >= 3;
+  const buyNow = form.direction === 'offer' && form.transactionMode !== 'exchange';
+  const canProceed = step === 0 ? Boolean(form.direction && form.kind)
+    : form.title.trim().length >= 3 && (!buyNow
+      || (Number(form.priceFiat) > 0 && form.acceptedPaymentTokens.length > 0));
 
   const handlePublish = async () => {
     setSubmitting(true);
@@ -161,13 +194,16 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
       if (form.imageFile) {
         imageUrl = (await uploadImage(form.imageFile)).url;
       }
-      const intent = await createIntent({
-        direction: form.direction,
+      const payload = {
         kind: form.kind,
         title: form.title.trim(),
         description: form.description.trim() || null,
         price_fiat: form.priceFiat ? Number(form.priceFiat) : null,
-        image_url: imageUrl,
+        transaction_mode: form.direction === 'offer' ? form.transactionMode : 'exchange',
+        accepted_payment_tokens: form.direction === 'offer' && form.transactionMode !== 'exchange'
+          ? form.acceptedPaymentTokens : [],
+        ...(imageUrl ? { image_url: imageUrl }
+          : initialIntent?.image_url && !form.imagePreview ? { image_url: null } : {}),
         is_continuous: form.isContinuous,
         condition: form.condition || null,
         brand: form.brand.trim() || null,
@@ -175,11 +211,14 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
         format: form.format || null,
         access: form.access || null,
         level: form.level || null,
-      });
+      };
+      const intent = editing
+        ? await updateIntent(initialIntent.id, payload)
+        : await createIntent({ ...payload, direction: form.direction });
       window?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
       setPublished(intent);
     } catch (e) {
-      setError(e.message || 'Could not publish. Try again.');
+      setError(e.message || `Could not ${editing ? 'update' : 'publish'}. Try again.`);
     } finally {
       setSubmitting(false);
     }
@@ -204,7 +243,11 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
 
       {step === 0 && (
         <StepIntentType direction={form.direction} kind={form.kind}
-          onDirection={(v) => set('direction', v)} onKind={setKind} />
+          directionLocked={editing}
+          onDirection={(v) => setForm((current) => ({
+            ...current, direction: v,
+            transactionMode: v === 'offer' ? current.transactionMode : 'exchange',
+          }))} onKind={setKind} />
       )}
       {step === 1 && <StepIntentDetails form={form} onChange={set} direction={form.direction} />}
       {step === 2 && <StepIntentReview form={form} />}
@@ -223,7 +266,7 @@ export default function CreateIntentWizard({ onBack, onMarket, onNexum, isAuthen
           disabled={!canProceed} />
       ) : (
         <NavRow onBack={() => setStep(1)} onNext={handlePublish}
-          nextLabel="Publish" nextIcon={Sparkles} loading={submitting} />
+          nextLabel={editing ? 'Update' : 'Publish'} nextIcon={Sparkles} loading={submitting} />
       )}
     </div>
   );

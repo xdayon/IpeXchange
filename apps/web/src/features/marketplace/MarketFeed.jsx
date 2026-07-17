@@ -30,13 +30,14 @@ export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }
             The <span className="text-gradient-lime">Market</span>
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
-            Interests and offers from the Ipe network
+            Interests are what people need. Offers are what people can sell or exchange.
           </p>
         </div>
         <button
           onClick={() => refresh()}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 8 }}
           title="Refresh"
+          aria-label="Refresh market listings"
         >
           <RefreshCw size={18} className={loading ? 'spin' : ''} />
         </button>
@@ -45,6 +46,7 @@ export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }
       <div style={{ position: 'relative', marginBottom: 14 }}>
         <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
         <input
+          aria-label="Search Interests and Offers"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search the market..."
@@ -57,24 +59,26 @@ export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }
         />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div className="filter-chips">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} aria-label="Market filters">
+        <div className="filter-chips" role="group" aria-label="Listing type">
           {DIRECTION_TABS.map((t) => (
             <button
               key={t.label}
               className={`filter-chip ${direction === t.id ? 'active' : ''}`}
               onClick={() => setDirection(t.id)}
+              aria-pressed={direction === t.id}
             >
               {t.label}
             </button>
           ))}
         </div>
-        <div className="filter-chips">
+        <div className="filter-chips" role="group" aria-label="Category">
           {KINDS.map((k) => (
             <button
               key={k.id}
               className={`filter-chip ${kind === k.id ? 'active' : ''}`}
               onClick={() => setKind(kind === k.id ? null : k.id)}
+              aria-pressed={kind === k.id}
             >
               {k.label}
             </button>
@@ -104,7 +108,7 @@ export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }
       {loading && intents.length === 0 && (
         <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-secondary)' }}>
           <Activity size={28} className="pulse" style={{ margin: '0 auto 16px', display: 'block', color: 'var(--accent-lime)' }} />
-          <p>Syncing with the Ipe network...</p>
+          <p role="status">Loading market listings...</p>
         </div>
       )}
 
@@ -121,9 +125,11 @@ export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }
       {!loading && intents.length === 0 && !error && (
         <div className="empty-state" style={{ marginTop: 40 }}>
           <Activity size={40} style={{ margin: '0 auto 16px', opacity: 0.2 }} />
-          <p style={{ marginBottom: 8 }}>Nothing here yet.</p>
+          <p style={{ marginBottom: 8 }}>{q || direction || kind ? 'No listings match these filters.' : 'The market is ready for its first listing.'}</p>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
-            Be the first: tell the network what you are looking for or what you bring.
+            {q || direction || kind
+              ? 'Try a broader search or clear one of the filters above.'
+              : 'Publish what you need as an Interest, or what you can provide as an Offer.'}
           </p>
           <button
             onClick={() => onNavigate('create')}
@@ -135,7 +141,7 @@ export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }
               cursor: 'pointer', fontFamily: 'var(--font-sans)',
             }}
           >
-            <Plus size={16} /> Publish an intent
+            <Plus size={16} aria-hidden="true" /> Publish an Interest or Offer
           </button>
         </div>
       )}
@@ -143,7 +149,7 @@ export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }
       {isTMA && (
         <button
           onClick={() => { window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); onNavigate('create'); }}
-          title="Publish an intent"
+          aria-label="Publish an Interest or Offer"
           style={{
             position: 'fixed',
             bottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',

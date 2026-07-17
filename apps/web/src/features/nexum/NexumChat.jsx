@@ -7,11 +7,12 @@ import DraftCards, { PublishedScreen } from './DraftCards.jsx';
 import ChatInputRow from './ChatInputRow.jsx';
 import InterviewProgress from './InterviewProgress.jsx';
 import QuickReplies from './QuickReplies.jsx';
+import LiveIntentMap from './LiveIntentMap.jsx';
 
 export default function NexumChat({ isAuthenticated, login, onMarket, variant = 'page', onOrbState }) {
   const {
     messages, orbState, setOrbState, error, draft, send, reveal, revealing,
-    userTurns, ready, canReveal, pills, progress,
+    userTurns, ready, canReveal, pills, progress, mappedIntents,
   } = useInterview();
   const { haptic } = useTelegram();
   const [input, setInput] = useState('');
@@ -95,9 +96,10 @@ export default function NexumChat({ isAuthenticated, login, onMarket, variant = 
             )}
 
             {userTurns > 0 && <InterviewProgress progress={progress} ready={ready} />}
+            <LiveIntentMap intents={mappedIntents} />
             {!ready && <QuickReplies pills={pills} busy={busy || voice.recording} onPill={sendPill} />}
 
-            {canReveal && (
+            {ready && canReveal && (
               <div className={`nexum-reveal-panel ${ready ? 'is-ready' : ''}`}>
                 <span>{ready ? 'Your intents are ready' : 'Review what Nexum understood'}</span>
                 <p>You will confirm and edit everything before anything is published.</p>

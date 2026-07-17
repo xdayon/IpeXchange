@@ -16,7 +16,7 @@ const DIRECTION_CARDS = [
   },
 ];
 
-export default function StepIntentType({ direction, kind, onDirection, onKind }) {
+export default function StepIntentType({ direction, kind, onDirection, onKind, directionLocked = false }) {
   return (
     <div className="page-enter">
       <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 6 }}>What are you publishing?</h2>
@@ -29,7 +29,7 @@ export default function StepIntentType({ direction, kind, onDirection, onKind })
           const active = direction === d.id;
           const Icon = d.icon;
           return (
-            <button key={d.id} onClick={() => { haptic('medium'); onDirection(d.id); }}
+            <button key={d.id} disabled={directionLocked} onClick={() => { haptic('medium'); onDirection(d.id); }}
               style={{
                 padding: '20px 16px', borderRadius: 'var(--radius-lg)', textAlign: 'left',
                 border: `1.5px solid ${active ? d.border : 'var(--border-color)'}`,
@@ -52,6 +52,12 @@ export default function StepIntentType({ direction, kind, onDirection, onKind })
           );
         })}
       </div>
+
+      {directionLocked && (
+        <p style={{ marginTop: -16, marginBottom: 24, color: 'var(--text-secondary)', fontSize: 12 }}>
+          Interest or Offer cannot be changed after publication. Other details remain editable.
+        </p>
+      )}
 
       <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.8, color: 'var(--text-secondary)',
         textTransform: 'uppercase', marginBottom: 10 }}>Type</p>

@@ -28,9 +28,9 @@ const wasDefinitelyNotSent = (error) => (
   error?.code === 4001 || /reject|denied|insufficient/i.test(error?.message ?? '')
 );
 
-export function useOnChainPayment({ intentId, isAuthenticated, login, wallet }) {
+export function useOnChainPayment({ intentId, isAuthenticated, login, wallet, initialToken = 'usdc' }) {
   const [phase, setPhase] = useState('idle');
-  const [token, setToken] = useState('usdc');
+  const [token, setToken] = useState(initialToken);
   const [quote, setQuote] = useState(null);
   const [txHash, setTxHash] = useState(null);
   const [error, setError] = useState(null);

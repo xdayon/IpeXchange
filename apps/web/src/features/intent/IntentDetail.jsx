@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Handshake, Check, Loader2, Wallet, Repeat, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Handshake, Check, Loader2, Wallet, Repeat, CheckCircle2, Pencil } from 'lucide-react';
 import { fetchIntent, markInterest } from '../../api/intents.js';
 import { directionInfo, kindInfo, formatPrice, kindFieldChips } from './constants.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
@@ -15,7 +15,7 @@ const btnBase = {
   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
 };
 
-export default function IntentDetail({ intent: initial, user, isAuthenticated, login, onBack }) {
+export default function IntentDetail({ intent: initial, user, isAuthenticated, login, onBack, onEdit }) {
   const { isTMA, openLink } = useTelegram();
   const [intent, setIntent] = useState(initial);
   const [message, setMessage] = useState('');
@@ -33,8 +33,11 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
   const price = formatPrice(intent.price_fiat);
   const owner = intent.users;
   const isOwn = user && intent.user_id === user.id;
+  const acceptsPayment = ['buy_now', 'both'].includes(intent.transaction_mode);
+  const acceptsExchange = intent.direction !== 'offer'
+    || !intent.transaction_mode || ['exchange', 'both'].includes(intent.transaction_mode);
   // Crypto checkout never runs inside the Mini App: openLink to the web app.
-  const canPay = intent.direction === 'offer' && Number(intent.price_fiat) > 0 &&
+  const canPay = intent.direction === 'offer' && acceptsPayment && Number(intent.price_fiat) > 0 &&
     Boolean(owner?.has_wallet) && !isOwn && (isTMA || PRIVY_ENABLED);
 
   const handleInterest = async () => {
@@ -86,6 +89,14 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
             <Repeat size={12} /> Stays active after trades
           </span>
         )}
+        {intent.direction === 'offer' && (
+          <span style={{ fontSize: 12, fontWeight: 600, padding: '4px 12px',
+            background: 'rgba(56,189,248,0.08)', color: 'var(--accent-cyan)',
+            borderRadius: 'var(--radius-full)' }}>
+            {intent.transaction_mode === 'buy_now' ? 'Buy now'
+              : intent.transaction_mode === 'both' ? 'Buy now + exchange' : 'Exchange only'}
+          </span>
+        )}
         {kindFieldChips(intent).map((chip) => (
           <span key={chip} style={{ fontSize: 12, fontWeight: 600, padding: '4px 12px',
             background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)',
@@ -122,10 +133,11 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
 
       <div style={{ marginTop: 28 }}>
         {isOwn ? (
-          <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>
-            This is your intent. Manage it from your profile.
-          </p>
-        ) : sent ? (
+          <button onClick={() => onEdit?.(intent)} className="pressable"
+            style={{ ...btnBase, background: 'var(--accent-lime)', color: 'var(--bg-dark)' }}>
+            <Pencil size={18} /> Edit this {intent.direction === 'offer' ? 'Offer' : 'Interest'}
+          </button>
+        ) : acceptsExchange && (sent ? (
           <div style={{ ...btnBase, background: 'rgba(180,244,74,0.12)', color: 'var(--accent-lime)', cursor: 'default' }}>
             <Check size={20} /> Interest sent. They will be notified.
           </div>
@@ -157,10 +169,14 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
               <p style={{ marginTop: 12, fontSize: 13, color: 'var(--accent-pink)', textAlign: 'center' }}>{error}</p>
             )}
           </>
-        )}
+        ))}
 
         {canPay && (
           <div style={{ marginTop: 12 }}>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
+              Seller accepts {(intent.accepted_payment_tokens ?? []).map((token) => token === 'cbbtc'
+                ? 'cbBTC' : token.toUpperCase()).join(', ')}. Payment goes directly to their wallet.
+            </p>
             {isTMA ? (
               <button
                 onClick={() => openLink(`${window.location.origin}/?intent=${intent.id}`)}

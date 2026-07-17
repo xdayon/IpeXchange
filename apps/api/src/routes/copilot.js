@@ -5,7 +5,7 @@ import { extractDrafts } from '../lib/gemini.js';
 import { transcribe, extractDraftsGroq } from '../lib/groq.js';
 import { normalizeDraftForReview } from '../lib/copilotDrafts.js';
 import {
-  NEXUM_PROMPT_VERSION, runNexumTurn,
+  NEXUM_PROMPT_VERSION, refreshMarketSignal, runNexumTurn,
 } from '../lib/nexumEngine.js';
 import copilotPublish from './copilotPublish.js';
 
@@ -62,8 +62,14 @@ app.post('/copilot/interview', requireAuth, async (c) => {
     const created = await db.from('nexum_sessions').insert({
       id: sessionId, user_id: user.id, prompt_version: NEXUM_PROMPT_VERSION,
     }).select().single();
-    if (created.error) return c.json({ error: 'Could not start Nexum session' }, 500);
-    session = created.data;
+    if (created.error?.code === '23505') {
+      const existing = await db.from('nexum_sessions').select('*')
+        .eq('id', sessionId).eq('user_id', user.id).maybeSingle();
+      session = existing.data;
+    } else if (!created.error) {
+      session = created.data;
+    }
+    if (!session) return c.json({ error: 'Could not start Nexum session' }, 500);
   }
   const { data: live } = await db
     .from('intents')
@@ -84,6 +90,7 @@ app.post('/copilot/interview', requireAuth, async (c) => {
     prompt_version: NEXUM_PROMPT_VERSION, updated_at: new Date().toISOString(),
   }).eq('id', session.id).eq('user_id', user.id);
   c.executionCtx.waitUntil(Promise.all([
+    refreshMarketSignal(c.env, user.id, session.id, result.state, session.signal_signature),
     db.from('nexum_events').insert({
       user_id: user.id, session_id: session.id, event: 'turn_completed',
       properties: { turn: session.turn_count + 1, ready: result.state.ready },
@@ -137,16 +144,9 @@ app.post('/copilot/drafts', requireAuth, async (c) => {
   if (rawText.length < 10) return c.json({ error: 'messages or raw_text is required (min 10 chars)' }, 400);
   const db = getDb(c.env);
   const validSessionId = /^[0-9a-f-]{36}$/i.test(body?.session_id) ? body.session_id : null;
-  const { data: session } = validSessionId
-    ? await db.from('nexum_sessions').select('state, status')
-      .eq('id', validSessionId).eq('user_id', user.id).maybeSingle()
-    : { data: null };
-  let extracted = session?.status === 'ready' ? session.state?.intents : null;
-  if (!Array.isArray(extracted)) {
-    if (!(await allow(c, 'drafts'))) return quotaError(c);
-    extracted = (await extractDraftsGroq(c.env, rawText)) ?? (await extractDrafts(c.env, rawText));
-  }
-  if (!extracted) return c.json({ error: 'Could not extract intents from the text' }, 502);
+  if (!(await allow(c, 'drafts'))) return quotaError(c);
+  const extracted = (await extractDraftsGroq(c.env, rawText)) ?? (await extractDrafts(c.env, rawText));
+  if (!extracted?.length) return c.json({ error: 'Could not extract intents from the interview' }, 502);
   const drafts = extracted.map(normalizeDraftForReview)
     .filter((draft) => draft.direction && draft.title?.length >= 3)
     .slice(0, 10);

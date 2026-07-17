@@ -17,6 +17,9 @@ const TOKEN_OPTIONS = [
 
 export default function PayOnChain({ intent, isAuthenticated, login, btnStyle }) {
   const { wallets } = useWallets();
+  const acceptedTokens = intent.accepted_payment_tokens?.length
+    ? intent.accepted_payment_tokens : ['usdc'];
+  const tokenOptions = TOKEN_OPTIONS.filter((option) => acceptedTokens.includes(option.id));
   const [walletAddress, setWalletAddress] = useState('');
   const effectiveWalletAddress = walletAddress || initialWalletAddress(wallets);
   const wallet = useMemo(
@@ -25,7 +28,9 @@ export default function PayOnChain({ intent, isAuthenticated, login, btnStyle })
   );
   const {
     error, phase, quote, requestQuote, retryVerification, sendAndVerify, token, txHash,
-  } = useOnChainPayment({ intentId: intent.id, isAuthenticated, login, wallet });
+  } = useOnChainPayment({
+    intentId: intent.id, isAuthenticated, login, wallet, initialToken: tokenOptions[0]?.id,
+  });
 
   const walletPicker = isAuthenticated && wallets.length > 0 && (
     <label className="payment-wallet-picker">
@@ -83,7 +88,7 @@ export default function PayOnChain({ intent, isAuthenticated, login, btnStyle })
         borderRadius: 'var(--radius-lg)' }}>
         {walletPicker}
         <div className="filter-chips" style={{ marginBottom: 12 }}>
-          {TOKEN_OPTIONS.map((t) => (
+          {tokenOptions.map((t) => (
             <button key={t.id} className={`filter-chip ${token === t.id ? 'active' : ''}`}
               disabled={busy || phase === 'quoting'} onClick={() => t.id !== token && requestQuote(t.id)}>
               {t.label}
@@ -102,6 +107,10 @@ export default function PayOnChain({ intent, isAuthenticated, login, btnStyle })
             for 15 minutes. Sent directly to the seller's wallet and verified on-chain.
           </p>
         )}
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.45 }}>
+          You pay the Base network fee shown by your wallet. IpeXchange does not sponsor gas, hold funds,
+          or guarantee delivery. On-chain payments are irreversible.
+        </p>
         <button onClick={sendAndVerify} disabled={busy || phase === 'quoting' || !wallet}
           style={{ ...btnStyle, background: 'var(--accent-cyan)', color: 'var(--bg-dark)', opacity: busy || !wallet ? 0.7 : 1 }}>
           {busy

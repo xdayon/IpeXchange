@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { ArrowLeft, Bell, Home, LogOut, ShieldCheck, Compass, Wallet } from 'lucide-react';
+import { ArrowLeft, Bell, BookOpen, Home, LogOut, ShieldCheck, Compass, Wallet } from 'lucide-react';
 import { saveSettings } from '../../api/me.js';
 import { HAPTICS_OFF_KEY } from '../../shared/hooks/useTelegram.js';
+import PayoutWalletSettings from './PayoutWalletSettings.jsx';
+
+const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
 
 function Section({ title, icon: Icon, children }) {
   return (
@@ -43,7 +46,7 @@ function Toggle({ on, onChange }) {
   );
 }
 
-export default function SettingsPage({ user, logout, onBack, refresh }) {
+export default function SettingsPage({ user, logout, onBack, refresh, onReplayTutorial }) {
   const [settings, setSettings] = useState(user?.settings ?? {});
   const [saveError, setSaveError] = useState(null);
   const val = (key, fallback = true) => settings[key] ?? fallback;
@@ -82,7 +85,7 @@ export default function SettingsPage({ user, logout, onBack, refresh }) {
       <Section title="Notifications" icon={Bell}>
         <Row label="Interest alerts" hint="Telegram message when someone marks interest in your intents"
           control={<Toggle on={val('notify_interest')} onChange={(v) => set('notify_interest', v)} />} />
-        <Row label="Trade cycle alerts" hint="When a multi-hop trade including you is suggested or advances"
+        <Row label="Group trade alerts" hint="When a two or three-person exchange including you is suggested or advances"
           control={<Toggle on={val('notify_cycles')} onChange={(v) => set('notify_cycles', v)} />} />
         <Row label="Payment alerts" hint="When a buyer pays one of your offers on-chain"
           control={<Toggle on={val('notify_payments')} onChange={(v) => set('notify_payments', v)} />} />
@@ -96,16 +99,24 @@ export default function SettingsPage({ user, logout, onBack, refresh }) {
           control={<div style={{ display: 'flex', gap: 8 }}>{tabBtn('home', 'Home', Home)}{tabBtn('discover', 'Market', Compass)}</div>} />
         <Row label="Haptic feedback" hint="Vibration on taps inside the Telegram Mini App"
           control={<Toggle on={val('haptics')} onChange={(v) => set('haptics', v)} />} />
+        <Row label="How IpeXchange works" hint="Replay the introduction to Interests, Offers and exchanges"
+          control={
+            <button onClick={onReplayTutorial} className="filter-chip"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <BookOpen size={13} /> View tutorial
+            </button>
+          } />
       </Section>
 
       <Section title="Wallet and security" icon={Wallet}>
-        <Row label="Payout wallet"
-          hint={user?.wallet
-            ? `${user.wallet.slice(0, 10)}...${user.wallet.slice(-8)} on Base`
-            : 'Log in with a wallet to receive on-chain payments'} />
+        {PRIVY_ENABLED ? (
+          <PayoutWalletSettings currentWallet={user?.wallet} onSaved={refresh} />
+        ) : (
+          <Row label="Payout wallet" hint="Wallet setup is unavailable in this build" />
+        )}
         <Row label="Wallet ownership" hint="Payout addresses are verified against your login account before being saved"
           control={<ShieldCheck size={18} style={{ color: 'var(--accent-lime)', flexShrink: 0 }} />} />
-        <Row label="Payments" hint="Direct peer-to-peer on Base (ETH or USDC). The platform never holds your funds" />
+        <Row label="Payments" hint="Direct peer-to-peer on Base. Buyers pay network fees; IpeXchange never holds funds or sponsors gas" />
       </Section>
 
       <Section title="Account" icon={ShieldCheck}>

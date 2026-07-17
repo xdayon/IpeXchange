@@ -16,7 +16,7 @@ function TradeSide({ label, intent, color }) {
   return (
     <div style={{ flex: 1, minWidth: 140, padding: '12px 14px', borderRadius: 'var(--radius-md)',
       background: 'rgba(148,163,184,0.06)', border: '1px solid var(--border-color)' }}>
-      <p style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: 0.5, marginBottom: 4 }}>{label}</p>
+      <p style={{ fontSize: 12, fontWeight: 700, color, letterSpacing: 0.5, marginBottom: 4 }}>{label}</p>
       <p style={{ fontSize: 14, fontWeight: 600 }}>{intent?.title}</p>
       {intent?.price_fiat != null && (
         <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{formatPrice(intent.price_fiat)}</p>
@@ -62,22 +62,21 @@ export default function CycleDetail({ cycleId, user, onBack }) {
 
   return (
     <div className="page-enter" style={{ padding: '20px 0 60px', maxWidth: 560, margin: '0 auto' }}>
-      <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none',
+      <button onClick={onBack} aria-label="Back to group trades" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none',
         border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13,
         fontFamily: 'var(--font-sans)', marginBottom: 14, padding: 0 }}>
         <ArrowLeft size={15} /> Back
       </button>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 800 }}>{cycle.hops}-way trade</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 800 }}>{cycle.hops}-person group trade</h1>
         <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px',
           borderRadius: 'var(--radius-full)', color: info.color, background: info.bg }}>
           {info.label}
         </span>
       </div>
-      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10 }}>
-        Match strength {Math.round((cycle.min_similarity ?? 0) * 100)}%
-        {cycle.value_ratio != null && ` - value balance ${Math.round(cycle.value_ratio * 100)}%`}
+      <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 10 }}>
+        Follow the arrows to see who gives to whom. Review your part below before accepting.
       </p>
 
       <CycleRing participants={cycle.participants} currentUserId={user?.id} />
@@ -90,7 +89,7 @@ export default function CycleDetail({ cycleId, user, onBack }) {
       )}
 
       {open && me?.acceptance === 'pending' && (
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10 }} aria-label="Respond to this group trade">
           <button disabled={busy} style={btn('var(--accent-lime)', 'var(--bg-dark)')}
             onClick={() => act(() => respondToCycle(cycle.id, true))}>
             <Check size={16} /> Accept trade
@@ -102,13 +101,13 @@ export default function CycleDetail({ cycleId, user, onBack }) {
         </div>
       )}
       {waitingOthers && (
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>
+        <p role="status" style={{ fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center' }}>
           You accepted. Waiting for the other participants to respond.
         </p>
       )}
 
       {cycle.status === 'accepted' && me && (
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10 }} aria-label="Confirm your exchange progress">
           <button disabled={busy || !!me.delivered_at}
             style={btn(me.delivered_at ? 'rgba(180,244,74,0.12)' : 'var(--accent-lime)',
               me.delivered_at ? 'var(--accent-lime)' : 'var(--bg-dark)')}
@@ -125,7 +124,7 @@ export default function CycleDetail({ cycleId, user, onBack }) {
       )}
 
       {cycle.status === 'completed' && (
-        <p style={{ fontSize: 13, color: 'var(--accent-lime)', textAlign: 'center', fontWeight: 600 }}>
+        <p role="status" style={{ fontSize: 14, color: 'var(--accent-lime)', textAlign: 'center', fontWeight: 600 }}>
           Trade completed. Everyone delivered and received.
         </p>
       )}

@@ -17,6 +17,7 @@ const SETTING_KEYS = new Set([
   'notify_payments',
   'haptics',
   'default_tab',
+  'onboarding_version',
 ]);
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -95,6 +96,9 @@ app.put('/me/settings', requireAuth, rateLimit(30, 'me-settings'), async (c) => 
     if (!SETTING_KEYS.has(key)) continue;
     if (key === 'default_tab') {
       if (!['home', 'discover'].includes(value)) continue;
+      incoming[key] = value;
+    } else if (key === 'onboarding_version') {
+      if (!Number.isInteger(value) || value < 0 || value > 100) continue;
       incoming[key] = value;
     } else if (typeof value === 'boolean') {
       incoming[key] = value;

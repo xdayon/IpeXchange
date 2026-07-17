@@ -4,6 +4,8 @@ export const DIRECTIONS = ['want', 'offer'];
 export const KINDS = ['good', 'digital', 'service', 'knowledge'];
 export const STATUSES = ['active', 'fulfilled', 'archived'];
 export const CONTINUOUS_KINDS = ['service', 'knowledge'];
+export const TRANSACTION_MODES = ['exchange', 'buy_now', 'both'];
+export const PAYMENT_TOKENS = ['usdc', 'eth', 'eurc', 'cbbtc'];
 
 const KIND_FIELD_ENUMS = {
   condition: ['new', 'used', 'refurbished'],
@@ -18,6 +20,7 @@ export const EDITABLE = [
   'title', 'description', 'kind', 'category', 'price_fiat', 'image_url', 'status',
   'is_continuous', 'concept_id', 'location_text', 'location_radius_km', 'timeframe',
   'quantity', 'currency', 'value_flexibility', 'exchange_modes', 'delivery_modes',
+  'transaction_mode', 'accepted_payment_tokens',
   'attributes', 'constraints', 'field_confidence', 'expires_at', ...KIND_FIELD_KEYS,
 ];
 
@@ -25,7 +28,28 @@ export const INTENT_FIELDS =
   'id, user_id, direction, kind, title, description, category, price_fiat, image_url, ' +
   'status, source, created_at, is_continuous, condition, brand, duration, format, access, level, ' +
   'concept_id, location_text, location_radius_km, timeframe, quantity, currency, value_flexibility, ' +
-  'exchange_modes, delivery_modes, attributes, constraints, field_confidence, expires_at';
+  'exchange_modes, delivery_modes, transaction_mode, accepted_payment_tokens, ' +
+  'attributes, constraints, field_confidence, expires_at';
+
+export function validateTransactionFields(body) {
+  const mode = body.transaction_mode ?? 'exchange';
+  const tokens = body.accepted_payment_tokens ?? [];
+  if (!TRANSACTION_MODES.includes(mode)) return 'Invalid transaction_mode';
+  if (!Array.isArray(tokens) || tokens.some((token) => !PAYMENT_TOKENS.includes(token))) {
+    return `accepted_payment_tokens must only contain: ${PAYMENT_TOKENS.join(', ')}`;
+  }
+  if (new Set(tokens).size !== tokens.length) return 'accepted_payment_tokens must be unique';
+  if (body.direction === 'want' && mode !== 'exchange') {
+    return 'Interests can only use exchange mode';
+  }
+  const acceptsPayment = mode === 'buy_now' || mode === 'both';
+  if (acceptsPayment && !(Number(body.price_fiat) > 0)) {
+    return 'Buy now offers require a positive USD price';
+  }
+  if (acceptsPayment && tokens.length === 0) return 'Choose at least one accepted payment token';
+  if (!acceptsPayment && tokens.length > 0) return 'Exchange-only intents cannot accept payment tokens';
+  return null;
+}
 
 export function validateKindFields(body) {
   for (const [field, allowed] of Object.entries(KIND_FIELD_ENUMS)) {
@@ -69,7 +93,7 @@ export function validateIntentCreate(body, supabaseUrl) {
   if (image_url != null && !String(image_url).startsWith(`${supabaseUrl}/storage/`)) {
     return 'Invalid image URL';
   }
-  return validateKindFields(body);
+  return validateKindFields(body) ?? validateTransactionFields(body);
 }
 
 export function validateIntentPatch(patch, supabaseUrl) {
@@ -86,6 +110,13 @@ export function validateIntentPatch(patch, supabaseUrl) {
   }
   if (patch.image_url != null && !String(patch.image_url).startsWith(`${supabaseUrl}/storage/`)) {
     return 'Invalid image URL';
+  }
+  if (patch.transaction_mode != null && !TRANSACTION_MODES.includes(patch.transaction_mode)) {
+    return 'Invalid transaction_mode';
+  }
+  if (patch.accepted_payment_tokens != null && (!Array.isArray(patch.accepted_payment_tokens)
+    || patch.accepted_payment_tokens.some((token) => !PAYMENT_TOKENS.includes(token)))) {
+    return `accepted_payment_tokens must only contain: ${PAYMENT_TOKENS.join(', ')}`;
   }
   return validateKindFields(patch);
 }

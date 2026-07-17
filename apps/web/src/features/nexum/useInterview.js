@@ -8,11 +8,11 @@ const GREETING =
   'Let us map what you are looking for first: what would you love to find here these days?';
 
 // Interview state machine. Orb state: idle | listening | thinking | speaking.
-// Nexum ends its closing turn with READY_MARK; it is stripped from display
-// and flips `ready` so the UI can spotlight the reveal action.
+// Readiness is validated by the backend before the review action is shown.
 export function useInterview() {
   const [sessionId] = useState(() => globalThis.crypto.randomUUID());
   const openedTracked = useRef(false);
+  const inFlight = useRef(false);
   const [messages, setMessages] = useState([{ role: 'assistant', content: GREETING }]);
   const [orbState, setOrbState] = useState('idle');
   const [error, setError] = useState(null);
@@ -32,7 +32,8 @@ export function useInterview() {
 
   const send = useCallback(async (text) => {
     const content = text.trim();
-    if (!content) return;
+    if (!content || inFlight.current) return;
+    inFlight.current = true;
     setError(null);
     setPills([]);
     const history = [...messages, { role: 'user', content }];
@@ -56,6 +57,8 @@ export function useInterview() {
       setMessages(history);
       setError(e.status === 429 ? e.message : 'Nexum lost the thread. Try again.');
       setOrbState('idle');
+    } finally {
+      inFlight.current = false;
     }
   }, [messages, sessionId]);
 

@@ -1,20 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { buildNexumPrompt } from '../src/lib/nexum.js';
 
-describe('Nexum interview prompt', () => {
-  it('defines readiness, progress and concise interview constraints', () => {
+describe('Nexum adaptive interview prompt', () => {
+  it('requires contextual questions and guarded completion', () => {
     const prompt = buildNexumPrompt();
-    expect(prompt).toContain('Aim to finish in 3-6 member turns');
-    expect(prompt).toContain('<<PROGRESS: interests=N | offers=N | detailed=N>>');
-    expect(prompt).toContain('Never emit READY before these conditions are met');
+    expect(prompt).toContain('exactly ONE personalized question');
+    expect(prompt).toContain('personalized question');
+    expect(prompt).toContain('interview_complete=true only when both sides');
+    expect(prompt).toContain('Pills are optional shortcuts');
   });
 
-  it('includes active intents so they are not interviewed again', () => {
+  it('includes member context, live intents, and previous state', () => {
     const prompt = buildNexumPrompt({
       name: 'Ana', intents: [{ direction: 'want', title: 'Road bike' }],
+      previous: { side_status: { want: 'provided', offer: 'unknown' } },
     });
     expect(prompt).toContain("member's name is Ana");
-    expect(prompt).toContain('[INTEREST] Road bike');
-    expect(prompt).toContain('Do not re-map these');
+    expect(prompt).toContain('Road bike');
+    expect(prompt).toContain('Current verified interview state');
+    expect(prompt).toContain('must not be duplicated');
   });
 });

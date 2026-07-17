@@ -1,8 +1,21 @@
 import { useRef, useState } from 'react';
-import { Camera, X, DollarSign } from 'lucide-react';
+import { Camera, X, DollarSign, ShoppingBag, Repeat2, Split } from 'lucide-react';
 import { Field } from './ui.jsx';
 import { inputStyle, haptic } from './helpers.js';
 import StepIntentKindFields from './StepIntentKindFields.jsx';
+
+const TRANSACTION_OPTIONS = [
+  { id: 'exchange', label: 'Exchange only', desc: 'Receive trade proposals and group trade matches.', icon: Repeat2 },
+  { id: 'buy_now', label: 'Buy now', desc: 'Sell at a fixed USD price through Base.', icon: ShoppingBag },
+  { id: 'both', label: 'Both', desc: 'Accept direct purchases and exchange proposals.', icon: Split },
+];
+
+const PAYMENT_TOKENS = [
+  { id: 'usdc', label: 'USDC', hint: 'Recommended' },
+  { id: 'eth', label: 'ETH' },
+  { id: 'eurc', label: 'EURC' },
+  { id: 'cbbtc', label: 'cbBTC' },
+];
 
 export default function StepIntentDetails({ form, onChange, direction }) {
   const fileRef = useRef(null);
@@ -52,7 +65,30 @@ export default function StepIntentDetails({ form, onChange, direction }) {
         />
       </Field>
 
-      <Field label="Estimated value (USD)" hint="optional, helps balance trades">
+      {direction === 'offer' && (
+        <Field label="How can people get this?" required>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {TRANSACTION_OPTIONS.map(({ id, label, desc, icon: Icon }) => (
+              <button type="button" key={id} onClick={() => onChange('transactionMode', id)}
+                aria-pressed={form.transactionMode === id}
+                style={{ padding: 14, borderRadius: 'var(--radius-md)', textAlign: 'left', cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)', display: 'flex', gap: 12, alignItems: 'center',
+                  color: 'var(--text-primary)', background: form.transactionMode === id
+                    ? 'rgba(180,244,74,0.08)' : 'var(--bg-card)',
+                  border: `1px solid ${form.transactionMode === id ? 'var(--border-active)' : 'var(--border-color)'}` }}>
+                <Icon size={19} color={form.transactionMode === id ? 'var(--accent-lime)' : 'var(--text-secondary)'} />
+                <span><strong style={{ display: 'block', fontSize: 14 }}>{label}</strong>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{desc}</span></span>
+              </button>
+            ))}
+          </div>
+        </Field>
+      )}
+
+      <Field label={form.transactionMode !== 'exchange' && direction === 'offer'
+        ? 'Buy now price (USD)' : 'Estimated exchange value (USD)'}
+        required={form.transactionMode !== 'exchange' && direction === 'offer'}
+        hint={form.transactionMode === 'exchange' || direction !== 'offer' ? 'optional, helps balance trades' : 'fixed checkout price'}>
         <div style={{ position: 'relative' }}>
           <DollarSign size={16} style={{ position: 'absolute', left: 14, top: '50%',
             transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
@@ -66,6 +102,28 @@ export default function StepIntentDetails({ form, onChange, direction }) {
         </div>
       </Field>
 
+      {direction === 'offer' && form.transactionMode !== 'exchange' && (
+        <Field label="Accepted payment tokens" required hint="USDC is the simplest USD-priced option">
+          <div className="filter-chips" style={{ marginBottom: 10 }}>
+            {PAYMENT_TOKENS.map((token) => {
+              const active = form.acceptedPaymentTokens.includes(token.id);
+              return (
+                <button type="button" key={token.id} className={`filter-chip ${active ? 'active' : ''}`}
+                  aria-pressed={active} onClick={() => onChange('acceptedPaymentTokens', active
+                    ? form.acceptedPaymentTokens.filter((id) => id !== token.id)
+                    : [...form.acceptedPaymentTokens, token.id])}>
+                  {token.label}{token.hint ? ` (${token.hint})` : ''}
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+            Funds go directly to your verified payout wallet. IpeXchange never holds them.
+            Publishing is blocked if your payout wallet is not ready.
+          </p>
+        </Field>
+      )}
+
       <Field label="Photo" hint="optional, 1 image up to 5MB">
         {imageError && (
           <p style={{ color: 'var(--accent-pink)', fontSize: 13, marginBottom: 10 }}>{imageError}</p>
@@ -75,6 +133,7 @@ export default function StepIntentDetails({ form, onChange, direction }) {
             <img src={form.imagePreview} alt="preview"
               style={{ width: '100%', maxHeight: 220, objectFit: 'cover', display: 'block' }} />
             <button type="button"
+              aria-label="Remove photo"
               onClick={() => { onChange('imageFile', null); onChange('imagePreview', null); }}
               style={{ position: 'absolute', top: 10, right: 10, width: 32, height: 32,
                 background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.15)',

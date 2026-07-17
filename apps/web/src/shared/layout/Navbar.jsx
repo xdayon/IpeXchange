@@ -12,7 +12,7 @@ const styles = {
     padding: '0 20px',
     justifyContent: 'space-between',
   },
-  logo: { display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' },
+  logo: { display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'var(--font-sans)' },
   logoMark: { width: 32, height: 32, borderRadius: 10 },
   logoText: { fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' },
   actions: { display: 'flex', alignItems: 'center', gap: 12 },
@@ -44,10 +44,10 @@ export default function Navbar({ user, isAuthenticated, login, onNavigate, unrea
 
   return (
     <nav style={styles.nav}>
-      <div style={styles.logo} onClick={() => onNavigate('home')} role="button" tabIndex={0}>
+      <button style={styles.logo} onClick={() => onNavigate('home')} aria-label="IpeXchange home">
         <img src="/logo.png" alt="IpeXchange" style={styles.logoMark} />
         <span style={styles.logoText}>IpeXchange</span>
-      </div>
+      </button>
 
       <div style={styles.actions}>
         <button className="pressable" style={styles.publishBtn} onClick={() => onNavigate('create')}>
@@ -60,12 +60,12 @@ export default function Navbar({ user, isAuthenticated, login, onNavigate, unrea
               <Bell size={17} />
               {unreadCount > 0 && <span className="notification-badge">{Math.min(unreadCount, 99)}</span>}
             </button>
-            <div className="pressable" style={styles.avatar} onClick={() => onNavigate('profile')}
-              role="button" tabIndex={0} title={user?.displayName || 'Profile'}>
+            <button className="pressable" style={styles.avatar} onClick={() => onNavigate('profile')}
+              aria-label={`Open profile${user?.displayName ? ` for ${user.displayName}` : ''}`}>
               {user?.avatar
                 ? <img src={user.avatar} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : initials}
-            </div>
+            </button>
           </>
         ) : (
           <button className="pressable" style={styles.loginBtn} onClick={() => login?.()}>

@@ -1,6 +1,6 @@
 import { apiFetch } from './index.js';
 
-// Streams Nexum's reply; onChunk receives the accumulated text as it arrives.
+// Sends one interview turn and receives Nexum's reply plus verified state.
 export async function interviewTurn(sessionId, messages) {
   return apiFetch('/copilot/interview', {
     method: 'POST', body: JSON.stringify({ session_id: sessionId, messages }),

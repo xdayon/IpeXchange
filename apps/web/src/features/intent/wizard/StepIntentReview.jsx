@@ -1,5 +1,5 @@
 
-import { Sparkles, Repeat } from 'lucide-react';
+import { Sparkles, Repeat, Wallet, ShieldCheck } from 'lucide-react';
 import { directionInfo, kindInfo, formatPrice, kindFieldChips } from '../constants.js';
 import IntentCover from '../../../shared/ui/IntentCover.jsx';
 
@@ -60,6 +60,30 @@ export default function StepIntentReview({ form }) {
           {price && <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--accent-lime)' }}>{price}</span>}
         </div>
       </div>
+
+      {form.direction === 'offer' && (
+        <div style={{ padding: '14px 16px', borderRadius: 'var(--radius-md)', marginBottom: 14,
+          background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+          <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+            {form.transactionMode === 'exchange' ? 'Exchange only'
+              : form.transactionMode === 'buy_now' ? 'Buy now' : 'Buy now and exchange'}
+          </p>
+          {form.transactionMode !== 'exchange' && (
+            <>
+              <p style={{ display: 'flex', gap: 7, alignItems: 'center', fontSize: 13,
+                color: 'var(--text-secondary)', marginBottom: 6 }}>
+                <Wallet size={15} /> Accepting {form.acceptedPaymentTokens.map((token) => token === 'cbbtc'
+                  ? 'cbBTC' : token.toUpperCase()).join(', ')} on Base
+              </p>
+              <p style={{ display: 'flex', gap: 7, alignItems: 'center', fontSize: 12,
+                color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                <ShieldCheck size={15} style={{ flexShrink: 0 }} /> Your verified payout wallet is checked again
+                before publishing. Payments are direct and non-custodial.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       <div style={{
         padding: '14px 16px', borderRadius: 'var(--radius-md)',

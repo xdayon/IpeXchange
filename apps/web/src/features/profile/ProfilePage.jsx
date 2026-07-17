@@ -14,7 +14,7 @@ export default function ProfilePage({
     return (
       <div className="empty-state" style={{ marginTop: 80 }}>
         <LogIn size={36} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-        <p style={{ marginBottom: 8 }}>Log in to see your profile and your intents.</p>
+        <p style={{ marginBottom: 8 }}>Log in to manage your Interests, Offers, saved items, and payments.</p>
         <button onClick={() => login?.()} style={{ marginTop: 12, padding: '12px 28px',
           borderRadius: 'var(--radius-full)', background: 'var(--accent-lime)', color: 'var(--bg-dark)',
           fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
@@ -32,7 +32,7 @@ export default function ProfilePage({
       {!user?.telegramLinked && <TelegramLinkBanner />}
       <NotificationShortcut unreadCount={unreadCount} onOpen={() => onNavigate('notifications')} />
 
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>My Intents</h2>
+      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>My activity</h2>
       <MyIntents onSelectIntent={onSelectIntent} />
       <TradeHistory />
 
@@ -40,7 +40,7 @@ export default function ProfilePage({
         borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-active)',
         background: 'transparent', color: 'var(--accent-cyan)', fontWeight: 700, fontSize: 14,
         cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
-        + Publish a new intent
+        + Publish an Interest or Offer
       </button>
     </div>
   );

@@ -40,7 +40,7 @@ const styles = {
     boxShadow: '0 4px 16px rgba(180,244,74,0.35)',
     border: '3px solid var(--bg-dark)',
   },
-  label: { fontSize: 10, fontWeight: 600, letterSpacing: 0.3 },
+  label: { fontSize: 12, fontWeight: 600, letterSpacing: 0.2 },
 };
 
 export default function BottomNav({ page, onNavigate }) {
@@ -48,7 +48,7 @@ export default function BottomNav({ page, onNavigate }) {
     <nav style={styles.nav} role="navigation" aria-label="Main navigation">
       {TABS.map(({ id, icon: Icon, label, fab }) =>
         fab ? (
-          <button key={id} className="pressable" style={styles.fabSlot} onClick={() => onNavigate(id)} aria-label="Publish an intent">
+          <button key={id} className="pressable" style={styles.fabSlot} onClick={() => onNavigate(id)} aria-label="Publish an Interest or Offer">
             <span style={styles.fab}><Plus size={26} strokeWidth={2.5} /></span>
           </button>
         ) : (

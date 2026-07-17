@@ -6,7 +6,7 @@ const CASES = [
     name: 'specific multilingual interest with no offer',
     output: { intents: [{ direction: 'want', kind: 'good', title: 'Used road bike',
       concept_id: 'mobility', condition: 'used', confidence: 0.9 }],
-    side_status: { want: 'provided', offer: 'declined' } },
+    side_status: { want: 'provided', offer: 'declined' }, interview_complete: true },
     ready: true,
   },
   {
@@ -19,7 +19,7 @@ const CASES = [
     name: 'correction keeps one canonical intent',
     output: { intents: [{ direction: 'offer', kind: 'knowledge', title: 'Advanced German lessons',
       concept_id: 'languages', level: 'advanced', confidence: 0.95 }],
-      side_status: { want: 'declined', offer: 'provided' } },
+      side_status: { want: 'declined', offer: 'provided' }, interview_complete: true },
     ready: true,
   },
   {

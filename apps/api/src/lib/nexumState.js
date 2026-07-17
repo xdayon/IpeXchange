@@ -24,9 +24,25 @@ export function normalizeInterviewIntent(intent) {
     kind: canonical(intent?.kind, KIND_ALIASES),
   };
   const draft = normalizeDraftForReview(canonicalIntent);
+  draft.interview_key = String(intent?.interview_key ?? '').trim().slice(0, 40) || null;
   draft.concept_id = conceptForKind(canonicalIntent.concept_id, draft.kind);
   draft.confidence = Math.max(0, Math.min(1, Number(intent?.confidence) || 0));
   return draft;
+}
+
+function sameIntent(a, b) {
+  if (a.interview_key && b.interview_key) return a.interview_key === b.interview_key;
+  return a.direction === b.direction && a.kind === b.kind
+    && a.title?.toLowerCase() === b.title?.toLowerCase();
+}
+
+function mergeIntents(incoming, previous) {
+  if (!incoming.length) return previous;
+  const merged = [...incoming];
+  for (const oldIntent of previous) {
+    if (!merged.some((intent) => sameIntent(intent, oldIntent))) merged.push(oldIntent);
+  }
+  return merged.slice(0, 10);
 }
 
 function previousSideStatus(previous, side) {
@@ -45,12 +61,12 @@ function sideStatus(output, previous, side, intents) {
 
 export function hasMatchDetail(intent) {
   if (intent.kind === 'good') {
-    return Boolean(intent.condition || intent.brand || intent.location_text || intent.timeframe || intent.price_fiat);
+    return Boolean(intent.condition || intent.brand || intent.price_fiat || intent.quantity);
   }
   if (['service', 'knowledge'].includes(intent.kind)) {
-    return Boolean(intent.format || intent.level || intent.duration || intent.location_text || intent.timeframe);
+    return Boolean(intent.format || intent.level || intent.duration || intent.price_fiat || intent.is_continuous);
   }
-  return Boolean(intent.access || intent.timeframe || intent.price_fiat);
+  return Boolean(intent.access || intent.price_fiat || intent.delivery_modes?.length);
 }
 
 export function deriveInterviewState(output, previous = {}, { turnCount = 1 } = {}) {
@@ -58,8 +74,9 @@ export function deriveInterviewState(output, previous = {}, { turnCount = 1 } = 
     .map(normalizeInterviewIntent)
     .filter((intent) => intent.direction && intent.kind && intent.title?.length >= 3)
     .slice(0, 10);
-  // A malformed or incomplete model turn must never erase already verified facts.
-  const intents = incoming.length ? incoming : (previous.intents ?? []).map(normalizeInterviewIntent);
+  // A malformed or partial model snapshot must never erase previously verified intents.
+  const priorIntents = (previous.intents ?? []).map(normalizeInterviewIntent);
+  const intents = mergeIntents(incoming, priorIntents);
   const side_status = {
     want: sideStatus(output, previous, 'want', intents),
     offer: sideStatus(output, previous, 'offer', intents),
@@ -71,7 +88,10 @@ export function deriveInterviewState(output, previous = {}, { turnCount = 1 } = 
   const usable = intents.filter((intent) => intent.concept_id);
   const sidesComplete = checked.want && checked.offer;
   const detailed = usable.filter(hasMatchDetail);
-  const ready = usable.length > 0 && sidesComplete && (detailed.length > 0 || turnCount >= 3);
+  const everyIntentDetailed = usable.length === intents.length && detailed.length === usable.length;
+  const modelClosed = output?.interview_complete === true;
+  const ready = usable.length > 0 && sidesComplete && everyIntentDetailed
+    && (modelClosed || turnCount >= 7);
 
   return {
     intents,
@@ -79,7 +99,7 @@ export function deriveInterviewState(output, previous = {}, { turnCount = 1 } = 
     sides_checked: checked,
     focus_field: null,
     ready,
-    can_reveal: usable.length > 0 && (ready || turnCount >= 2),
+    can_reveal: ready,
     progress: {
       interests: intents.filter((intent) => intent.direction === 'want').length,
       offers: intents.filter((intent) => intent.direction === 'offer').length,

@@ -85,6 +85,7 @@ body {
 .stagger-enter {
   opacity: 0;
   animation: pageEnter 0.4s ease forwards;
+  animation-delay: var(--enter-delay, 0ms);
 }
 
 /* ── Listings grid ────────────────────────────────────────────── */
@@ -106,7 +107,8 @@ body {
 
 .filter-chip {
   flex-shrink: 0;
-  padding: 7px 16px;
+  min-height: 40px;
+  padding: 8px 16px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-color);
   background: transparent;
@@ -197,10 +199,89 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ── Accessible interactive surfaces ────────────────────────── */
+button, [role="button"], input, select, textarea { min-height: 40px; }
+
+.intent-card__action {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+.intent-card__action:focus-visible { outline-offset: -4px; }
+
+.context-note {
+  margin-bottom: 24px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-active);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent-cyan) 6%, var(--bg-card));
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* ── Home: explain the product before introducing its tools ─── */
+.home-page { max-width: 760px; margin: 0 auto; padding: 48px 0 64px; }
+.home-page > h1 { max-width: 680px; margin-bottom: 12px; font-size: clamp(30px, 6vw, 44px); line-height: 1.12; }
+.home-eyebrow { margin-bottom: 6px; color: var(--accent-cyan); font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.home-intro { max-width: 680px; color: var(--text-secondary); font-size: 17px; line-height: 1.65; }
+.home-intro strong { color: var(--text-primary); }
+.home-how { margin: 32px 0 24px; padding: 22px; border: 1px solid var(--border-color); border-radius: var(--radius-xl); background: var(--bg-card); }
+.home-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+.home-section-heading h2 { font-size: 20px; }
+.home-section-heading > span { color: var(--text-secondary); font-size: 13px; }
+.home-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.home-step { display: flex; gap: 10px; }
+.home-step > span { display: grid; width: 28px; height: 28px; flex: 0 0 28px; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--accent-lime) 14%, transparent); color: var(--accent-lime); font-size: 13px; font-weight: 800; }
+.home-step h3 { margin: 2px 0 4px; font-size: 14px; }
+.home-step p { color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+.home-example { display: flex; gap: 10px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
+.home-example svg { flex: 0 0 auto; margin-top: 2px; color: var(--accent-purple); }
+.home-example strong { color: var(--text-primary); }
+.home-actions { display: flex; flex-direction: column; gap: 12px; }
+.cta-card { --cta-accent: var(--accent-cyan); display: flex; width: 100%; min-height: 88px; align-items: center; gap: 16px; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--cta-accent) 32%, var(--border-color)); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--cta-accent) 7%, var(--bg-card)); color: var(--text-primary); text-align: left; cursor: pointer; font-family: var(--font-sans); transition: transform var(--transition), border-color var(--transition); }
+.cta-card--lime { --cta-accent: var(--accent-lime); }
+.cta-card--purple { --cta-accent: var(--accent-purple); }
+.cta-card--indigo { --cta-accent: var(--accent-indigo); }
+.cta-card__icon { display: grid; width: 46px; height: 46px; flex: 0 0 46px; place-items: center; border-radius: var(--radius-md); background: var(--bg-elevated); color: var(--cta-accent); }
+.cta-card__copy { flex: 1; }
+.cta-card__title { display: block; margin-bottom: 3px; font-size: 16px; font-weight: 750; }
+.cta-card__description { display: block; color: var(--text-secondary); font-size: 14px; line-height: 1.45; }
+.cta-card__arrow { flex: 0 0 auto; color: var(--cta-accent); }
+@media (hover: hover) { .cta-card:hover { transform: translateY(-2px); border-color: var(--cta-accent); } }
+.primary-action { display: flex; width: 100%; align-items: center; justify-content: center; gap: 10px; margin-top: 24px; padding: 14px 20px; border: none; border-radius: var(--radius-md); background: var(--accent-lime); color: var(--bg-dark); font: 800 16px var(--font-sans); cursor: pointer; }
+
+/* ── Explicit payout wallet setup ───────────────────────────── */
+.wallet-settings { padding: 16px; border-bottom: 1px solid var(--border-color); }
+.wallet-settings__label { font-size: 14px; font-weight: 700; }
+.wallet-settings__hint { margin-top: 3px; color: var(--text-secondary); font-size: 12px; line-height: 1.45; }
+.wallet-settings__controls { display: flex; gap: 10px; margin-top: 12px; }
+.wallet-settings__controls select { min-width: 0; flex: 1; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-elevated); color: var(--text-primary); }
+.wallet-settings__controls button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--border-active); border-radius: var(--radius-md); background: rgba(56,189,248,0.08); color: var(--accent-cyan); font: 700 12px var(--font-sans); cursor: pointer; }
+.wallet-settings__controls button:disabled { cursor: default; opacity: 0.7; }
+.wallet-settings__security { display: flex; align-items: center; gap: 6px; margin-top: 9px; color: var(--text-secondary); font-size: 11px; }
+.wallet-settings__error { margin-top: 8px; color: var(--accent-pink); font-size: 12px; }
+
+@media (max-width: 640px) {
+  .home-page { padding-top: 32px; }
+  .home-how { padding: 18px; }
+  .home-section-heading { display: block; }
+  .home-section-heading > span { display: block; margin-top: 6px; }
+  .home-steps { grid-template-columns: 1fr; gap: 16px; }
+  .wallet-settings__controls { align-items: stretch; flex-direction: column; }
 }
 
 /* ── Nexum chat: message bubbles ──────────────────────────────── */

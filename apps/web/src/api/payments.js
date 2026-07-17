@@ -1,6 +1,6 @@
 import { apiFetch } from './index.js';
 
-export async function createPayment(intentId, token = 'eth') {
+export async function createPayment(intentId, token = 'usdc') {
   return apiFetch('/payments', {
     method: 'POST',
     body: JSON.stringify({ intent_id: intentId, token }),

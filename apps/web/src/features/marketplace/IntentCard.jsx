@@ -1,5 +1,5 @@
 
-import { Repeat } from 'lucide-react';
+import { Repeat, ShoppingBag } from 'lucide-react';
 import { directionInfo, kindInfo, formatPrice } from '../intent/constants.js';
 import IntentCover from '../../shared/ui/IntentCover.jsx';
 
@@ -9,7 +9,7 @@ const styles = {
     border: '1px solid var(--border-color)',
     borderRadius: 'var(--radius-lg)',
     overflow: 'hidden',
-    cursor: 'pointer',
+    position: 'relative',
     transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s',
     display: 'flex',
     flexDirection: 'column',
@@ -45,8 +45,9 @@ export default function IntentCard({ intent, onClick }) {
     <article
       className="intent-card hover-lift pressable"
       style={styles.card}
-      onClick={() => onClick?.(intent)}
     >
+      <button className="intent-card__action" onClick={() => onClick?.(intent)}
+        aria-label={`View ${dir.label.toLowerCase()}: ${intent.title}`} />
       <IntentCover kind={intent.kind} imageUrl={intent.image_url} alt={intent.title} height={160} />
       <div style={styles.body}>
         <div style={styles.meta}>
@@ -64,6 +65,11 @@ export default function IntentCard({ intent, onClick }) {
           {intent.is_continuous && (
             <span style={{ ...styles.kindTag, color: 'var(--accent-lime)', background: 'rgba(180,244,74,0.08)' }}>
               <Repeat size={12} /> Stays active
+            </span>
+          )}
+          {intent.direction === 'offer' && ['buy_now', 'both'].includes(intent.transaction_mode) && (
+            <span style={{ ...styles.kindTag, color: 'var(--accent-cyan)', background: 'rgba(56,189,248,0.08)' }}>
+              <ShoppingBag size={12} /> {intent.transaction_mode === 'both' ? 'Buy or exchange' : 'Buy now'}
             </span>
           )}
         </div>

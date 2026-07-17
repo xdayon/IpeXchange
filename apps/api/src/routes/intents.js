@@ -9,7 +9,7 @@ import { intentEmbeddingText } from '../lib/copilotDrafts.js';
 import { removeListingImage } from '../lib/listingImages.js';
 import {
   DIRECTIONS, CONTINUOUS_KINDS, EDITABLE, INTENT_FIELDS,
-  KIND_FIELD_KEYS, validateIntentCreate, validateIntentPatch, kindFieldValues,
+  KIND_FIELD_KEYS, validateIntentCreate, validateIntentPatch, validateTransactionFields, kindFieldValues,
 } from '../lib/intentFields.js';
 
 const app = new Hono();
@@ -23,12 +23,23 @@ app.post('/intents', requireAuth, rateLimit(20, 'intent-create'), async (c) => {
   const validationError = validateIntentCreate(body, c.env.SUPABASE_URL);
   if (validationError) return c.json({ error: validationError }, 400);
 
+  const db = getDb(c.env);
+  const acceptsPayment = ['buy_now', 'both'].includes(body.transaction_mode);
+  if (acceptsPayment) {
+    const { data: seller } = await db.from('users').select('wallet').eq('id', user.id).maybeSingle();
+    if (!seller?.wallet) {
+      return c.json({
+        error: 'Connect and verify a payout wallet before publishing a Buy now offer',
+        code: 'PAYOUT_WALLET_REQUIRED',
+      }, 409);
+    }
+  }
+
   const trimmedDescription = description ? String(description).trim().slice(0, 4000) : null;
   const normalizedCategory = category != null ? String(category).trim().toLowerCase().slice(0, 40) : null;
 
   const embedding = await embed(c.env, intentEmbeddingText({ ...body, title, description }));
 
-  const db = getDb(c.env);
   const { data, error } = await db
     .from('intents')
     .insert({
@@ -52,6 +63,9 @@ app.post('/intents', requireAuth, rateLimit(20, 'intent-create'), async (c) => {
       value_flexibility: body.value_flexibility ?? null,
       exchange_modes: Array.isArray(body.exchange_modes) ? body.exchange_modes : [],
       delivery_modes: Array.isArray(body.delivery_modes) ? body.delivery_modes : [],
+      transaction_mode: body.transaction_mode ?? 'exchange',
+      accepted_payment_tokens: Array.isArray(body.accepted_payment_tokens)
+        ? body.accepted_payment_tokens : [],
       attributes: body.attributes ?? {}, constraints: body.constraints ?? {},
       field_confidence: body.field_confidence ?? {}, expires_at: body.expires_at ?? null,
       embedding,
@@ -106,6 +120,19 @@ app.patch('/intents/:id', requireAuth, rateLimit(30, 'intent-edit'), async (c) =
     .maybeSingle();
   if (!existing) return c.json({ error: 'Not found' }, 404);
   if (existing.user_id !== user.id) return c.json({ error: 'Forbidden' }, 403);
+
+  const effective = { ...existing, ...patch };
+  const transactionError = validateTransactionFields(effective);
+  if (transactionError) return c.json({ error: transactionError }, 400);
+  if (['buy_now', 'both'].includes(effective.transaction_mode)) {
+    const { data: seller } = await db.from('users').select('wallet').eq('id', user.id).maybeSingle();
+    if (!seller?.wallet) {
+      return c.json({
+        error: 'Connect and verify a payout wallet before enabling Buy now',
+        code: 'PAYOUT_WALLET_REQUIRED',
+      }, 409);
+    }
+  }
 
   if ('is_continuous' in patch) {
     const effectiveKind = patch.kind ?? existing.kind;

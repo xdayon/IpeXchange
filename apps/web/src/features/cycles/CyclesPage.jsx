@@ -15,7 +15,7 @@ function CycleCard({ cycle, userId, onSelect }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
         <Repeat size={16} style={{ color: 'var(--accent-cyan)' }} />
         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-          {cycle.hops}-way trade
+          {cycle.hops}-person group trade
         </span>
         <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px',
           borderRadius: 'var(--radius-full)', color: info.color, background: info.bg }}>
@@ -61,18 +61,22 @@ export default function CyclesPage({ user, isAuthenticated, login, onSelectCycle
 
   return (
     <div className="page-enter" style={{ padding: '28px 0 60px', maxWidth: 680, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>Trade cycles</h1>
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 22 }}>
-        Rings of 2 or 3 people where everyone gives one thing and receives another.
-        Nexum suggests them whenever your intents close a loop.
+      <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 6 }}>Group trades</h1>
+      <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 12 }}>
+        Nexum connects two or three people so everyone gives something they offer and receives
+        something they want. You decide whether to join each suggested trade.
+      </p>
+      <p className="context-note">
+        For example: you give a desk to Ana, Ana gives lessons to Leo, and Leo repairs your bicycle.
       </p>
 
-      {loading && <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Looking for your cycles...</p>}
+      {loading && <p role="status" style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading your group trades...</p>}
 
       {!loading && cycles?.length === 0 && (
         <div className="empty-state" style={{ marginTop: 40 }}>
           <Repeat size={36} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-          <p>No trade cycles yet. Publish more interests and offers so Nexum can close a ring for you.</p>
+          <p><strong>No group trades yet.</strong></p>
+          <p style={{ marginTop: 6, fontSize: 14 }}>Keep your Interests and Offers current. Nexum will notify you when it finds a useful exchange.</p>
         </div>
       )}
 

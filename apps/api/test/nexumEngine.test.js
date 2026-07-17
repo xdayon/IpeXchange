@@ -1,26 +1,51 @@
 import { describe, expect, it } from 'vitest';
-import { composeInterviewReply, planNextStep } from '../src/lib/nexumEngine.js';
+import { finalizeNexumTurn } from '../src/lib/nexumEngine.js';
 
-const intent = { direction: 'want', kind: 'good', title: 'Road bike', concept_id: 'mobility' };
+const context = {
+  messages: [{ role: 'user', content: 'Quero uma bicicleta usada para ir ao trabalho.' }],
+  previous: {}, turnCount: 1, signal: null,
+};
 
-describe('deterministic Nexum interview planner', () => {
-  it('checks the missing marketplace side before asking for details', () => {
-    expect(planNextStep({
-      ready: false, intents: [intent], side_status: { want: 'provided', offer: 'unknown' },
-    }, 1)).toBe('side_offer');
+const bike = {
+  interview_key: 'want-1', direction: 'want', kind: 'good', title: 'Used commuter bicycle',
+  description: 'A bicycle for commuting to work.', concept_id: 'mobility', condition: 'used',
+  confidence: 0.9,
+};
+
+describe('adaptive Nexum interview response', () => {
+  it('keeps the model-authored personalized question and contextual pills', () => {
+    const result = finalizeNexumTurn({
+      reply: 'Uma bicicleta usada para o trajeto diário faz sentido. Que estilo combina mais com seu percurso?',
+      language: 'pt-BR', focus_field: 'bike_style',
+      suggested_pills: ['Urbana', 'Speed', 'Mountain bike'],
+      side_status: { want: 'provided', offer: 'unknown' }, intents: [bike],
+      interview_complete: false,
+    }, context);
+    expect(result.reply).toContain('bicicleta usada');
+    expect(result.pills).toEqual(['Urbana', 'Speed', 'Mountain bike']);
+    expect(result.state.ready).toBe(false);
   });
 
-  it('clarifies a vague intent before checking the other side', () => {
-    expect(planNextStep({
-      ready: false,
-      intents: [{ ...intent, kind: 'knowledge', title: 'Learn something new' }],
-      side_status: { want: 'provided', offer: 'unknown' },
-    }, 1)).toBe('subject');
+  it('does not trust premature completion without both sides explored', () => {
+    const result = finalizeNexumTurn({
+      reply: 'Seu interesse está mapeado.', language: 'pt-BR', suggested_pills: [],
+      side_status: { want: 'provided', offer: 'unknown' }, intents: [bike],
+      interview_complete: true,
+    }, context);
+    expect(result.state.ready).toBe(false);
+    expect(result.reply).toContain('oferecer');
+    expect(result.reply).toContain('?');
   });
 
-  it('never emits a question on the review step', () => {
-    const reply = composeInterviewReply({ intents: [intent] }, 'review', 'pt-BR');
-    expect(reply).not.toContain('?');
-    expect(reply).toContain('revisar');
+  it('closes only after a detailed intent and both sides are resolved', () => {
+    const result = finalizeNexumTurn({
+      reply: 'Mapeei sua bicicleta usada e registrei que você não tem uma oferta agora. Revise os detalhes antes de publicar.',
+      language: 'pt-BR', suggested_pills: ['A', 'B'],
+      side_status: { want: 'provided', offer: 'declined' }, intents: [bike],
+      interview_complete: true,
+    }, { ...context, turnCount: 3 });
+    expect(result.state.ready).toBe(true);
+    expect(result.pills).toEqual([]);
+    expect(result.reply).not.toContain('?');
   });
 });

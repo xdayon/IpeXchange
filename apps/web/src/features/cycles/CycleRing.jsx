@@ -21,8 +21,10 @@ export default function CycleRing({ participants, currentUserId }) {
     participants.findIndex((q) => q.receives?.id === p.gives?.id);
 
   return (
-    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}
-      style={{ display: 'block', margin: '0 auto' }} aria-label="Trade ring">
+    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img"
+      style={{ display: 'block', margin: '0 auto', maxWidth: '100%' }} aria-labelledby="trade-ring-title trade-ring-description">
+      <title id="trade-ring-title">Who gives to whom in this group trade</title>
+      <desc id="trade-ring-description">Arrows connect each participant to the person receiving their Offer.</desc>
       <defs>
         <marker id="ring-arrow" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto">
           <path d="M0,0 L7,3.5 L0,7 Z" fill="var(--accent-cyan)" />

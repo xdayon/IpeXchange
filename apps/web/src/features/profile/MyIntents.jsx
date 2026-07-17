@@ -19,14 +19,22 @@ const PAYMENT_COLORS = {
 };
 
 function Row({ title, subtitle, right, onSelect }) {
+  const content = (
+    <div style={{ minWidth: 0 }}>
+      <p style={{ fontWeight: 600, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</p>
+      {subtitle && <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{subtitle}</p>}
+    </div>
+  );
   return (
-    <div onClick={onSelect} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      gap: 12, padding: '14px 16px', background: 'var(--bg-card)', cursor: onSelect ? 'pointer' : 'default',
-      border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
-      <div style={{ minWidth: 0 }}>
-        <p style={{ fontWeight: 600, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</p>
-        {subtitle && <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{subtitle}</p>}
-      </div>
+    <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center',
+      gap: 12, padding: onSelect ? '0 10px 0 0' : '14px 16px', background: 'var(--bg-card)',
+      border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }}>
+      {onSelect ? (
+        <button onClick={onSelect} style={{ flex: 1, minWidth: 0, padding: '14px 16px', textAlign: 'left',
+          border: 'none', background: 'none', color: 'inherit', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+          {content}
+        </button>
+      ) : content}
       {right}
     </div>
   );
@@ -63,16 +71,16 @@ export default function MyIntents({ onSelectIntent }) {
 
   return (
     <div>
-      <div className="filter-chips" style={{ marginBottom: 16 }}>
+      <div className="filter-chips" role="tablist" aria-label="My activity" style={{ marginBottom: 16 }}>
         {TABS.map((t) => (
-          <button key={t.id} className={`filter-chip ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
+          <button key={t.id} role="tab" aria-selected={tab === t.id} className={`filter-chip ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
             {t.label}
           </button>
         ))}
       </div>
 
       {list == null ? (
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading...</p>
+        <p role="status" style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading {TABS.find((item) => item.id === tab)?.label.toLowerCase()}...</p>
       ) : list.length === 0 ? (
         <div style={{ padding: '32px 24px', border: '1px dashed var(--border-color)',
           borderRadius: 'var(--radius-lg)', textAlign: 'center', color: 'var(--text-secondary)' }}>
@@ -82,7 +90,9 @@ export default function MyIntents({ onSelectIntent }) {
               ? 'No on-chain payments yet.'
               : tab === 'marked'
                 ? 'You have not marked interest in anything yet.'
-                : 'Nothing published here yet.'}
+                : tab === 'want'
+                  ? 'No Interests yet. Publish what you are looking for.'
+                  : 'No Offers yet. Publish something you can sell or exchange.'}
           </p>
         </div>
       ) : (
@@ -119,7 +129,7 @@ export default function MyIntents({ onSelectIntent }) {
                   subtitle={[formatPrice(i.price_fiat), i.status].filter(Boolean).join(' - ')}
                   onSelect={() => onSelectIntent?.(i)}
                   right={
-                    <button onClick={(e) => { e.stopPropagation(); archive(i); }} title="Archive"
+                    <button onClick={(e) => { e.stopPropagation(); archive(i); }} aria-label={`Archive ${i.title}`}
                       style={{ background: 'none', border: 'none', color: 'var(--text-secondary)',
                         cursor: 'pointer', padding: 6, flexShrink: 0 }}>
                       <Archive size={16} />

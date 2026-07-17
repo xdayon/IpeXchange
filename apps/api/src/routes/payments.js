@@ -51,21 +51,27 @@ app.post('/payments', requireAuth, rateLimit(10, 'pay-quote'), async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => ({}));
   if (!body.intent_id) return c.json({ error: 'intent_id is required' }, 400);
-  const token = body.token ?? 'eth';
+  const token = body.token ?? 'usdc';
   if (!TOKENS[token]) return c.json({ error: 'Unsupported token' }, 400);
 
   const db = getDb(c.env);
   const { data: intent } = await db
     .from('intents')
-    .select('id, user_id, direction, title, price_fiat, status, users ( id, wallet )')
+    .select('id, user_id, direction, title, price_fiat, status, transaction_mode, accepted_payment_tokens, users ( id, wallet )')
     .eq('id', body.intent_id)
     .maybeSingle();
 
   if (!intent || intent.status !== 'active') return c.json({ error: 'Not found' }, 404);
   if (intent.direction !== 'offer') return c.json({ error: 'Only offers can be paid' }, 400);
+  if (!['buy_now', 'both'].includes(intent.transaction_mode)) {
+    return c.json({ error: 'This offer is available for exchange only' }, 409);
+  }
   if (intent.user_id === user.id) return c.json({ error: 'Cannot pay for your own offer' }, 400);
   if (!(Number(intent.price_fiat) > 0)) return c.json({ error: 'This offer has no price' }, 400);
   if (!intent.users?.wallet) return c.json({ error: 'The seller has no wallet linked' }, 409);
+  if (!intent.accepted_payment_tokens?.includes(token)) {
+    return c.json({ error: `The seller does not accept ${TOKENS[token].symbol}` }, 400);
+  }
 
   let usdPrice;
   try {

@@ -5,13 +5,13 @@ conversation transcript.
 
 ## Objective
 
-- Complete remaining production verification without touching `demo` or
-  recreating `pre-reset-mvp`.
+- Implement a comprehensive English/USD UX improvement: first-login onboarding,
+  clearer marketplace education, explicit offer/payment modes, and accessibility.
+- Do not touch `demo` or recreate `pre-reset-mvp`.
 
 ## Current State
 
-- Branch: `main-mvp`
-- Last published implementation commit: `f597ccc` (merged PR #2).
+- Branch: `main-mvp`; last published commit: `f597ccc` (merged PR #2).
 - `apps/web/src/main.jsx` now reads `VITE_PRIVY_CLIENT_ID` and passes it to
   `PrivyProvider`; the ignored `apps/web/.env` contains the public Client ID.
 - The Client ID change is merged and deployed to `ipexchange.xyz` and
@@ -20,10 +20,23 @@ conversation transcript.
   but verified email, payout-wallet ownership, and payment checks need it.
 - Migrations 0015 through 0021 are applied to the Supabase project configured in
   `apps/api/.dev.vars` (`mzjdataxrqtlqufnvpmh`).
+- Pre-existing uncommitted Nexum engine/interview changes span 16 API/web files;
+  preserve them while integrating the UX work.
+- Gas sponsorship is out of scope: network fees must remain buyer-paid and the
+  platform must not assume paymaster or promotional-credit costs.
+- UX changes and migration 0022 are local only: not committed, deployed, or
+  applied to Supabase.
 
 ## Implemented
 
-- Findings 1-7, 9-20 and the listed low-severity application issues are fixed.
+- Versioned first-login onboarding explains Interests, Offers, purchases,
+  exchanges, group trades, and Nexum; it is replayable from Settings.
+- Home, Market, Group trades, navigation, empty states, contrast, focus,
+  keyboard semantics, reduced motion, and target sizes have a clarity pass.
+- Offers choose Exchange only, Buy now, or Both. Buy now requires a verified
+  payout wallet, positive USD price, and seller-selected Base tokens; USDC is
+  the default, checkout is non-custodial, and gas remains buyer-paid.
+- Settings supports explicit selection and verification of a payout wallet.
 - Migration 0021 expires unanswered cycles after seven days, releases their
   intents atomically, permits safe re-suggestion, and pins every application SQL
   function to `public, pg_temp`.
@@ -31,18 +44,13 @@ conversation transcript.
 - Checkout requires explicit wallet choice when multiple wallets are connected.
 - Native ERC-4337 ETH verification requires both a UserOperation sender and a
   matching internal transfer trace; unavailable traces stay pending and safe.
-- Archived listing images are removed from the owner's Storage path; a failed
-  deletion restores the URL and returns a retryable error.
-- `ws` 8 consumers are overridden to 8.21.0; the WalletConnect component that
-  requires major 7 remains on 7.5.11. Privy was not downgraded.
 
 ## Verification
 
-- `npm run check` passes after the Client ID change: lint, syntax, 112 tests,
-  web build, Worker dry-run.
+- Current combined `npm run check` passes: lint, syntax, 114 tests, web build,
+  and Worker dry-run. `git diff --check` passes.
 - Production `/api/health` responds with HTTP 200; the new frontend bundle is
   available on `xchange.synapses.academy` and contains the Client ID.
-- `git diff --check` passes.
 - `npm audit --omit=dev --audit-level=high` reports no high or critical issues;
   ten transitive moderate `uuid` findings remain behind Privy/MetaMask.
 - Migrations 0001-0021 apply from scratch on disposable PostgreSQL 17 + pgvector.
