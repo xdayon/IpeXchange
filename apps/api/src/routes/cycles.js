@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
-import { notifyCycle } from '../lib/matching.js';
+import { loopLabel, notifyCycle, rematchMembers } from '../lib/matching.js';
 
 const app = new Hono();
 
@@ -16,7 +16,7 @@ const PARTICIPANT_FIELDS = `
 async function loadCycle(db, id) {
   const { data, error } = await db
     .from('trade_cycles')
-    .select(`id, hops, status, min_similarity, value_ratio, created_at, updated_at,
+    .select(`id, hops, status, score, source, min_similarity, value_ratio, created_at, updated_at,
              trade_cycle_participants ( ${PARTICIPANT_FIELDS} )`)
     .eq('id', id)
     .maybeSingle();
@@ -47,7 +47,7 @@ app.get('/me/cycles', requireAuth, async (c) => {
 
   const { data, error: cyclesError } = await db
     .from('trade_cycles')
-    .select(`id, hops, status, min_similarity, value_ratio, created_at, updated_at,
+    .select(`id, hops, status, score, source, min_similarity, value_ratio, created_at, updated_at,
              trade_cycle_participants ( ${PARTICIPANT_FIELDS} )`)
     .in('id', ids)
     .order('created_at', { ascending: false });
@@ -91,16 +91,41 @@ app.post('/cycles/:id/respond', requireAuth, rateLimit(30, 'cycle-act'), async (
 
   const cycle = await loadCycle(db, c.req.param('id'));
   const who = user.display_name || 'A participant';
+  const others = cycle.participants.map((p) => p.user_id).filter((id) => id !== user.id);
   if (result.status === 'cancelled') {
-    c.executionCtx.waitUntil(notifyCycle(c.env, cycle.id, cycle.participants, 'cycle_cancelled',
-      `${who} declined the trade cycle, so it was cancelled. Nexum keeps looking for new matches.`,
-      user.id));
+    c.executionCtx.waitUntil(Promise.all([
+      notifyCycle(c.env, cycle.id, cycle.participants, 'cycle_cancelled',
+        `${who} declined the ${loopLabel(cycle.hops)}, so it was cancelled. Nexum keeps looking for new matches.`,
+        user.id),
+      rematchMembers(c.env, others),
+    ]));
+  } else if (result.status === 'superseded') {
+    c.executionCtx.waitUntil(notifyCycle(c.env, cycle.id, cycle.participants, 'cycle_superseded',
+      'One of the items in this trade loop is no longer available, so the loop was closed. Nexum keeps looking for new matches.'));
   } else if (result.status === 'accepted') {
-    c.executionCtx.waitUntil(notifyCycle(c.env, cycle.id, cycle.participants, 'cycle_accepted',
-      'Everyone accepted the trade cycle. Time to deliver: open IpeXchange to coordinate and confirm each step.'));
+    c.executionCtx.waitUntil(Promise.all([
+      notifyCycle(c.env, cycle.id, cycle.participants, 'cycle_accepted',
+        `Everyone accepted the ${loopLabel(cycle.hops)}. Time to deliver: open IpeXchange to coordinate and confirm each step.`),
+      closeSupersededLoops(c.env, db, result.superseded ?? []),
+    ]));
   }
   return c.json(cycle);
 });
+
+// Loops that lost an item to the accepted one: tell their members and look
+// for new loops through them.
+async function closeSupersededLoops(env, db, cycleIds) {
+  if (!cycleIds.length) return;
+  const { data: seats } = await db
+    .from('trade_cycle_participants')
+    .select('cycle_id, user_id')
+    .in('cycle_id', cycleIds);
+  const byCycle = Map.groupBy(seats ?? [], (seat) => seat.cycle_id);
+  await Promise.all([...byCycle].map(([cycleId, members]) =>
+    notifyCycle(env, cycleId, members, 'cycle_superseded',
+      'Someone completed another trade loop with one of these items, so this loop was closed. Nexum keeps looking for new matches.')));
+  await rematchMembers(env, (seats ?? []).map((seat) => seat.user_id));
+}
 
 app.post('/cycles/:id/confirm', requireAuth, rateLimit(30, 'cycle-act'), async (c) => {
   const user = c.get('user');
@@ -122,7 +147,7 @@ app.post('/cycles/:id/confirm', requireAuth, rateLimit(30, 'cycle-act'), async (
   const cycle = await loadCycle(db, c.req.param('id'));
   if (result.status === 'completed') {
     c.executionCtx.waitUntil(notifyCycle(c.env, cycle.id, cycle.participants, 'cycle_completed',
-      'Trade cycle completed. Everyone delivered and received - the intents involved are now fulfilled. Well traded!'));
+      `${loopLabel(cycle.hops)[0].toUpperCase()}${loopLabel(cycle.hops).slice(1)} completed. Everyone delivered and received. Well traded!`));
   }
   return c.json(cycle);
 });

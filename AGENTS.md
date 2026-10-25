@@ -27,6 +27,8 @@ Mini App, and Telegram Bot are supported. Crypto payments on Base are launch 2.
 - Offers include goods, digital products, services, work, consulting,
   knowledge, and skills.
 - Internally, both are `intent` records with `direction: want | offer`.
+- Multi-person trades are "trade loops" in UI copy; a 2-person loop may be
+  called a "direct swap". Internally they are `trade_cycles`.
 
 ## Stack And Routing
 
@@ -53,10 +55,19 @@ Mini App, and Telegram Bot are supported. Crypto payments on Base are launch 2.
 
 ## Business Rules
 
-- Matching runs after intent creation through `ctx.waitUntil()`; do not add
-  polling or cron loops.
-- Trade cycles have 2 or 3 participants and at most 25% value imbalance;
-  unknown prices pass.
+- Matching runs through `ctx.waitUntil()` (or inline for swipes) after an
+  intent is created or edited, after a swipe or interest mark, and after a loop
+  is declined or superseded. Do not add polling or matching crons; clearing
+  rounds are admin-triggered (`POST /api/admin/clearing`). The only scheduled
+  job is the Supabase keepalive cron in `wrangler.jsonc`.
+- Trade loops have 2 to 7 participants, ranked by the product of edge
+  acceptance probabilities, with at most 25% value imbalance; unknown prices
+  pass. Semantic edges need similarity >= 0.70; swipes and interest marks on
+  exchangeable Offers are explicit edges. Buy now only Offers never join loops.
+- Suggestions do not reserve intents. The last acceptance claims one-off
+  intents and supersedes competing suggestions; continuous intents are never
+  reserved. Matching logic lives in SQL (`supabase/migrations/0023_*`) and is
+  covered by `npm run test:db`.
 - AI usage is limited by the `increment_ai_usage` RPC.
 - Anonymous users may browse with text search. Publishing and marking interest
   require authentication.
@@ -85,5 +96,6 @@ npm run lint
 npm run check
 npm run build
 npm run db:apply
+npm run test:db   # needs TEST_DATABASE_URL (disposable Postgres + pgvector)
 ```
 

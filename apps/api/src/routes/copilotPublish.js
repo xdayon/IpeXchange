@@ -110,6 +110,7 @@ app.post('/:id/publish', requireAuth, rateLimit(10, 'copilot-publish'), async (c
       cycle_count: cycles.length,
       best_hops: best?.hops ?? null,
       best_similarity: best?.min_similarity ?? null,
+      best_score: best?.score ?? null,
     },
   }, 201);
 });
