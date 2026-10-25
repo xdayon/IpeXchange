@@ -25,8 +25,17 @@ export async function pingUrls(env) {
   }));
 }
 
+// Two matching intents published at the same moment miss each other's
+// edge; recomputing recent intents' edges repairs that (see migration 0023).
+export async function repairRecentEdges(env) {
+  const { data, error } = await getDb(env).rpc('refresh_recent_edges');
+  if (error) console.error('Edge repair failed:', error.message ?? error);
+  return error ? null : data;
+}
+
 export async function keepAlive(env) {
   const [database, urls] = await Promise.all([pingDatabase(env), pingUrls(env)]);
-  console.log('Keepalive:', JSON.stringify({ database, urls }));
-  return { database, urls };
+  const edges = database.ok ? await repairRecentEdges(env) : null;
+  console.log('Keepalive:', JSON.stringify({ database, urls, edges }));
+  return { database, urls, edges };
 }

@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
-import { loopLabel, notifyCycle, rematchMembers } from '../lib/matching.js';
+import { loopLabel, matchAndNotify, notifyCycle } from '../lib/matching.js';
+import { notifyMany } from '../lib/notify.js';
 
 const app = new Hono();
 
@@ -97,7 +98,7 @@ app.post('/cycles/:id/respond', requireAuth, rateLimit(30, 'cycle-act'), async (
       notifyCycle(c.env, cycle.id, cycle.participants, 'cycle_cancelled',
         `${who} declined the ${loopLabel(cycle.hops)}, so it was cancelled. Nexum keeps looking for new matches.`,
         user.id),
-      rematchMembers(c.env, others),
+      matchAndNotify(c.env, others),
     ]));
   } else if (result.status === 'superseded') {
     c.executionCtx.waitUntil(notifyCycle(c.env, cycle.id, cycle.participants, 'cycle_superseded',
@@ -120,11 +121,13 @@ async function closeSupersededLoops(env, db, cycleIds) {
     .from('trade_cycle_participants')
     .select('cycle_id, user_id')
     .in('cycle_id', cycleIds);
-  const byCycle = Map.groupBy(seats ?? [], (seat) => seat.cycle_id);
-  await Promise.all([...byCycle].map(([cycleId, members]) =>
-    notifyCycle(env, cycleId, members, 'cycle_superseded',
-      'Someone completed another trade loop with one of these items, so this loop was closed. Nexum keeps looking for new matches.')));
-  await rematchMembers(env, (seats ?? []).map((seat) => seat.user_id));
+  await notifyMany(env, (seats ?? []).map((seat) => ({
+    userId: seat.user_id,
+    type: 'cycle_superseded',
+    payload: { cycle_id: seat.cycle_id },
+    text: 'Someone completed another trade loop with one of these items, so this loop was closed. Nexum keeps looking for new matches.',
+  })));
+  await matchAndNotify(env, (seats ?? []).map((seat) => seat.user_id));
 }
 
 app.post('/cycles/:id/confirm', requireAuth, rateLimit(30, 'cycle-act'), async (c) => {

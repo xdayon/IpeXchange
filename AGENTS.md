@@ -59,14 +59,18 @@ Mini App, and Telegram Bot are supported. Crypto payments on Base are launch 2.
   intent is created or edited, after a swipe or interest mark, and after a loop
   is declined or superseded. Do not add polling or matching crons; clearing
   rounds are admin-triggered (`POST /api/admin/clearing`). The only scheduled
-  job is the Supabase keepalive cron in `wrangler.jsonc`.
+  job is the keepalive cron in `wrangler.jsonc` (Supabase ping plus repair of
+  edges for recently created intents). One `match_and_persist` RPC per trigger
+  and batched notifications keep the Worker within its subrequest budget.
 - Trade loops have 2 to 7 participants, ranked by the product of edge
   acceptance probabilities, with at most 25% value imbalance; unknown prices
   pass. Semantic edges need similarity >= 0.70; swipes and interest marks on
   exchangeable Offers are explicit edges. Buy now only Offers never join loops.
 - Suggestions do not reserve intents. The last acceptance claims one-off
   intents and supersedes competing suggestions; continuous intents are never
-  reserved. Matching logic lives in SQL (`supabase/migrations/0023_*`) and is
+  reserved. A decline records a pass and the same loop is not suggested again
+  for 14 days. Accepted loops with no delivery for 30 days expire, and admins
+  can cancel a stuck loop (`POST /api/admin/cycles/:id/cancel`). Matching logic lives in SQL (`supabase/migrations/0023_*`) and is
   covered by `npm run test:db`.
 - AI usage is limited by the `increment_ai_usage` RPC.
 - Anonymous users may browse with text search. Publishing and marking interest

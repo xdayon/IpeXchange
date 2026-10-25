@@ -2,7 +2,9 @@ import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
-import { findCycles, matchAndNotify, notifyNewLoops, persistLoops } from '../lib/matching.js';
+import { matchAndNotify, notifyNewLoops, persistNewLoops } from '../lib/matching.js';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const app = new Hono();
 
@@ -87,19 +89,37 @@ app.post('/intents/:id/swipe', requireAuth, rateLimit(120, 'swipe'), async (c) =
   }
 
   let created = [];
+  let open = [];
   if (body.decision === 'accept' && offer.transaction_mode !== 'buy_now') {
-    created = await persistLoops(c.env, await findCycles(c.env, user.id));
+    created = await persistNewLoops(c.env, user.id);
     if (created.length) c.executionCtx.waitUntil(notifyNewLoops(c.env, created));
+    open = await openLoopsReceiving(db, user.id, offer.id);
   }
+  const summary = (loop) => ({ id: loop.id, hops: loop.hops, score: loop.score });
   return c.json({
     ok: true,
     decision: body.decision,
-    new_loops: created.map((loop) => ({ id: loop.id, hops: loop.hops, score: loop.score })),
+    new_loops: created.map(summary),
+    // Loops that already give this Offer to the member (often formed when
+    // the Offer was published), so the client can point to them.
+    open_loops: open.filter((loop) => !created.some((n) => n.id === loop.id)).map(summary),
   });
 });
 
+async function openLoopsReceiving(db, userId, offerId) {
+  const { data, error } = await db
+    .from('trade_cycle_participants')
+    .select('trade_cycles!inner ( id, hops, score, status )')
+    .eq('user_id', userId)
+    .eq('receives_intent_id', offerId)
+    .in('trade_cycles.status', ['suggested', 'pending_acceptance']);
+  if (error) console.error('Open loop lookup failed:', error);
+  return (data ?? []).map((row) => row.trade_cycles);
+}
+
 app.delete('/intents/:id/swipe', requireAuth, rateLimit(120, 'swipe'), async (c) => {
   const user = c.get('user');
+  if (!UUID_RE.test(c.req.param('id'))) return c.json({ error: 'Invalid id' }, 400);
   const { error } = await getDb(c.env)
     .from('intent_swipes')
     .delete()

@@ -21,6 +21,7 @@ ALTER TABLE trade_cycles
 CREATE INDEX IF NOT EXISTS idx_cycle_participants_gives ON trade_cycle_participants (gives_intent_id);
 CREATE INDEX IF NOT EXISTS idx_cycle_participants_want ON trade_cycle_participants (want_intent_id);
 CREATE INDEX IF NOT EXISTS idx_trade_cycles_status ON trade_cycles (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trade_cycles_hash ON trade_cycles (cycle_hash);
 
 -- ── Approximate member area for the map ──────────────────────
 -- Two decimals (about 1 km) are enforced by the column type itself.
@@ -131,6 +132,7 @@ BEGIN
     OR NEW.constraints IS DISTINCT FROM OLD.constraints
     OR NEW.location_text IS DISTINCT FROM OLD.location_text
     OR NEW.transaction_mode IS DISTINCT FROM OLD.transaction_mode
+    OR NEW.user_id IS DISTINCT FROM OLD.user_id
     OR (NEW.status IN ('archived', 'fulfilled')) <> (OLD.status IN ('archived', 'fulfilled'))
   THEN
     PERFORM refresh_intent_edges(NEW.id);
@@ -170,7 +172,8 @@ AS $$
     FROM intent_edges e
     JOIN live w ON w.id = e.want_id
     JOIN live o ON o.id = e.offer_id
-    WHERE NOT EXISTS (
+    WHERE w.user_id <> o.user_id
+      AND NOT EXISTS (
       SELECT 1 FROM intent_swipes s
       WHERE s.user_id = w.user_id AND s.offer_id = o.id AND s.decision = 'pass'
     )
@@ -404,6 +407,12 @@ BEGIN
       <> cardinality(v_all) THEN
     RETURN jsonb_build_object('created', false, 'reason', 'intent_unavailable');
   END IF;
+  IF EXISTS (
+    SELECT 1 FROM trade_cycles
+    WHERE cycle_hash = v_hash AND status = 'cancelled' AND updated_at > now() - interval '14 days'
+  ) THEN
+    RETURN jsonb_build_object('created', false, 'reason', 'recently_declined');
+  END IF;
   IF p_source = 'match' AND EXISTS (
     SELECT 1 FROM trade_cycle_participants tp
     JOIN trade_cycles c ON c.id = tp.cycle_id
@@ -468,8 +477,26 @@ BEGIN
     -- explicitly accept it later.
     INSERT INTO intent_swipes (user_id, offer_id, decision)
     VALUES (p_user, v_receives, 'pass')
-    ON CONFLICT (user_id, offer_id) DO NOTHING;
+    ON CONFLICT (user_id, offer_id) DO UPDATE SET decision = 'pass', created_at = now();
     RETURN jsonb_build_object('status', 'cancelled');
+  END IF;
+
+  SELECT array_agg(DISTINCT x ORDER BY x) INTO v_intents FROM (
+    SELECT gives_intent_id AS x FROM trade_cycle_participants WHERE cycle_id = p_cycle
+    UNION
+    SELECT want_intent_id FROM trade_cycle_participants
+    WHERE cycle_id = p_cycle AND want_intent_id IS NOT NULL
+  ) ids;
+  -- Tell members early when another loop already claimed one of the items.
+  IF EXISTS (
+    SELECT 1 FROM intents i
+    WHERE i.id = ANY(v_intents)
+      AND (i.status IN ('archived', 'fulfilled')
+           OR EXISTS (SELECT 1 FROM intent_reservations r
+                      WHERE r.intent_id = i.id AND r.cycle_id IS NOT NULL))
+  ) THEN
+    UPDATE trade_cycles SET status = 'superseded' WHERE id = p_cycle;
+    RETURN jsonb_build_object('status', 'superseded', 'reason', 'intent_unavailable');
   END IF;
 
   SELECT count(*) INTO v_pending FROM trade_cycle_participants
@@ -479,13 +506,9 @@ BEGIN
     RETURN jsonb_build_object('status', 'pending_acceptance');
   END IF;
 
-  SELECT array_agg(DISTINCT x ORDER BY x) INTO v_intents FROM (
-    SELECT gives_intent_id AS x FROM trade_cycle_participants WHERE cycle_id = p_cycle
-    UNION
-    SELECT want_intent_id FROM trade_cycle_participants
-    WHERE cycle_id = p_cycle AND want_intent_id IS NOT NULL
-  ) ids;
-  PERFORM 1 FROM intents WHERE id = ANY(v_intents) ORDER BY id FOR UPDATE;
+  -- NO KEY UPDATE serializes claims against each other and against
+  -- prepare_payment without blocking foreign-key checks from inserts.
+  PERFORM 1 FROM intents WHERE id = ANY(v_intents) ORDER BY id FOR NO KEY UPDATE;
   IF (SELECT count(*) FROM intents WHERE id = ANY(v_intents) AND status = 'active')
       <> cardinality(v_intents) THEN
     UPDATE trade_cycles SET status = 'superseded' WHERE id = p_cycle;
@@ -589,7 +612,10 @@ BEGIN
     AND EXISTS (
       SELECT 1 FROM trade_cycle_participants tp
       JOIN intents i ON i.id IN (tp.gives_intent_id, tp.want_intent_id)
-      WHERE tp.cycle_id = c.id AND i.status IN ('archived', 'fulfilled')
+      WHERE tp.cycle_id = c.id
+        AND (i.status IN ('archived', 'fulfilled')
+             OR EXISTS (SELECT 1 FROM intent_reservations r
+                        WHERE r.intent_id = i.id AND r.cycle_id IS NOT NULL AND r.cycle_id <> c.id))
     );
   GET DIAGNOSTICS v_count = ROW_COUNT;
   RETURN v_count;
@@ -620,20 +646,62 @@ BEGIN
     RETURNING cycle.id
   )
   SELECT count(*) INTO v_expired FROM expired;
+
+  -- An accepted loop where nobody delivered anything for 30 days is
+  -- abandoned: release its items so their owners can trade again.
+  WITH abandoned AS (
+    SELECT c.id FROM trade_cycles c
+    WHERE c.status = 'accepted' AND c.updated_at <= now() - interval '30 days'
+      AND NOT EXISTS (SELECT 1 FROM trade_cycle_participants tp
+                      WHERE tp.cycle_id = c.id AND tp.delivered_at IS NOT NULL)
+    FOR UPDATE SKIP LOCKED
+  ), closed AS (
+    UPDATE trade_cycles c SET status = 'expired' FROM abandoned WHERE c.id = abandoned.id
+    RETURNING c.id
+  ), released AS (
+    DELETE FROM intent_reservations r USING closed WHERE r.cycle_id = closed.id
+    RETURNING r.intent_id
+  )
+  UPDATE intents SET status = 'active'
+  WHERE id IN (SELECT intent_id FROM released) AND status = 'in_cycle';
   RETURN v_expired;
 END;
 $$;
 
--- Suggestions created before this migration reserved their intents.
--- Release them, and release continuous intents held by accepted loops.
+-- ── Legacy data ──────────────────────────────────────────────
+-- Open suggestions created by the old engine are re-checked against the
+-- new rules: weak edges (old similarity floor was 0.58), Buy now only
+-- Offers and incompatible pairs can never be accepted now.
+UPDATE trade_cycles c SET status = 'superseded'
+WHERE c.status IN ('suggested', 'pending_acceptance')
+  AND (c.min_similarity < 0.70
+       OR EXISTS (SELECT 1 FROM trade_cycle_participants tp
+                  JOIN intents o ON o.id = tp.gives_intent_id
+                  WHERE tp.cycle_id = c.id AND o.transaction_mode = 'buy_now')
+       OR EXISTS (SELECT 1 FROM trade_cycle_participants tp
+                  JOIN intents w ON w.id = tp.want_intent_id
+                  JOIN intents o ON o.id = tp.receives_intent_id
+                  WHERE tp.cycle_id = c.id AND NOT intent_pair_compatible(w, o)));
+
+-- Suggestions no longer hold intents, and closed loops never should.
+-- Completed loops that leaked a reservation finish the one-off intent.
 WITH released AS (
   DELETE FROM intent_reservations r USING trade_cycles c
-  WHERE r.cycle_id = c.id AND c.status IN ('suggested', 'pending_acceptance')
+  WHERE r.cycle_id = c.id AND c.status = 'completed'
+  RETURNING r.intent_id
+)
+UPDATE intents SET status = CASE WHEN is_continuous THEN 'active' ELSE 'fulfilled' END
+WHERE id IN (SELECT intent_id FROM released) AND status = 'in_cycle';
+
+WITH released AS (
+  DELETE FROM intent_reservations r USING trade_cycles c
+  WHERE r.cycle_id = c.id AND c.status NOT IN ('accepted', 'completed')
   RETURNING r.intent_id
 )
 UPDATE intents SET status = 'active'
 WHERE id IN (SELECT intent_id FROM released) AND status = 'in_cycle';
 
+-- Continuous intents stay available while in accepted loops.
 WITH released AS (
   DELETE FROM intent_reservations r USING intents i
   WHERE r.intent_id = i.id AND r.cycle_id IS NOT NULL AND i.is_continuous
@@ -641,6 +709,11 @@ WITH released AS (
 )
 UPDATE intents SET status = 'active'
 WHERE id IN (SELECT intent_id FROM released) AND status = 'in_cycle';
+
+-- An in_cycle intent without any reservation is invisible to everyone.
+UPDATE intents i SET status = 'active'
+WHERE i.status = 'in_cycle'
+  AND NOT EXISTS (SELECT 1 FROM intent_reservations r WHERE r.intent_id = i.id);
 
 -- ── Clearing round ───────────────────────────────────────────
 -- Searches loops from every member who both gives and receives (each
@@ -697,7 +770,12 @@ BEGIN
     v_cycle := loop_to_json(v_row.path, v_row.offers, v_row.wants, v_row.probs, v_row.explicit,
                             v_row.hops, v_row.score, v_row.pmin, v_row.pmax);
     IF NOT p_dry_run THEN
-      v_persisted := persist_intent_cycle(v_cycle, 'clearing');
+      BEGIN
+        v_persisted := persist_intent_cycle(v_cycle, 'clearing');
+      EXCEPTION WHEN OTHERS THEN
+        RAISE WARNING 'clearing loop not saved: %', SQLERRM;
+        v_persisted := NULL;
+      END;
       IF (v_persisted->>'created')::BOOLEAN THEN
         v_created := v_created + 1;
         v_cycle := v_cycle || jsonb_build_object('cycle_id', v_persisted->>'id');
@@ -781,11 +859,17 @@ BEGIN
                   WHERE tp.cycle_id = c.id AND tp.user_id = p_user)
   ), shown_loops AS (
     SELECT * FROM open_loops ORDER BY score DESC NULLS LAST LIMIT 6
+  ), visible AS (
+    -- Arcs into the viewer are their own Interests or swipes. Arcs out of
+    -- the viewer are shown only when backed by a public Interest: another
+    -- member's swipe stays private until a loop forms.
+    SELECT a.* FROM loop_arc_snapshot a
+    WHERE a.receiver = p_user OR (a.giver = p_user AND a.want_id IS NOT NULL)
   ), direct AS (
     SELECT d.u FROM (
-      SELECT receiver AS u, prob FROM loop_arc_snapshot WHERE giver = p_user
+      SELECT receiver AS u, prob FROM visible WHERE giver = p_user
       UNION ALL
-      SELECT giver, prob FROM loop_arc_snapshot WHERE receiver = p_user
+      SELECT giver, prob FROM visible WHERE receiver = p_user
     ) d GROUP BY d.u ORDER BY max(d.prob) DESC LIMIT 16
   ), node_ids AS (
     SELECT p_user AS id, 0 AS ring
@@ -794,9 +878,9 @@ BEGIN
   ), nodes AS (
     SELECT id, min(ring) AS ring FROM node_ids GROUP BY id ORDER BY min(ring) LIMIT 25
   ), links AS (
-    SELECT a.* FROM loop_arc_snapshot a
-    WHERE a.giver IN (SELECT id FROM nodes) AND a.receiver IN (SELECT id FROM nodes)
-    ORDER BY a.prob DESC LIMIT 60
+    SELECT v.* FROM visible v
+    WHERE v.giver IN (SELECT id FROM nodes) AND v.receiver IN (SELECT id FROM nodes)
+    ORDER BY v.prob DESC LIMIT 40
   )
   SELECT jsonb_build_object(
     'nodes', (SELECT COALESCE(jsonb_agg(jsonb_build_object(
@@ -805,7 +889,8 @@ BEGIN
               ORDER BY n.ring), '[]') FROM nodes n JOIN users u ON u.id = n.id),
     'links', (SELECT COALESCE(jsonb_agg(jsonb_build_object(
                 'source', l.giver, 'target', l.receiver, 'offer_id', l.offer_id,
-                'offer_title', i.title, 'score', round(l.prob::numeric, 3), 'explicit', l.explicit)),
+                'offer_title', i.title, 'score', round(l.prob::numeric, 3),
+                'explicit', l.explicit AND l.receiver = p_user)),
               '[]') FROM links l JOIN intents i ON i.id = l.offer_id),
     'loops', (SELECT COALESCE(jsonb_agg(jsonb_build_object(
                 'id', s.id, 'hops', s.hops, 'status', s.status, 'score', s.score,
@@ -861,9 +946,11 @@ AS $$
 $$;
 
 -- ── Market map ───────────────────────────────────────────────
--- Points sit at the owner's rounded area plus a deterministic offset of
--- up to ~400 m per intent, so neighbours never reveal an address.
-CREATE OR REPLACE FUNCTION market_map(p_limit INT DEFAULT 500) RETURNS JSONB
+-- Points sit at the owner's area, already rounded to about 1 km, plus an
+-- offset of up to ~400 m per intent so points do not stack. The offset is
+-- keyed by a secret salt passed by the Worker, so it cannot be undone to
+-- recover the exact rounded cell. The rounded area itself is public.
+CREATE OR REPLACE FUNCTION market_map(p_limit INT DEFAULT 500, p_salt TEXT DEFAULT '') RETURNS JSONB
 LANGUAGE sql STABLE
 SET search_path = public, pg_temp
 AS $$
@@ -871,9 +958,9 @@ AS $$
     'id', p.id, 'direction', p.direction, 'kind', p.kind, 'title', p.title,
     'price_fiat', p.price_fiat,
     'lat', round((p.geo_lat
-      + ((('x' || substr(md5(p.id::text), 1, 4))::bit(16)::int / 65535.0) - 0.5) * 0.008)::numeric, 4),
+      + ((('x' || substr(md5(p_salt || p.id::text), 1, 4))::bit(16)::int / 65535.0) - 0.5) * 0.008)::numeric, 4),
     'lng', round((p.geo_lng
-      + ((('x' || substr(md5(p.id::text), 5, 4))::bit(16)::int / 65535.0) - 0.5) * 0.008)::numeric, 4)
+      + ((('x' || substr(md5(p_salt || p.id::text), 5, 4))::bit(16)::int / 65535.0) - 0.5) * 0.008)::numeric, 4)
   )), '[]')
   FROM (
     SELECT i.id, i.direction, i.kind, i.title, i.price_fiat, u.geo_lat, u.geo_lng
@@ -988,5 +1075,129 @@ BEGIN
     WHERE id = p_user;
 
   RETURN jsonb_build_object('ok', true, 'merged', v_merged);
+END;
+$$;
+
+-- ── Matching entry point for the Worker ──────────────────────
+-- One round trip per trigger (publish, edit, swipe, decline, supersede):
+-- expires stale state, snapshots the arcs once, and saves up to p_max_new
+-- loops through each member. Keeps the Worker within its subrequest budget.
+CREATE OR REPLACE FUNCTION match_and_persist(p_users UUID[], p_max_new INT DEFAULT 3)
+RETURNS JSONB LANGUAGE plpgsql
+SET search_path = public, pg_temp
+SET jit = off
+AS $$
+DECLARE
+  v_user UUID;
+  v_cycle JSONB;
+  v_result JSONB;
+  v_new INT;
+  v_created JSONB[] := '{}';
+BEGIN
+  PERFORM expire_payment_reservations();
+  PERFORM expire_stale_cycles();
+  PERFORM prepare_loop_arcs();
+  FOR v_user IN
+    SELECT DISTINCT u FROM unnest(p_users) u WHERE u IS NOT NULL LIMIT 10
+  LOOP
+    v_new := 0;
+    FOR v_cycle IN
+      SELECT value FROM jsonb_array_elements(search_loops_from(v_user, 6, 0.04, 0.75, 10))
+    LOOP
+      EXIT WHEN v_new >= p_max_new;
+      BEGIN
+        v_result := persist_intent_cycle(v_cycle, 'match');
+      EXCEPTION WHEN OTHERS THEN
+        RAISE WARNING 'loop not saved: %', SQLERRM;
+        CONTINUE;
+      END;
+      IF (v_result->>'created')::BOOLEAN THEN
+        v_new := v_new + 1;
+        v_created := v_created || (v_cycle || jsonb_build_object('id', v_result->>'id'));
+      END IF;
+    END LOOP;
+  END LOOP;
+  RETURN to_jsonb(v_created);
+END;
+$$;
+
+-- Support exit for a loop that cannot finish: releases its reservations
+-- and returns the members so the Worker can tell them and re-match.
+CREATE OR REPLACE FUNCTION cancel_loop(p_cycle UUID) RETURNS JSONB LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_status TEXT;
+  v_members UUID[];
+BEGIN
+  SELECT status INTO v_status FROM trade_cycles WHERE id = p_cycle FOR UPDATE;
+  IF v_status IS NULL THEN RETURN jsonb_build_object('error', 'not_found'); END IF;
+  IF v_status NOT IN ('suggested', 'pending_acceptance', 'accepted') THEN
+    RETURN jsonb_build_object('error', 'closed', 'status', v_status);
+  END IF;
+  UPDATE trade_cycles SET status = 'cancelled' WHERE id = p_cycle;
+  WITH released AS (
+    DELETE FROM intent_reservations WHERE cycle_id = p_cycle RETURNING intent_id
+  )
+  UPDATE intents SET status = 'active'
+  WHERE id IN (SELECT intent_id FROM released) AND status = 'in_cycle';
+  SELECT array_agg(user_id ORDER BY position) INTO v_members
+  FROM trade_cycle_participants WHERE cycle_id = p_cycle;
+  RETURN jsonb_build_object('status', 'cancelled', 'members', to_jsonb(v_members));
+END;
+$$;
+
+-- Two matching intents published at the same moment cannot see each
+-- other's uncommitted row, so their edge is missed. The keepalive cron
+-- repairs edges of recently created or edited intents.
+CREATE OR REPLACE FUNCTION refresh_recent_edges(p_since INTERVAL DEFAULT interval '7 hours')
+RETURNS INT LANGUAGE sql
+SET search_path = public, pg_temp
+AS $$
+  SELECT COALESCE(sum(refresh_intent_edges(id)), 0)::INT FROM intents
+  WHERE (created_at > now() - p_since OR updated_at > now() - p_since)
+    AND embedding IS NOT NULL AND status NOT IN ('archived', 'fulfilled');
+$$;
+
+-- ── Privileges ───────────────────────────────────────────────
+-- Only the Worker (service_role) calls these. Supabase grants EXECUTE on
+-- new functions to anon by default; RLS already blocks data access, but
+-- anon should not be able to burn CPU or create temp tables either.
+DO $$
+DECLARE
+  f RECORD;
+BEGIN
+  FOR f IN
+    SELECT p.oid::regprocedure AS sig
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = ANY (ARRAY[
+      'intent_pair_compatible', 'refresh_intent_edges', 'sync_intent_edges', 'loop_arcs',
+      'prepare_loop_arcs', 'collect_loops_from', 'loop_to_json', 'search_loops_from',
+      'find_intent_cycles', 'persist_intent_cycle', 'respond_to_cycle', 'confirm_cycle_step',
+      'prune_unavailable_loops', 'expire_stale_cycles', 'run_clearing_round', 'swipe_deck',
+      'loop_radar', 'market_activity', 'market_map', 'link_telegram_account',
+      'match_and_persist', 'cancel_loop', 'refresh_recent_edges'])
+  LOOP
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC', f.sig);
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+      EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM anon, authenticated', f.sig);
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+      EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role', f.sig);
+    END IF;
+  END LOOP;
+END;
+$$;
+
+-- Loop search keeps per-transaction temp tables; make sure the Worker's
+-- role may create them (PostgreSQL grants TEMP to PUBLIC by default).
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role')
+     AND NOT has_database_privilege('service_role', current_database(), 'TEMP') THEN
+    EXECUTE format('GRANT TEMPORARY ON DATABASE %I TO service_role', current_database());
+  END IF;
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE WARNING 'Could not grant TEMP to service_role: loop search needs it';
 END;
 $$;

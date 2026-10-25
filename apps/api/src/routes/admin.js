@@ -4,7 +4,7 @@ import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { isAllowlistedAdmin } from '../lib/admin.js';
 import { syncPrivyEmail } from '../lib/privy.js';
-import { notifyNewLoops } from '../lib/matching.js';
+import { matchAndNotify, notifyCycle, notifyNewLoops } from '../lib/matching.js';
 
 const app = new Hono();
 
@@ -78,6 +78,22 @@ app.post('/admin/clearing', rateLimit(10, 'admin-clearing'), async (c) => {
   const published = loops.filter((loop) => loop.cycle_id).map((loop) => ({ ...loop, id: loop.cycle_id }));
   if (published.length) c.executionCtx.waitUntil(notifyNewLoops(c.env, published));
   return c.json({ candidates: round.candidates, created: round.created, selected });
+});
+
+// Support exit for a loop that cannot finish (for example a member who
+// disappeared after accepting): releases its items and re-matches members.
+app.post('/admin/cycles/:id/cancel', async (c) => {
+  const { data: result, error } = await getDb(c.env).rpc('cancel_loop', { p_cycle: c.req.param('id') });
+  if (error) return c.json({ error: 'Could not cancel the loop' }, 500);
+  if (result?.error === 'not_found') return c.json({ error: 'Not found' }, 404);
+  if (result?.error) return c.json({ error: 'Loop already closed', detail: result }, 409);
+  const members = (result.members ?? []).map((userId) => ({ user_id: userId }));
+  c.executionCtx.waitUntil(Promise.all([
+    notifyCycle(c.env, c.req.param('id'), members, 'cycle_cancelled',
+      'An IpeXchange admin closed this trade loop. Your items are available again and Nexum keeps looking for new matches.'),
+    matchAndNotify(c.env, result.members ?? []),
+  ]));
+  return c.json(result);
 });
 
 app.get('/admin/users', async (c) => {
