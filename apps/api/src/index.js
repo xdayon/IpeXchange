@@ -11,6 +11,8 @@ import payments from './routes/payments.js';
 import admin from './routes/admin.js';
 import share from './routes/share.js';
 import notifications from './routes/notifications.js';
+import loops from './routes/loops.js';
+import discovery from './routes/discovery.js';
 import { keepAlive } from './lib/keepalive.js';
 
 const app = createApp();
@@ -26,6 +28,8 @@ app.route('/api', cycles);
 app.route('/api', payments);
 app.route('/api', admin);
 app.route('/api', notifications);
+app.route('/api', loops);
+app.route('/api', discovery);
 app.route('/', share);
 
 export default {

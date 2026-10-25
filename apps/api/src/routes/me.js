@@ -36,6 +36,9 @@ const serialize = (u) => ({
   is_admin: u.is_admin === true,
   referred_by: u.referred_by ?? null,
   created_at: u.created_at,
+  location: u.geo_lat != null && u.geo_lng != null
+    ? { lat: Number(u.geo_lat), lng: Number(u.geo_lng), label: u.geo_label ?? null }
+    : null,
 });
 
 app.get('/me', requireAuth, async (c) => {

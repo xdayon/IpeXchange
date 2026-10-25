@@ -4,6 +4,7 @@ import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { isAllowlistedAdmin } from '../lib/admin.js';
 import { syncPrivyEmail } from '../lib/privy.js';
+import { notifyNewLoops } from '../lib/matching.js';
 
 const app = new Hono();
 
@@ -36,6 +37,47 @@ app.get('/admin/nexum-funnel', async (c) => {
   const { data, error } = await getDb(c.env).rpc('nexum_funnel');
   if (error) return c.json({ error: 'Could not load Nexum funnel' }, 500);
   return c.json(data);
+});
+
+// Clearing round for live events: packs disjoint trade loops across the
+// whole market. Preview with dry_run, then publish them as suggestions.
+app.post('/admin/clearing', rateLimit(10, 'admin-clearing'), async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const maxHops = Math.min(Math.max(Number(body.max_hops) || 6, 2), 7);
+  const dryRun = body.dry_run !== false;
+  const db = getDb(c.env);
+  const { data: round, error } = await db.rpc('run_clearing_round', {
+    p_max_hops: maxHops, p_dry_run: dryRun,
+  });
+  if (error) {
+    console.error('run_clearing_round failed:', error);
+    return c.json({ error: 'Clearing round failed' }, 500);
+  }
+
+  const loops = round.selected ?? [];
+  const userIds = [...new Set(loops.flatMap((loop) => loop.participants.map((p) => p.user_id)))];
+  const { data: users } = userIds.length
+    ? await db.from('users').select('id, display_name').in('id', userIds)
+    : { data: [] };
+  const names = new Map((users ?? []).map((u) => [u.id, u.display_name || 'Member']));
+  const selected = loops.map((loop) => ({
+    cycle_id: loop.cycle_id ?? null,
+    hops: loop.hops,
+    score: loop.score,
+    participants: loop.participants.map((p) => ({
+      user_id: p.user_id,
+      display_name: names.get(p.user_id) ?? 'Member',
+      position: p.position,
+      gives_intent_id: p.gives_intent_id,
+      gives_title: p.gives_title,
+      receives_intent_id: p.receives_intent_id,
+      receives_title: p.receives_title,
+    })),
+  }));
+
+  const published = loops.filter((loop) => loop.cycle_id).map((loop) => ({ ...loop, id: loop.cycle_id }));
+  if (published.length) c.executionCtx.waitUntil(notifyNewLoops(c.env, published));
+  return c.json({ candidates: round.candidates, created: round.created, selected });
 });
 
 app.get('/admin/users', async (c) => {

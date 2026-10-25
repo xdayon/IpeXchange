@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
 import { notify } from '../lib/notify.js';
+import { matchAndNotify } from '../lib/matching.js';
 
 const app = new Hono();
 
@@ -18,7 +19,7 @@ app.post('/intents/:id/interest', requireAuth, rateLimit(15, 'interest'), async 
 
   const { data: intent } = await db
     .from('intents')
-    .select('id, user_id, title, status')
+    .select('id, user_id, title, status, direction, transaction_mode')
     .eq('id', c.req.param('id'))
     .maybeSingle();
   if (!intent || intent.status !== 'active') return c.json({ error: 'Not found' }, 404);
@@ -56,6 +57,20 @@ app.post('/intents/:id/interest', requireAuth, rateLimit(15, 'interest'), async 
       text: dm,
     }),
   );
+
+  // Interest in an exchangeable Offer is an explicit loop edge too.
+  if (intent.direction === 'offer' && intent.transaction_mode !== 'buy_now') {
+    c.executionCtx.waitUntil(
+      db.from('intent_swipes')
+        .upsert({ user_id: user.id, offer_id: intent.id, decision: 'accept' },
+          { onConflict: 'user_id,offer_id' })
+        .then(({ error: swipeError }) => {
+          if (swipeError) throw swipeError;
+          return matchAndNotify(c.env, user.id);
+        })
+        .catch((swipeError) => console.error('Interest loop edge failed:', swipeError)),
+    );
+  }
 
   return c.json(mark, 201);
 });

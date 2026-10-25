@@ -14,6 +14,12 @@ import {
 
 const app = new Hono();
 
+// Changing any of these can open new trade loops for the owner.
+const MATCH_FIELDS = [
+  'embedding', 'kind', 'status', 'exchange_modes', 'constraints', 'location_text',
+  'transaction_mode', 'price_fiat', 'expires_at',
+];
+
 app.post('/intents', requireAuth, rateLimit(20, 'intent-create'), async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => null);
@@ -161,6 +167,9 @@ app.patch('/intents/:id', requireAuth, rateLimit(30, 'intent-edit'), async (c) =
   if (error) {
     console.error('Intent update failed:', error);
     return c.json({ error: 'Could not update intent' }, 500);
+  }
+  if (MATCH_FIELDS.some((field) => field in patch) && data.status === 'active') {
+    c.executionCtx.waitUntil(matchAndNotify(c.env, user.id));
   }
   if (archiveImage) {
     try {
