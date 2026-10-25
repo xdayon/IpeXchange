@@ -1,0 +1,27 @@
+.celebration {
+  position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: 24px 16px;
+  background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--accent-lime) 14%, var(--scrim)), var(--scrim) 70%);
+  animation: celebrationIn 0.35s var(--ease-out-soft) both; overflow: hidden;
+}
+@keyframes celebrationIn { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: none; } }
+.celebration__close {
+  position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 12px; display: grid; place-items: center;
+  width: 40px; border: none; border-radius: 50%; background: var(--bg-elevated); color: var(--text-primary); cursor: pointer;
+}
+.celebration__body { position: relative; z-index: 1; width: 100%; max-width: 420px; text-align: center; }
+.celebration__ring { width: min(340px, 88vw); margin: 0 auto 8px; animation: popIn 0.6s var(--ease-spring) both; }
+.celebration__title { font-size: clamp(34px, 9vw, 52px); font-weight: 800; line-height: 1.05; }
+.celebration__subtitle { margin: 10px auto 22px; max-width: 320px; color: var(--text-secondary); font-size: 16px; line-height: 1.5; }
+.celebration__actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.celebration__confetti { position: absolute; inset: 0; pointer-events: none; }
+.celebration__confetti span {
+  position: absolute; top: -12px; left: var(--x); width: 8px; height: 14px; border-radius: 2px;
+  background: var(--accent-lime); opacity: 0; animation: confettiFall 2.8s ease-in calc(var(--i) * 70ms) infinite;
+}
+.celebration__confetti span:nth-child(3n) { background: var(--accent-cyan); }
+.celebration__confetti span:nth-child(3n + 1) { background: var(--accent-purple); }
+.celebration__confetti span:nth-child(5n) { background: var(--accent-amber); }
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(540deg); opacity: 0.8; }
+}

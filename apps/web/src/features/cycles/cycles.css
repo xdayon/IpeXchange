@@ -1,0 +1,64 @@
+/* Loop ring */
+.cycle-ring { display: block; width: 100%; max-width: 320px; margin: 0 auto; overflow: visible; }
+.cycle-ring__track { fill: none; stroke: var(--border-color); stroke-dasharray: 3 5; }
+.cycle-ring__edge { fill: none; stroke: var(--accent-cyan); stroke-width: 1.8; stroke-dasharray: 5 5; opacity: 0.8; animation: ringFlow 1.4s linear infinite; }
+.cycle-ring__edge.is-active { stroke: var(--accent-lime); stroke-width: 3; opacity: 1; filter: drop-shadow(0 0 5px var(--glow-lime)); }
+.cycle-ring__arrowhead { fill: var(--accent-cyan); }
+.cycle-ring__node circle { fill: color-mix(in srgb, var(--accent-cyan) 14%, var(--bg-card)); stroke: var(--accent-cyan); stroke-width: 1.5; transition: all var(--transition); }
+.cycle-ring__node.is-me circle { fill: color-mix(in srgb, var(--accent-lime) 16%, var(--bg-card)); stroke: var(--accent-lime); }
+.cycle-ring__node.is-active circle { stroke: var(--accent-lime); stroke-width: 3; filter: drop-shadow(0 0 8px var(--glow-lime)); }
+.cycle-ring--glow .cycle-ring__node circle { filter: drop-shadow(0 0 6px var(--glow-cyan)); }
+.cycle-ring__initials { fill: var(--text-primary); font: 700 12px var(--font-sans); }
+.cycle-ring__label { fill: var(--text-secondary); font: 600 11px var(--font-sans); }
+.cycle-ring__node.is-me .cycle-ring__label { fill: var(--accent-lime); }
+
+/* Loops page */
+.loops-page, .loop-detail { max-width: 680px; margin: 0 auto; padding: 24px 0 60px; }
+.loops-page h1 { margin-bottom: 6px; font-size: 26px; font-weight: 800; }
+.loops-page__intro { margin-bottom: 16px; color: var(--text-secondary); font-size: 15px; line-height: 1.5; }
+.loops-page__note, .loop-note { color: var(--text-secondary); font-size: 14px; text-align: center; }
+.loop-note:not(.loop-note--inline) { margin-top: 60px; }
+.loop-note--inline { margin-top: 14px; }
+.loops-radar { margin-bottom: 18px; padding: 18px 14px 14px; border-radius: var(--radius-xl); background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent-cyan) 9%, transparent), transparent 70%), var(--glass-bg); }
+.loops-radar__empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 12px; color: var(--text-secondary); text-align: center; }
+.loops-radar__empty > svg { color: var(--accent-cyan); }
+.radar-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; text-align: center; }
+.radar-stats dd { font-size: 22px; font-weight: 800; color: var(--accent-lime); }
+.radar-stats dt { color: var(--text-secondary); font-size: 11px; font-weight: 600; }
+.loops-list { display: flex; flex-direction: column; gap: 12px; }
+.cycle-card { display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 16px 18px; border-radius: var(--radius-lg); color: var(--text-primary); font-family: var(--font-sans); text-align: left; cursor: pointer; }
+.cycle-card.needs-me { border-color: color-mix(in srgb, var(--accent-lime) 45%, transparent); box-shadow: var(--shadow-lime); }
+.cycle-card.is-dim { opacity: 0.7; }
+.cycle-card__head { display: flex; align-items: center; gap: 10px; }
+.cycle-card__head > svg { color: var(--accent-cyan); }
+.cycle-card__name { font-size: 14px; font-weight: 800; }
+.status-pill { margin-left: auto; padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.cycle-card__line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 13px; }
+.cycle-card__line .give { color: var(--accent-lime); }
+.cycle-card__line .get { color: var(--accent-cyan); }
+.cycle-card__strength { color: var(--text-muted); font-size: 12px; font-weight: 700; }
+
+/* Loop detail */
+.loop-detail { max-width: 560px; padding-top: 20px; }
+.back-link { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; padding: 0; border: none; background: none; color: var(--text-secondary); font: 400 13px var(--font-sans); cursor: pointer; }
+.loop-detail__head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.loop-detail__head h1 { font-size: 22px; font-weight: 800; }
+.loop-detail__head .status-pill { margin-left: 0; }
+.loop-detail__strength { margin-top: 4px; color: var(--accent-lime); font-size: 13px; font-weight: 800; }
+.loop-detail__hint { margin: 6px 0 12px; color: var(--text-secondary); font-size: 14px; }
+.loop-banner { display: flex; gap: 10px; margin-top: 16px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--accent-amber) 40%, transparent); border-radius: var(--radius-md); background: color-mix(in srgb, var(--accent-amber) 8%, transparent); color: var(--text-primary); font-size: 14px; line-height: 1.45; }
+.loop-banner > svg { flex: 0 0 auto; margin-top: 2px; color: var(--accent-amber); }
+.trade-sides { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+.trade-side { flex: 1; min-width: 140px; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: rgba(255,255,255,0.04); }
+.trade-side__label { margin-bottom: 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
+.trade-side__label--lime { color: var(--accent-lime); }
+.trade-side__label--cyan { color: var(--accent-cyan); }
+.trade-side__title { font-size: 14px; font-weight: 600; }
+.trade-side__meta { margin-top: 2px; color: var(--text-secondary); font-size: 12px; }
+.trade-side__active { display: flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--accent-lime); font-size: 11px; font-weight: 700; }
+.loop-actions { display: flex; gap: 10px; }
+.loop-actions .btn { flex: 1; padding: 12px 16px; font-size: 14px; }
+.btn--done-lime { background: color-mix(in srgb, var(--accent-lime) 12%, transparent); color: var(--accent-lime); }
+.btn--done-cyan { background: color-mix(in srgb, var(--accent-cyan) 12%, transparent); color: var(--accent-cyan); }
+.loop-done { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--accent-lime); font-size: 14px; font-weight: 600; text-align: center; }
+.loop-error { margin-top: 10px; color: var(--accent-pink); font-size: 12px; text-align: center; }

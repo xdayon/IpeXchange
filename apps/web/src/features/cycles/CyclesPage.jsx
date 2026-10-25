@@ -1,86 +1,100 @@
-import { Repeat, LogIn, ArrowRight } from 'lucide-react';
+import { Repeat, LogIn, ArrowRight, Sparkles } from 'lucide-react';
 import { useCycles } from './useCycles.js';
-import { statusInfo, myPart } from './constants.js';
+import { useRadar } from './useRadar.js';
+import LoopRadar from './LoopRadar.jsx';
+import { statusInfo, myPart, loopName, matchStrength } from './constants.js';
+import './cycles.css';
 
 function CycleCard({ cycle, userId, onSelect }) {
   const me = myPart(cycle, userId);
   const info = statusInfo(cycle.status);
   const needsMe = ['suggested', 'pending_acceptance'].includes(cycle.status) && me?.acceptance === 'pending';
+  const strength = matchStrength(cycle.score);
+  const dim = ['superseded', 'cancelled', 'expired'].includes(cycle.status);
 
   return (
-    <button onClick={() => onSelect(cycle)} className="glass-panel"
-      style={{ width: '100%', textAlign: 'left', padding: '16px 18px', cursor: 'pointer',
-        border: needsMe ? '1px solid rgba(180,244,74,0.4)' : '1px solid var(--border-color)',
-        borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-sans)', background: 'var(--glass-bg)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-        <Repeat size={16} style={{ color: 'var(--accent-cyan)' }} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-          {cycle.hops}-person group trade
-        </span>
-        <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px',
-          borderRadius: 'var(--radius-full)', color: info.color, background: info.bg }}>
+    <button onClick={() => onSelect(cycle)}
+      className={`cycle-card glass-panel pressable ${needsMe ? 'needs-me' : ''} ${dim ? 'is-dim' : ''}`}>
+      <div className="cycle-card__head">
+        <Repeat size={16} aria-hidden="true" />
+        <span className="cycle-card__name">{loopName(cycle.hops)}</span>
+        <span className="status-pill" style={{ color: info.color, background: info.bg }}>
           {needsMe ? 'Your response needed' : info.label}
         </span>
       </div>
-      {me && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
-          color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
-          <span>
-            You give <strong style={{ color: 'var(--accent-lime)' }}>{me.gives?.title}</strong>
-            {me.gives?.is_continuous && (
-              <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: 'var(--accent-lime)',
-                display: 'inline-flex', alignItems: 'center', gap: 3, verticalAlign: 'middle' }}>
-                <Repeat size={11} /> stays active
-              </span>
-            )}
-          </span>
-          <ArrowRight size={13} style={{ flexShrink: 0 }} />
-          <span>you receive <strong style={{ color: 'var(--accent-cyan)' }}>{me.receives?.title}</strong></span>
+      {cycle.status === 'superseded' ? (
+        <p className="cycle-card__line">No longer available: someone completed another loop with one of these items.</p>
+      ) : me && (
+        <div className="cycle-card__line">
+          <span>You give <strong className="give">{me.gives?.title}</strong></span>
+          <ArrowRight size={13} aria-hidden="true" />
+          <span>you receive <strong className="get">{me.receives?.title}</strong></span>
         </div>
       )}
+      {strength && <span className="cycle-card__strength">Match strength {strength}</span>}
     </button>
   );
 }
 
-export default function CyclesPage({ user, isAuthenticated, login, onSelectCycle }) {
+function Stats({ stats }) {
+  const items = [
+    ['Open loops', stats.open_loops], ['Completed', stats.completed_loops],
+    ['Offers', stats.offers], ['Interests', stats.interests],
+  ];
+  return (
+    <dl className="radar-stats">
+      {items.map(([label, value]) => (
+        <div key={label}><dd>{value ?? 0}</dd><dt>{label}</dt></div>
+      ))}
+    </dl>
+  );
+}
+
+export default function CyclesPage({ user, isAuthenticated, login, onSelectCycle, onNavigate }) {
   const { cycles, loading } = useCycles(isAuthenticated);
+  const { radar } = useRadar(isAuthenticated);
 
   if (!isAuthenticated) {
     return (
       <div className="empty-state" style={{ marginTop: 80 }}>
         <LogIn size={36} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-        <p style={{ marginBottom: 8 }}>Log in to see your trade cycles.</p>
-        <button onClick={() => login?.()} style={{ marginTop: 12, padding: '12px 28px',
-          borderRadius: 'var(--radius-full)', background: 'var(--accent-lime)', color: 'var(--bg-dark)',
-          fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
-          Log in
-        </button>
+        <p style={{ marginBottom: 8 }}>Log in to see your trade loops.</p>
+        <button className="btn btn--lime" style={{ marginTop: 12 }} onClick={() => login?.()}>Log in</button>
       </div>
     );
   }
 
+  const hasRadar = radar && radar.nodes?.length > 1;
+
   return (
-    <div className="page-enter" style={{ padding: '28px 0 60px', maxWidth: 680, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 6 }}>Group trades</h1>
-      <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 12 }}>
-        Nexum connects two or three people so everyone gives something they offer and receives
-        something they want. You decide whether to join each suggested trade.
-      </p>
-      <p className="context-note">
-        For example: you give a desk to Ana, Ana gives lessons to Leo, and Leo repairs your bicycle.
+    <div className="page-enter loops-page">
+      <h1>Loops</h1>
+      <p className="loops-page__intro">
+        Nexum links people so everyone gives something they offer and receives something they want.
       </p>
 
-      {loading && <p role="status" style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading your group trades...</p>}
+      <section className="loops-radar glass-panel" aria-label="Loop radar">
+        {hasRadar ? <LoopRadar radar={radar} /> : (
+          <div className="loops-radar__empty">
+            <Sparkles size={28} aria-hidden="true" />
+            <p>Your radar lights up when Nexum finds people to trade with.</p>
+            <button className="btn btn--ghost" onClick={() => onNavigate('nexum')}>Add Offers and Interests</button>
+          </div>
+        )}
+        {radar?.stats && <Stats stats={radar.stats} />}
+      </section>
+
+      {loading && <p role="status" className="loops-page__note">Loading your trade loops...</p>}
 
       {!loading && cycles?.length === 0 && (
-        <div className="empty-state" style={{ marginTop: 40 }}>
+        <div className="empty-state" style={{ marginTop: 24 }}>
           <Repeat size={36} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-          <p><strong>No group trades yet.</strong></p>
+          <p><strong>No trade loops yet.</strong></p>
           <p style={{ marginTop: 6, fontSize: 14 }}>Keep your Interests and Offers current. Nexum will notify you when it finds a useful exchange.</p>
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="loops-list">
         {cycles?.map((cycle) => (
           <CycleCard key={cycle.id} cycle={cycle} userId={user?.id} onSelect={onSelectCycle} />
         ))}

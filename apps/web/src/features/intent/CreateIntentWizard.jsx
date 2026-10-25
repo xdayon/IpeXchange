@@ -55,7 +55,7 @@ function SuccessScreen({ intent, onMarket, onCreateAnother, editing }) {
         {intent.direction === 'offer' ? 'Offer' : 'Interest'} <span className="text-gradient-lime">{editing ? 'updated' : 'published'}</span>
       </h2>
       <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 32 }}>
-        It is live on the market. {exchange && 'Nexum is looking for direct and group trade connections.'}
+        It is live on the market. {exchange && 'Nexum is looking for direct swaps and trade loops.'}
         {buyNow && ' Buyers can also pay with your accepted tokens on Base.'}
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
