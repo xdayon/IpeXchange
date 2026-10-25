@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/security.js';
 import { getDb } from '../lib/supabase.js';
+import { safeCreateReceipt } from '../lib/receipts.js';
 import { loopLabel, matchAndNotify, notifyCycle } from '../lib/matching.js';
 import { notifyMany } from '../lib/notify.js';
 
@@ -149,8 +150,11 @@ app.post('/cycles/:id/confirm', requireAuth, rateLimit(30, 'cycle-act'), async (
 
   const cycle = await loadCycle(db, c.req.param('id'));
   if (result.status === 'completed') {
-    c.executionCtx.waitUntil(notifyCycle(c.env, cycle.id, cycle.participants, 'cycle_completed',
-      `${loopLabel(cycle.hops)[0].toUpperCase()}${loopLabel(cycle.hops).slice(1)} completed. Everyone delivered and received. Well traded!`));
+    c.executionCtx.waitUntil(Promise.all([
+      notifyCycle(c.env, cycle.id, cycle.participants, 'cycle_completed',
+        `${loopLabel(cycle.hops)[0].toUpperCase()}${loopLabel(cycle.hops).slice(1)} completed. Everyone delivered and received. Well traded!`),
+      safeCreateReceipt(c.env, cycle.id),
+    ]));
   }
   return c.json(cycle);
 });

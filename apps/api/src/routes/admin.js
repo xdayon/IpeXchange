@@ -5,6 +5,7 @@ import { getDb } from '../lib/supabase.js';
 import { isAllowlistedAdmin } from '../lib/admin.js';
 import { syncPrivyEmail } from '../lib/privy.js';
 import { matchAndNotify, notifyCycle, notifyNewLoops } from '../lib/matching.js';
+import { anchorReceipts } from '../lib/solanaAnchor.js';
 
 const app = new Hono();
 
@@ -94,6 +95,16 @@ app.post('/admin/cycles/:id/cancel', async (c) => {
     matchAndNotify(c.env, result.members ?? []),
   ]));
   return c.json(result);
+});
+
+// Anchors pending loop receipts on Solana now (the cron does it otherwise).
+app.post('/admin/anchor', rateLimit(5, 'admin-anchor'), async (c) => {
+  try {
+    return c.json(await anchorReceipts(c.env));
+  } catch (err) {
+    console.error('Anchoring failed:', err.message);
+    return c.json({ error: 'Anchoring failed' }, 500);
+  }
 });
 
 app.get('/admin/users', async (c) => {
