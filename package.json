@@ -7,10 +7,16 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:worker": "wrangler dev",
+    "deploy": "vite build && wrangler deploy",
+    "check": "npm run lint && vite build && wrangler deploy --dry-run",
+    "db:setup": "node scripts/db-setup.js"
   },
   "dependencies": {
     "@privy-io/react-auth": "^3.22.2",
+    "@supabase/supabase-js": "^2.118.0",
+    "hono": "^4.13.14",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.11.0",
     "react": "^19.2.5",
@@ -22,11 +28,14 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "dotenv": "^18.0.9",
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
+    "postgres": "^3.4.9",
     "vite": "^8.0.10",
-    "vite-plugin-node-polyfills": "^0.26.0"
+    "vite-plugin-node-polyfills": "^0.26.0",
+    "wrangler": "^4.152.0"
   }
 }

@@ -9,9 +9,9 @@ IpêXchange is the trade marketplace for Ipê City, a pop-up innovation city. It
 Demo deadline: **2026-05-01 (Thursday)**. Prioritize visible UX wins and real data flow over refactors.
 
 ## Tech Stack
-- **Frontend:** React + Vite → deployed on Render (`ipexchange-front.onrender.com`)
-- **Backend:** Express + Google Gemini Flash (`gemini-flash-latest`) → deployed on Render
-- **Database:** Supabase (Postgres + pgvector, 768-dim embeddings) — schema at `backend/supabase_schema.sql`
+- **Frontend:** React + Vite → served by the Cloudflare Worker `ipexchange-demo` (`demo.ipexchange.xyz`)
+- **Backend:** Hono on Cloudflare Workers (`worker/index.js`) + Google Gemini Flash (`gemini-flash-latest`)
+- **Database:** Supabase (Postgres + pgvector, 768-dim embeddings) — schema at `supabase/supabase_schema.sql`
 - **Auth:** Privy (wallet + email), branded as "Ipê Passport"
 - **AI:** Gemini Flash for chat, intent extraction, listing extraction, and embeddings
 
@@ -27,11 +27,10 @@ Demo deadline: **2026-05-01 (Thursday)**. Prioritize visible UX wins and real da
 - Don't add error handling for scenarios that can't happen
 - Don't introduce abstractions beyond what the task requires
 - Prefer editing existing files over creating new ones
-- Keep components in `src/components/`, API calls in `src/lib/api.js`, backend routes in `backend/server.js`
+- Keep components in `src/components/`, API calls in `src/lib/api.js`, API routes in `worker/index.js`
 
 ## What NOT to Do
 - Don't change `'Ipê City'` to `'Jurerê'` or `'Florianópolis'` — the Gemini system prompt had a bug with this, it was fixed
 - Don't mock or stub DB/API calls — we use real Supabase data
-- Don't create new debug files (there are already `debug.js`, `dev_debug.js`, `dev_debug_2.js` in root — ignore these)
 - Don't add features beyond what was requested
 - Don't generate documentation files unless explicitly asked

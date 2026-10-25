@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config();
 
-const sqlFile = path.join(__dirname, 'supabase_schema.sql');
+const sqlFile = path.join(__dirname, '..', 'supabase', 'supabase_schema.sql');
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {

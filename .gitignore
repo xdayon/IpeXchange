@@ -30,3 +30,7 @@ dist-ssr
 
 # Backend dependencies
 backend/node_modules
+
+# Cloudflare
+.dev.vars
+.wrangler/

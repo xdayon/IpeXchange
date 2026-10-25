@@ -1,0 +1,19 @@
+// Required secrets (set with `wrangler secret put <NAME>`; use .dev.vars locally):
+//   SUPABASE_URL                 optional, without it the API serves in-memory demo data
+//   SUPABASE_SERVICE_ROLE_KEY    optional (SUPABASE_ANON_KEY is accepted as a fallback)
+//   GEMINI_API_KEY               required for chat, search and embeddings
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ipexchange-demo",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-06-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true },
+  "routes": [{ "pattern": "demo.ipexchange.xyz", "custom_domain": true }],
+  "triggers": { "crons": ["23 */6 * * *"] }
+}

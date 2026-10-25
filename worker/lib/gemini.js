@@ -1,11 +1,41 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+let apiKey = '';
+
+export function configureGemini(env) {
+  apiKey = env.GEMINI_API_KEY || '';
+}
+
+async function geminiFetch(model, method, body) {
+  if (!apiKey) throw new Error('GEMINI_API_KEY is not configured');
+  const res = await fetch(`${BASE}/models/${model}:${method}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = (await res.text()).slice(0, 300);
+    throw new Error(`Gemini ${res.status}: ${detail}`);
+  }
+  return res.json();
+}
+
+async function generateText({ systemInstruction, contents }) {
+  const data = await geminiFetch(MODEL, 'generateContent', {
+    ...(systemInstruction ? { systemInstruction: { parts: [{ text: systemInstruction }] } } : {}),
+    contents,
+  });
+  const text = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+  if (!text) throw new Error('Gemini returned an empty response');
+  return text;
+}
+
+const userText = (text) => [{ role: 'user', parts: [{ text }] }];
 
 // gemini-flash-latest — alias sempre disponível, sem problemas de cota
 const MODEL = 'gemini-flash-latest';
-// Embedding model — free tier, 768 dimensions, matches pgvector schema
-const EMBEDDING_MODEL = 'text-embedding-004';
+// Embedding model, truncated to 768 dimensions to match the pgvector schema
+const EMBEDDING_MODEL = 'gemini-embedding-001';
 
 const SYSTEM_PROMPT = `You are Xchange Core, the AI agent of IpêXchange — the decentralized marketplace of Ipê City, a pop-up innovation city and urban experiment built on community, technology, and circular economy.
 
@@ -117,17 +147,10 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
       systemPrompt += `\n\nActive stores in the city (use id for CTA_STORE_ID when routing to a store):\n${storesSummary}`;
     }
 
-    const model = genAI.getGenerativeModel({
-      model: MODEL,
-      systemInstruction: systemPrompt,
-    });
-
-    const geminiHistory = history.map(msg => ({
+    const contents = history.map(msg => ({
       role: msg.role === 'agent' ? 'model' : 'user',
       parts: [{ text: msg.content }],
     }));
-
-    const chatSession = model.startChat({ history: geminiHistory });
 
     const parts = [];
     if (audioBase64) {
@@ -143,9 +166,9 @@ export async function chat(history, userMessage, audioBase64 = null, mimeType = 
     } else {
       parts.push({ text: userMessage });
     }
+    contents.push({ role: 'user', parts });
 
-    const result = await chatSession.sendMessage(parts);
-    const rawText = result.response.text();
+    const rawText = await generateText({ systemInstruction: systemPrompt, contents });
 
     // Parse CTA from response
     let text = rawText;
@@ -212,11 +235,7 @@ export async function extractIntent(userMessage) {
   if (!userMessage || !userMessage.trim()) return null;
 
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL });
-    const result = await model.generateContent(
-      `${INTENT_EXTRACTION_PROMPT}\n\nUser message: "${userMessage}"`
-    );
-    const raw  = result.response.text().trim();
+    const raw = (await generateText({ contents: userText(`${INTENT_EXTRACTION_PROMPT}\n\nUser message: "${userMessage}"`) })).trim();
     const json = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
     return JSON.parse(json);
   } catch (err) {
@@ -232,11 +251,7 @@ export async function extractListing(conversationText) {
   if (!conversationText || !conversationText.trim()) return null;
 
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL });
-    const result = await model.generateContent(
-      `${LISTING_EXTRACTION_PROMPT}\n\nUser message: "${conversationText}"`
-    );
-    const raw  = result.response.text().trim();
+    const raw = (await generateText({ contents: userText(`${LISTING_EXTRACTION_PROMPT}\n\nUser message: "${conversationText}"`) })).trim();
     const json = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(json);
 
@@ -250,15 +265,21 @@ export async function extractListing(conversationText) {
 }
 
 // ─── Semantic Embeddings ──────────────────────────────────────────────────────
-// Generates a 768-dim embedding vector for pgvector similarity search
+// Generates a normalized 768-dim embedding vector for pgvector similarity search
 
 export async function generateEmbedding(text) {
   if (!text || !text.trim()) return null;
 
   try {
-    const model = genAI.getGenerativeModel({ model: EMBEDDING_MODEL });
-    const result = await model.embedContent(text);
-    return result.embedding.values; // Float32Array with 768 dimensions
+    const data = await geminiFetch(EMBEDDING_MODEL, 'embedContent', {
+      content: { parts: [{ text: String(text).slice(0, 8000) }] },
+      outputDimensionality: 768,
+    });
+    const values = data?.embedding?.values;
+    if (!values) return null;
+    // Truncated vectors are not unit-normalized by the API.
+    const norm = Math.sqrt(values.reduce((sum, v) => sum + v * v, 0));
+    return norm ? values.map(v => v / norm) : null;
   } catch (err) {
     console.error('Embedding error:', err.message);
     return null;
@@ -279,7 +300,6 @@ export async function suggestPrice(newListingTitle, similarListings) {
   if (!comparables) return null;
 
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL });
     const prompt = `Based on these comparable listings in our local marketplace:
 ${comparables}
 
@@ -287,8 +307,7 @@ What is a fair price range for: "${newListingTitle}"?
 Reply with ONLY a JSON object, no markdown:
 {"min": number, "max": number, "suggested": number, "reasoning": "1 sentence"}`;
 
-    const result = await model.generateContent(prompt);
-    const raw  = result.response.text().trim();
+    const raw = (await generateText({ contents: userText(prompt) })).trim();
     const json = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
     return JSON.parse(json);
   } catch (err) {

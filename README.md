@@ -56,7 +56,7 @@ Authentication is powered by **Privy**, providing residents with a blockchain-ba
 *   **Vanilla CSS**: Custom styling with deep glassmorphism and modern aesthetics.
 
 **Backend:**
-*   **Node.js** & **Express**: Robust API server.
+*   **Cloudflare Workers** & **Hono**: One Worker serves the SPA and the API under `/api/*`.
 *   **Supabase (PostgreSQL)**: Scalable, relational database with pgvector for semantic search.
 *   **Google Gemini API**: Powers "The Core" for conversational intelligence and multi-hop trade calculations.
 *   **Privy**: Embedded wallets and frictionless Web3 authentication.
@@ -78,49 +78,38 @@ git clone https://github.com/xdayon/IpeXchange.git
 cd IpeXchange
 ```
 
-### 2. Setup the Backend
-Navigate to the backend directory and install dependencies:
+### 2. Install and configure
 ```bash
-cd backend
 npm install
+cp .dev.vars.example .dev.vars   # then fill in the keys
 ```
 
-Create a `.env` file in the `backend` directory based on the following template:
+`.dev.vars` keys (never commit this file):
 ```env
-PORT=3001
-SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 GEMINI_API_KEY=your_gemini_api_key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
+Supabase is optional: without `SUPABASE_URL` and a key, or if the database is unreachable, the API falls back to in-memory demo data.
 
-Run the database setup script to initialize schemas and seed data:
+### 3. Run locally
+In two terminals:
 ```bash
-npm run db:setup
+npm run dev          # Vite on http://localhost:5173, proxies /api to the Worker
+npm run dev:worker   # Worker on http://localhost:8787
 ```
 
-Start the development server:
+### 4. Deploy to Cloudflare
 ```bash
-npm run dev
+npx wrangler secret put GEMINI_API_KEY
+npx wrangler secret put SUPABASE_URL
+npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npm run deploy       # vite build && wrangler deploy
 ```
+The Worker `ipexchange-demo` is bound to `demo.ipexchange.xyz` (see `wrangler.jsonc`). A cron trigger pings Supabase every 6 hours so a Free project does not auto-pause. Add the domain to the allowed origins of your Privy app.
 
-### 3. Setup the Frontend
-Open a new terminal, navigate to the root directory, and install dependencies:
-```bash
-npm install
-```
-
-Create a `.env` file in the root directory:
-```env
-VITE_API_URL=http://localhost:3001
-VITE_PRIVY_APP_ID=your_privy_app_id
-```
-
-Start the Vite development server:
-```bash
-npm run dev
-```
-
-The application should now be running at `http://localhost:5173`.
+### 5. Supabase
+Restore (unpause) the Supabase project, then apply the schema SQL in `supabase/` (`supabase_schema.sql`, `stores_schema.sql`, `update_schema.sql`, `multihop_v4.sql`) from the SQL editor, or run `DATABASE_URL=... npm run db:setup` for the base schema. Mock listings are seeded automatically when the listings table is empty.
 
 ---
 

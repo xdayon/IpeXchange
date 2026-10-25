@@ -18,7 +18,7 @@ const sql = postgres(process.env.DATABASE_URL, {
 });
 
 async function run() {
-  const sqlFile = path.join(__dirname, 'add_mock_listings.sql');
+  const sqlFile = path.join(__dirname, '..', 'supabase', 'add_mock_listings.sql');
   const query = fs.readFileSync(sqlFile, 'utf8');
 
   console.log('🌿 Connecting to Supabase...');

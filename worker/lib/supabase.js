@@ -70,32 +70,45 @@ const inMemory = {
   ],
 };
 
-try {
-  supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY
-  );
-  console.log('⚡ Supabase client initialized');
-} catch (e) {
-  console.warn('⚠️  Supabase not configured — using in-memory fallback');
+let configurePromise = null;
+
+// Lazily bind the Supabase client from Worker env bindings (once per isolate).
+export function configureSupabase(env) {
+  if (!configurePromise) configurePromise = initSupabase(env);
+  return configurePromise;
 }
 
-// Check if DB tables actually exist
-async function checkDb() {
-  if (!supabase) return;
+async function initSupabase(env) {
+  const url = env.SUPABASE_URL;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    console.warn('Supabase not configured, using in-memory fallback');
+    return;
+  }
   try {
-    const { error } = await supabase.from('sessions').select('id').limit(1);
-    if (!error) {
-      dbAvailable = true;
-      console.log('✅ Supabase DB tables found — persistence enabled');
-    } else {
-      console.warn('⚠️  Supabase tables not found — using in-memory fallback. Run supabase_schema.sql in your Supabase dashboard.');
-    }
+    supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { error } = await supabase.from('sessions').select('id').limit(1).retry(false);
+    dbAvailable = !error;
+    if (error) console.warn('Supabase check failed, using in-memory fallback:', error.message);
   } catch (e) {
-    console.warn('⚠️  Supabase connection failed — in-memory fallback active');
+    dbAvailable = false;
+    console.warn('Supabase connection failed, in-memory fallback active:', e.message);
   }
 }
-checkDb();
+
+export function isDbAvailable() {
+  return dbAvailable;
+}
+
+// Cheap keep-alive read so a Free project never auto-pauses.
+export async function pingSupabase(env) {
+  const url = env.SUPABASE_URL;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
+  if (!url || !key) return { skipped: true };
+  const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error } = await client.from('sessions').select('id').limit(1).retry(false);
+  return { ok: !error, error: error?.message };
+}
 
 // ─── Sessions ────────────────────────────────────────────────────────────────
 

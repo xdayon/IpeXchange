@@ -12,11 +12,11 @@ Este arquivo serve como a base de conhecimento permanente para o Antigravity (IA
 - **O que é:** Marketplace de trocas (barter) para a Ipê City (uma pop-up innovation city).
 - **Interface:** Voice-first, AI-native.
 - **Deadline Demo:** 01/05/2026 (Quinta-feira). Foco em UX visível e fluxo de dados real.
-- **Stack:** React + Vite (Frontend), Express + Gemini Flash (Backend), Supabase (DB/Vector), Privy (Auth - "Ipê Passport").
+- **Stack:** React + Vite (Frontend), Hono on Cloudflare Workers + Gemini Flash (Backend), Supabase (DB/Vector), Privy (Auth - "Ipê Passport").
 
 ## 🛠️ Diretrizes de Desenvolvimento
 - **Minimalismo:** Sem comentários óbvios. Sem abstrações desnecessárias.
-- **Padrões:** Componentes em `src/components/`, API em `src/lib/api.js`, Rotas em `backend/server.js`.
+- **Padrões:** Componentes em `src/components/`, API em `src/lib/api.js`, Rotas em `worker/index.js`.
 - **Branding:** Use sempre "Ipê" (com acento quando em PT, mas no código/UI geralmente "Ipe" ou "Ipê" conforme o padrão existente). Não mude nomes de cidades para outros que não sejam Ipê City.
 - **Segurança/Performance:** Não use placeholders. Use `generate_image` se precisar de assets.
 
