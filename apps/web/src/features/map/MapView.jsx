@@ -111,7 +111,7 @@ export default function MapView({ user, isAuthenticated, login, refresh, onSelec
 
       <div className="map-view__share glass-panel">
         <p className="map-view__privacy">
-          Your exact position is never stored. We round it to about 1 km before saving it.
+          Your area is rounded to about 1 km and shown publicly on the map. Your exact position is never stored.
         </p>
         {isAuthenticated ? (
           <div className="map-view__share-row">

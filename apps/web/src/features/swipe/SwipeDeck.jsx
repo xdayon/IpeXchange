@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Handshake, RotateCcw, Sparkles, X } from 'lucide-react';
 import SwipeCard from './SwipeCard.jsx';
 import LoopCelebration from '../cycles/LoopCelebration.jsx';
+import { loopName } from '../cycles/constants.js';
 import { useDeck } from './useDeck.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
 import {
@@ -142,11 +143,13 @@ export default function SwipeDeck({ onSelectIntent, onNavigate, onOpenLoop }) {
 
       {deck.celebration && (
         <LoopCelebration
-          hops={deck.celebration.hops}
-          title="Loop found!"
-          subtitle={`A ${deck.celebration.hops === 2 ? 'direct swap' : `${deck.celebration.hops}-person trade loop`} just closed around you.`}
+          hops={deck.celebration.loop.hops}
+          title={deck.celebration.kind === 'new' ? 'Loop found!' : 'Already in a loop'}
+          subtitle={deck.celebration.kind === 'new'
+            ? `A ${loopName(deck.celebration.loop.hops).toLowerCase()} just closed around you.`
+            : `This Offer is already in a ${deck.celebration.loop.hops}-person trade loop for you.`}
           actionLabel="Review loop"
-          onAction={() => { deck.dismissCelebration(); onOpenLoop(deck.celebration.id); }}
+          onAction={() => { deck.dismissCelebration(); onOpenLoop(deck.celebration.loop.id); }}
           onClose={deck.dismissCelebration}
         />
       )}

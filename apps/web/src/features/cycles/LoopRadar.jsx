@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import {
-  NODE_R, RADAR_CENTER, RADAR_SIZE, RING_RADII, curvedLink, layoutRadar, loopMemberSet, nodeDeals, openLoops,
+  NODE_R, RADAR_CENTER, RADAR_SIZE, RING_RADII, curvedLink, layoutRadar, loopArcs, loopMemberSet, nodeDeals, openLoops,
 } from './radarLayout.js';
 import './radar.css';
 
@@ -68,11 +68,18 @@ export default function LoopRadar({ radar, mini = false }) {
           const a = positions[link.source];
           const b = positions[link.target];
           if (!a || !b) return null;
-          const hot = inLoop.has(link.source) && inLoop.has(link.target);
           return (
             <path key={`${link.offer_id}-${link.source}-${link.target}`} d={curvedLink(a, b, lane(link))}
-              className={`radar__link ${link.explicit ? 'is-explicit' : ''} ${hot ? 'is-hot' : ''}`}
+              className={`radar__link ${link.explicit ? 'is-explicit' : ''}`}
               markerEnd="url(#radar-arrow)" />
+          );
+        })}
+        {loopArcs(radar.loops).map((arc) => {
+          const a = positions[arc.source];
+          const b = positions[arc.target];
+          if (!a || !b) return null;
+          return (
+            <path key={arc.key} d={curvedLink(a, b, 0)} className="radar__link is-hot" markerEnd="url(#radar-arrow)" />
           );
         })}
         {radar.nodes.map((node) => {

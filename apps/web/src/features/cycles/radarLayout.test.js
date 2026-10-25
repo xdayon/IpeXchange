@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  RADAR_CENTER, RADAR_SIZE, RING_RADII, curvedLink, layoutRadar, loopMemberSet, nodeDeals,
+  RADAR_CENTER, RADAR_SIZE, RING_RADII, curvedLink, layoutRadar, loopArcs, loopMemberSet, nodeDeals,
 } from './radarLayout.js';
 
 const nodes = [
@@ -51,5 +51,13 @@ describe('loop radar layout', () => {
       { status: 'completed', members: ['b'] },
     ]);
     expect([...set].sort()).toEqual(['a', 'me']);
+  });
+
+  it('derives loop arcs from member order, wrapping around', () => {
+    const arcs = loopArcs([
+      { id: 'l', status: 'suggested', members: ['a', 'b', 'c'] },
+      { id: 'x', status: 'cancelled', members: ['a', 'd'] },
+    ]);
+    expect(arcs.map((a) => [a.source, a.target])).toEqual([['a', 'b'], ['b', 'c'], ['c', 'a']]);
   });
 });

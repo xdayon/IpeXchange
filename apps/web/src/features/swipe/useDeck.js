@@ -32,7 +32,8 @@ export function useDeck(enabled) {
     setLastDecision({ card, decision });
     try {
       const res = await swipeIntent(card.id, decision);
-      if (res.new_loops?.length) setCelebration(res.new_loops[0]);
+      if (res.new_loops?.length) setCelebration({ kind: 'new', loop: res.new_loops[0] });
+      else if (res.open_loops?.length) setCelebration({ kind: 'open', loop: res.open_loops[0] });
     } catch (err) {
       setCards((list) => [card, ...list]);
       setLastDecision(null);

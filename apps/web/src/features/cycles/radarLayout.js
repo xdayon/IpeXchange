@@ -58,3 +58,13 @@ export const openLoops = (loops = []) =>
   loops.filter((l) => ['suggested', 'pending_acceptance', 'accepted'].includes(l.status));
 
 export const loopMemberSet = (loops = []) => new Set(openLoops(loops).flatMap((l) => l.members ?? []));
+
+// Loop flow arcs from member order: member j gives to member j+1, the last to the first.
+export function loopArcs(loops = []) {
+  return openLoops(loops).flatMap((loop) => {
+    const members = loop.members ?? [];
+    return members.map((source, j) => ({
+      key: `${loop.id}-${j}`, source, target: members[(j + 1) % members.length],
+    })).filter((arc) => arc.source !== arc.target);
+  });
+}
