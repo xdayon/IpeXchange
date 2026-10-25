@@ -241,14 +241,15 @@ export default function CityGraphMap({ onRegisterSimEdge, onEntitiesLoad }) {
       maxBounds: SVG_BOUNDS.pad(0.5),
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri',
+      maxNativeZoom: 16,
       maxZoom: 18,
     }).addTo(map);
 
     const tilePane = map.getPane('tilePane');
     if (tilePane) {
-      tilePane.style.filter = 'brightness(0.45) hue-rotate(-10deg) saturate(1.4)';
+      tilePane.style.filter = 'brightness(0.9) contrast(1.1)';
     }
 
     // SVG road overlay from jurere-map.json
