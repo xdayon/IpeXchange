@@ -5,75 +5,52 @@ conversation transcript.
 
 ## Objective
 
-- Implement a comprehensive English/USD UX improvement: first-login onboarding,
-  clearer marketplace education, explicit offer/payment modes, and accessibility.
+- 2026-10-24: full audit, database recovery, and a roadmap toward the IslandDAO v5
+  demo day (Solana builder residency in Florianopolis, 2026-10-19 to 2026-11-11).
 - Do not touch `demo` or recreate `pre-reset-mvp`.
 
 ## Current State
 
-- Branch: `main-mvp`; last published commit: `f597ccc` (merged PR #2).
-- `apps/web/src/main.jsx` now reads `VITE_PRIVY_CLIENT_ID` and passes it to
-  `PrivyProvider`; the ignored `apps/web/.env` contains the public Client ID.
-- The Client ID change is merged and deployed to `ipexchange.xyz` and
-  `xchange.synapses.academy` as Worker version `730643a1-454f-4ddd-9fe7-edfaf7bcad47`.
-- Production is missing `PRIVY_APP_SECRET`; login JWT validation still works,
-  but verified email, payout-wallet ownership, and payment checks need it.
-- Migrations 0015 through 0021 are applied to the Supabase project configured in
-  `apps/api/.dev.vars` (`mzjdataxrqtlqufnvpmh`).
-- Pre-existing uncommitted Nexum engine/interview changes span 16 API/web files;
-  preserve them while integrating the UX work.
-- Gas sponsorship is out of scope: network fees must remain buyer-paid and the
-  platform must not assume paymaster or promotional-credit costs.
-- UX changes and migration 0022 are local only: not committed, deployed, or
-  applied to Supabase.
+- Branch `main-mvp` at `838892f` (pushed). Production Worker is live, but the
+  Supabase project `mzjdataxrqtlqufnvpmh` is paused by the Free plan: its host no
+  longer resolves, the pooler answers "tenant/user not found", and `/api/market`
+  returns 500. The legacy demo project `xzecgbkwrhozoxigfzqn` is paused as well.
+- Restoring requires the owner to open the Supabase dashboard (GitHub-login
+  account for the MVP, email account for the demo) and click Restore. If the
+  restore window has passed, download the backup and restore it into a new project.
+- Legacy demo is still served: frontend `ipexchange.onrender.com`, backend
+  `ipe-api-x0q3.onrender.com` (Render Free, ~20 s cold start, in-memory mock
+  fallback when its DB is down). Its map is broken: CARTO basemaps now return an
+  "API KEY REQUIRED" tile. `ipexchange.pages.dev` serves an old MVP build.
 
-## Implemented
+## Uncommitted Changes (this session)
 
-- Versioned first-login onboarding explains Interests, Offers, purchases,
-  exchanges, group trades, and Nexum; it is replayable from Settings.
-- Home, Market, Group trades, navigation, empty states, contrast, focus,
-  keyboard semantics, reduced motion, and target sizes have a clarity pass.
-- Offers choose Exchange only, Buy now, or Both. Buy now requires a verified
-  payout wallet, positive USD price, and seller-selected Base tokens; USDC is
-  the default, checkout is non-custodial, and gas remains buyer-paid.
-- Settings supports explicit selection and verification of a payout wallet.
-- Migration 0021 expires unanswered cycles after seven days, releases their
-  intents atomically, permits safe re-suggestion, and pins every application SQL
-  function to `public, pg_temp`.
-- Cycle expiry runs lazily during matching and cycle reads/actions, with no poller.
-- Checkout requires explicit wallet choice when multiple wallets are connected.
-- Native ERC-4337 ETH verification requires both a UserOperation sender and a
-  matching internal transfer trace; unavailable traces stay pending and safe.
+- `apps/api/src/lib/keepalive.js`, `scheduled` handler in `src/index.js`, and a
+  `17 */6 * * *` cron in `wrangler.jsonc`: pings Supabase through REST (retries
+  off) and optional `KEEPALIVE_URLS` (comma list, e.g. the demo backend).
+- `GET /api/health/db` returns 503 when the database is unreachable.
+- CSP (`_headers` and `SPA_SECURITY_HEADERS`) now allows the Cloudflare Web
+  Analytics beacon; the CSP-blocked inline polyfill script was removed from
+  `apps/web/index.html` (it never ran in production).
+- Verified: `npm run check` passes (116 tests); `wrangler dev --test-scheduled`
+  runs the cron and logs the ping; local build renders at 390 px and desktop with
+  no horizontal scroll and no CSP inline-script error.
 
-## Verification
+## Audit Findings Not Yet Fixed
 
-- Current combined `npm run check` passes: lint, syntax, 114 tests, web build,
-  and Worker dry-run. `git diff --check` passes.
-- Production `/api/health` responds with HTTP 200; the new frontend bundle is
-  available on `xchange.synapses.academy` and contains the Client ID.
-- `npm audit --omit=dev --audit-level=high` reports no high or critical issues;
-  ten transitive moderate `uuid` findings remain behind Privy/MetaMask.
-- Migrations 0001-0021 apply from scratch on disposable PostgreSQL 17 + pgvector.
-- A transactional SQL test confirms cycle expiry, reservation release, intent
-  reactivation and insertion of a new cycle with the same hash.
-- PostgreSQL catalog inspection confirms all application functions have pinned
-  search paths.
-- The default Base public RPC supports neither `debug_traceTransaction` nor
-  `trace_transaction`; production needs a trace-capable `BASE_RPC_URL` before
-  enabling native ETH checkout from an ERC-4337 smart account.
+- `find_intent_cycles` wrappers (0013, 0014) filter kind/expiry/exchange-mode
+  guards after the inner `LIMIT 10`, so valid cycles can be dropped.
+- `transaction_mode = 'buy_now'` offers can enter barter cycles.
+- `persist_intent_cycle` reserves intents and sets `in_cycle` at suggestion time,
+  hiding them from the market for up to 7 days.
+- Released intents (decline or expiry) never trigger a new match.
+- Edge discovery is a full want x offer scan; `trade_cycles.hops` is limited to 2-3.
+- Privy (3.1 MB) is preloaded on every Mini App open even though TMA auth uses initData.
 
 ## External Follow-up
 
-- Exercise payment, account linking, reservations, Copilot and notifications
-  against the configured Supabase project after deployment.
-- `pre-reset-mvp` is absent from the GitHub API and remote refs. GitHub documents
-  that cached SHA views can only be purged through a Support Portal ticket; ask
-  Support to purge cached views/references for `list_output.txt` in
-  `xdayon/IpeXchange` because it contains third-party PII. The earliest affected
-  unreachable commit is `443bb094b4243da2ef9b00859f269581d1420ef7`.
-
-## Notes
-
-- The remaining npm audit items are moderate transitive `uuid` advisories. npm's
-  proposed forced fix downgrades Privy and must not be used.
-- Build warnings are third-party Privy/Rolldown annotations and chunk size only.
+- Deploy the keepalive only after the database is restored and the owner approves.
+- Production still lacks `PRIVY_APP_SECRET`; payout-wallet verification fails closed.
+- Native ETH checkout from ERC-4337 accounts needs a trace-capable `BASE_RPC_URL`.
+- Ask GitHub Support to purge cached views of `list_output.txt` (third-party PII);
+  earliest affected unreachable commit `443bb094b4243da2ef9b00859f269581d1420ef7`.

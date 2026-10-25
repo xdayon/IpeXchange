@@ -11,6 +11,7 @@ import payments from './routes/payments.js';
 import admin from './routes/admin.js';
 import share from './routes/share.js';
 import notifications from './routes/notifications.js';
+import { keepAlive } from './lib/keepalive.js';
 
 const app = createApp();
 
@@ -27,4 +28,8 @@ app.route('/api', admin);
 app.route('/api', notifications);
 app.route('/', share);
 
-export default app;
+export default {
+  fetch: app.fetch,
+  // Cron trigger from wrangler.jsonc: keeps the Supabase Free project active.
+  scheduled: (_controller, env, ctx) => ctx.waitUntil(keepAlive(env)),
+};

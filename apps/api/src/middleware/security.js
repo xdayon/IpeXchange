@@ -11,7 +11,8 @@ export const apiSecureHeaders = secureHeaders({
 // run_worker_first route in wrangler.jsonc, so it bypasses _headers.
 export const SPA_SECURITY_HEADERS = {
   'content-security-policy':
-    "default-src 'self'; script-src 'self' https://telegram.org https://challenges.cloudflare.com; " +
+    "default-src 'self'; script-src 'self' https://telegram.org https://challenges.cloudflare.com " +
+    "https://static.cloudflareinsights.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: blob: https://*.supabase.co https://t.me https://*.telegram.org; " +
     "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org; " +
@@ -19,7 +20,7 @@ export const SPA_SECURITY_HEADERS = {
     'child-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org; ' +
     'frame-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org ' +
     'https://challenges.cloudflare.com https://oauth.telegram.org; ' +
-    "connect-src 'self' https://auth.privy.io https://*.rpc.privy.systems wss://relay.walletconnect.com " +
+    "connect-src 'self' https://cloudflareinsights.com https://auth.privy.io https://*.rpc.privy.systems wss://relay.walletconnect.com " +
     'wss://relay.walletconnect.org wss://www.walletlink.org https://explorer-api.walletconnect.com ' +
     'https://pulse.walletconnect.org https://api.web3modal.org',
   'x-content-type-options': 'nosniff',

@@ -17,13 +17,6 @@
     <!-- Telegram Mini App SDK — must load before React -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- Node.js polyfills for wallet/crypto libs -->
-    <script>
-      window.global = window.global ?? globalThis;
-      window.process = window.process ?? { env: {}, version: '', versions: {} };
-      window.Buffer = window.Buffer ?? { isBuffer: () => false };
-    </script>
-
     <!-- Inline critical CSS to prevent flash -->
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
