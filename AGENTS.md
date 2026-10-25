@@ -73,6 +73,9 @@ Mini App, and Telegram Bot are supported. Crypto payments on Base are launch 2.
   require authentication.
 - Each intent supports one image in the `listing-images/` Storage bucket;
   uploads are proxied through the Worker.
+- Every completed trade loop gets a pseudonymous signed receipt (`loop_receipts`);
+  receipts are batched into a Merkle root anchored in a Solana Memo transaction
+  by the cron. Signing and anchoring stay off until `SOLANA_ANCHOR_SECRET` is set.
 
 ## Work Method
 

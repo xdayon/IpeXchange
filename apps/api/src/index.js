@@ -13,7 +13,9 @@ import share from './routes/share.js';
 import notifications from './routes/notifications.js';
 import loops from './routes/loops.js';
 import discovery from './routes/discovery.js';
+import receipts from './routes/receipts.js';
 import { keepAlive } from './lib/keepalive.js';
+import { anchorReceipts } from './lib/solanaAnchor.js';
 
 const app = createApp();
 
@@ -30,10 +32,15 @@ app.route('/api', admin);
 app.route('/api', notifications);
 app.route('/api', loops);
 app.route('/api', discovery);
+app.route('/api', receipts);
 app.route('/', share);
 
 export default {
   fetch: app.fetch,
-  // Cron trigger from wrangler.jsonc: keeps the Supabase Free project active.
-  scheduled: (_controller, env, ctx) => ctx.waitUntil(keepAlive(env)),
+  // Cron trigger from wrangler.jsonc: keeps the Supabase Free project active
+  // and anchors pending loop receipts (a no-op without SOLANA_ANCHOR_SECRET).
+  scheduled: (_controller, env, ctx) => {
+    ctx.waitUntil(keepAlive(env));
+    ctx.waitUntil(anchorReceipts(env).catch((err) => console.error('Anchoring failed:', err.message)));
+  },
 };

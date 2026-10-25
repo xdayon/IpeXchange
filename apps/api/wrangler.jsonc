@@ -18,7 +18,9 @@
     "crons": ["17 */6 * * *"]
   },
   "vars": {
-    "BASE_RPC_URL": "https://mainnet.base.org"
+    "BASE_RPC_URL": "https://mainnet.base.org",
+    "SOLANA_RPC_URL": "https://api.devnet.solana.com",
+    "SOLANA_CLUSTER": "devnet"
   },
   "routes": [
     { "pattern": "ipexchange.xyz", "custom_domain": true },
@@ -29,5 +31,10 @@
   // PRIVY_APP_ID, PRIVY_APP_SECRET, LINK_TOKEN_SECRET, TELEGRAM_BOT_USERNAME
   // PRIVY_APP_SECRET is required: payout wallet verification (POST /me/wallet)
   // fails closed without it.
+  // Optional: SOLANA_ANCHOR_SECRET signs loop receipts and anchors their Merkle
+  // root in a Solana Memo transaction (base58 64-byte key or CLI JSON array; the
+  // keypair must hold a little SOL). Without it receipts stay unsigned and
+  // nothing is anchored. SOLANA_RPC_URL / SOLANA_CLUSTER (devnet, mainnet-beta)
+  // are vars above; switch both together for mainnet.
   // Optional: ADMIN_EMAILS / ADMIN_TELEGRAM_IDS (comma lists that bootstrap admins)
 }
