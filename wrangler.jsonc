@@ -2,6 +2,7 @@
 //   SUPABASE_URL                 optional, without it the API serves in-memory demo data
 //   SUPABASE_SERVICE_ROLE_KEY    optional (SUPABASE_ANON_KEY is accepted as a fallback)
 //   GEMINI_API_KEY               required for chat, search and embeddings
+//   ADMIN_SEED_TOKEN             optional, enables POST /api/admin/seed with x-admin-token
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ipexchange-demo",

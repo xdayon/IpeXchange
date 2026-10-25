@@ -41,7 +41,7 @@ const CityMap = React.memo(({ activeCategory }) => {
         dragging={true}
         preferCanvas={true}
         style={{ width: '100%', height: '100%', zIndex: 1 }}
-        attributionControl={false}
+        attributionControl={true}
       >
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"

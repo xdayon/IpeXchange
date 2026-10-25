@@ -435,7 +435,11 @@ app.patch('/api/listings/:listingId/privacy', async (c) => {
 
 // ─── Admin: seed mock data ────────────────────────────────────────────────────
 
+// Re-seeds mock data into Supabase. Hidden unless ADMIN_SEED_TOKEN is set
+// and sent as x-admin-token, so visitors cannot write to the database.
 app.post('/api/admin/seed', async (c) => {
+  const token = c.env.ADMIN_SEED_TOKEN;
+  if (!token || c.req.header('x-admin-token') !== token) return c.json({ error: 'Not found' }, 404);
   try {
     const result = await seedDatabase(MOCK_SESSIONS, MOCK_LISTINGS, MOCK_DEMANDS);
     if (result.success) {

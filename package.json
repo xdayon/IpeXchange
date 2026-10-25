@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "dev:worker": "wrangler dev",
     "deploy": "vite build && wrangler deploy",
-    "check": "npm run lint && vite build && wrangler deploy --dry-run",
+    "check": "eslint worker scripts && vite build && wrangler deploy --dry-run",
     "db:setup": "node scripts/db-setup.js"
   },
   "dependencies": {

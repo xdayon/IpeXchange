@@ -244,7 +244,7 @@ const STATIC_EDGES = [
   { id: 'e-founder-artizen',    source: 'venue-founder-haus',target: 'venue-artizen-haus', relationship: 'sister-venue',label: 'Sister Venue' },
 ];
 
-export function buildCityGraphPayload({ listings, users, stores, transactions, demands }) {
+export function buildCityGraphPayload({ listings, users, stores, transactions }) {
   // DB-derived entities
   const dbEntities = [
     ...listings.map(listingToEntity).filter(Boolean),

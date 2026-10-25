@@ -237,7 +237,8 @@ export default function CityGraphMap({ onRegisterSimEdge, onEntitiesLoad }) {
       minZoom: 13,
       maxZoom: 18,
       zoomControl: false,
-      attributionControl: false,
+      // Esri's terms require the tile attribution to stay visible.
+      attributionControl: true,
       maxBounds: SVG_BOUNDS.pad(0.5),
     });
 
