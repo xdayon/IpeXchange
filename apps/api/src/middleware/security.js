@@ -14,19 +14,19 @@ export const SPA_SECURITY_HEADERS = {
     "default-src 'self'; script-src 'self' https://telegram.org https://challenges.cloudflare.com " +
     "https://static.cloudflareinsights.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; " +
-    "img-src 'self' data: blob: https://*.supabase.co https://t.me https://*.telegram.org; " +
+    "img-src 'self' data: blob: https://*.supabase.co https://t.me https://*.telegram.org https://tiles.openfreemap.org; " +
     "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org; " +
     "worker-src 'self' blob:; manifest-src 'self'; " +
     'child-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org; ' +
     'frame-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org ' +
     'https://challenges.cloudflare.com https://oauth.telegram.org; ' +
-    "connect-src 'self' https://cloudflareinsights.com https://auth.privy.io https://*.rpc.privy.systems wss://relay.walletconnect.com " +
+    "connect-src 'self' https://tiles.openfreemap.org https://cloudflareinsights.com https://auth.privy.io https://*.rpc.privy.systems wss://relay.walletconnect.com " +
     'wss://relay.walletconnect.org wss://www.walletlink.org https://explorer-api.walletconnect.com ' +
     'https://pulse.walletconnect.org https://api.web3modal.org',
   'x-content-type-options': 'nosniff',
   'strict-transport-security': 'max-age=31536000; includeSubDomains',
   'referrer-policy': 'strict-origin-when-cross-origin',
-  'permissions-policy': 'microphone=(self), camera=(), geolocation=()',
+  'permissions-policy': 'microphone=(self), camera=(), geolocation=(self)',
 };
 
 // Uploads cap at 5MB server-side already; 6MB covers multipart overhead

@@ -10,7 +10,7 @@ const DIRECTION_TABS = [
   { id: 'want', label: 'Interests' },
 ];
 
-export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }) {
+export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false, embedded = false }) {
   const [direction, setDirection] = useState(null);
   const [kind, setKind] = useState(null);
   const [search, setSearch] = useState('');
@@ -23,16 +23,16 @@ export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }
   }, [search]);
 
   return (
-    <div style={{ padding: '28px 0 40px' }} className="page-enter">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-        <div>
+    <div style={{ padding: embedded ? '0 0 40px' : '28px 0 40px' }} className="page-enter">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: embedded ? 8 : 20 }}>
+        {embedded ? <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Interests are what people need. Offers are what people bring.</p> : <div>
           <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 4 }}>
             The <span className="text-gradient-lime">Market</span>
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
             Interests are what people need. Offers are what people can sell or exchange.
           </p>
-        </div>
+        </div>}
         <button
           onClick={() => refresh()}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 8 }}
@@ -146,7 +146,7 @@ export default function MarketFeed({ onSelectIntent, onNavigate, isTMA = false }
         </div>
       )}
 
-      {isTMA && (
+      {isTMA && !embedded && (
         <button
           onClick={() => { window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); onNavigate('create'); }}
           aria-label="Publish an Interest or Offer"

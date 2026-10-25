@@ -21,7 +21,7 @@ export default function IntentCover({ kind, imageUrl, alt, height = 160 }) {
         background: gradient, color,
       }}
     >
-      <Icon size={Math.min(40, height / 4 + 16)} strokeWidth={1.5} />
+      <Icon size={typeof height === 'number' ? Math.min(40, height / 4 + 16) : 64} strokeWidth={1.5} />
     </div>
   );
 }
