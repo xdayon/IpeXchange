@@ -5,7 +5,7 @@ import { inputStyle, haptic } from './helpers.js';
 import StepIntentKindFields from './StepIntentKindFields.jsx';
 
 const TRANSACTION_OPTIONS = [
-  { id: 'exchange', label: 'Exchange only', desc: 'Receive trade proposals and group trade matches.', icon: Repeat2 },
+  { id: 'exchange', label: 'Exchange only', desc: 'Receive trade proposals and trade loop matches.', icon: Repeat2 },
   { id: 'buy_now', label: 'Buy now', desc: 'Sell at a fixed USD price through Base.', icon: ShoppingBag },
   { id: 'both', label: 'Both', desc: 'Accept direct purchases and exchange proposals.', icon: Split },
 ];

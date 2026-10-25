@@ -5,7 +5,7 @@ const TABS = [
   { id: 'home', icon: Home, label: 'Home' },
   { id: 'discover', icon: Compass, label: 'Market' },
   { id: 'create', fab: true },
-  { id: 'cycles', icon: Repeat, label: 'Trades' },
+  { id: 'cycles', icon: Repeat, label: 'Loops' },
   { id: 'profile', icon: User, label: 'Profile' },
 ];
 

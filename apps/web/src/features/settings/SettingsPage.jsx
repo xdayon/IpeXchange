@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { ArrowLeft, Bell, BookOpen, Home, LogOut, ShieldCheck, Compass, Wallet } from 'lucide-react';
 import { saveSettings } from '../../api/me.js';
-import { HAPTICS_OFF_KEY } from '../../shared/hooks/useTelegram.js';
-import PayoutWalletSettings from './PayoutWalletSettings.jsx';
+import { HAPTICS_OFF_KEY, useTelegram } from '../../shared/hooks/useTelegram.js';
+const PayoutWalletSettings = lazy(() => import('./PayoutWalletSettings.jsx'));
 
 const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
 
@@ -47,6 +47,7 @@ function Toggle({ on, onChange }) {
 }
 
 export default function SettingsPage({ user, logout, onBack, refresh, onReplayTutorial }) {
+  const { isTMA, openLink } = useTelegram();
   const [settings, setSettings] = useState(user?.settings ?? {});
   const [saveError, setSaveError] = useState(null);
   const val = (key, fallback = true) => settings[key] ?? fallback;
@@ -85,7 +86,7 @@ export default function SettingsPage({ user, logout, onBack, refresh, onReplayTu
       <Section title="Notifications" icon={Bell}>
         <Row label="Interest alerts" hint="Telegram message when someone marks interest in your intents"
           control={<Toggle on={val('notify_interest')} onChange={(v) => set('notify_interest', v)} />} />
-        <Row label="Group trade alerts" hint="When a two or three-person exchange including you is suggested or advances"
+        <Row label="Trade loop alerts" hint="When a trade loop including you is suggested or advances"
           control={<Toggle on={val('notify_cycles')} onChange={(v) => set('notify_cycles', v)} />} />
         <Row label="Payment alerts" hint="When a buyer pays one of your offers on-chain"
           control={<Toggle on={val('notify_payments')} onChange={(v) => set('notify_payments', v)} />} />
@@ -109,8 +110,17 @@ export default function SettingsPage({ user, logout, onBack, refresh, onReplayTu
       </Section>
 
       <Section title="Wallet and security" icon={Wallet}>
-        {PRIVY_ENABLED ? (
-          <PayoutWalletSettings currentWallet={user?.wallet} onSaved={refresh} />
+        {isTMA ? (
+          <Row label="Payout wallet" hint="Wallet setup happens in your browser"
+            control={
+              <button onClick={() => openLink(window.location.origin)} className="filter-chip">
+                Continue in browser
+              </button>
+            } />
+        ) : PRIVY_ENABLED ? (
+          <Suspense fallback={<Row label="Payout wallet" hint="Loading wallet settings..." />}>
+            <PayoutWalletSettings currentWallet={user?.wallet} onSaved={refresh} />
+          </Suspense>
         ) : (
           <Row label="Payout wallet" hint="Wallet setup is unavailable in this build" />
         )}

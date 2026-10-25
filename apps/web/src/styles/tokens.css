@@ -30,6 +30,12 @@
   --glass-border:   rgba(255, 255, 255, 0.07);
   --glass-blur:     blur(20px);
 
+  /* ── Overlays and glows ────────────────────────────────────── */
+  --scrim:          rgba(8, 12, 20, 0.9);
+  --glow-lime:      rgba(180, 244, 74, 0.35);
+  --glow-cyan:      rgba(56, 189, 248, 0.35);
+  --glow-purple:    rgba(168, 85, 247, 0.35);
+
   /* ── Sombras ───────────────────────────────────────────────── */
   --shadow-sm:      0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-md:      0 4px 24px rgba(0, 0, 0, 0.4);

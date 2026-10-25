@@ -12,6 +12,7 @@
   "dependencies": {
     "@privy-io/react-auth": "^3.22.2",
     "lucide-react": "^1.11.0",
+    "maplibre-gl": "^6.16.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "viem": "^2.52.0"

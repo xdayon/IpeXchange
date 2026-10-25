@@ -1,15 +1,13 @@
 // Identity resolution, in priority order:
-// 1. Privy session (when VITE_PRIVY_APP_ID is configured at build time)
+// 1. Privy session (web only, provided through PrivyIdentityContext by PrivyShell)
 // 2. Telegram Mini App initData (Worker validates the HMAC)
 // 3. Anonymous browsing (read-only market access)
-import { useState, useEffect, useCallback } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useState, useEffect, useCallback, useContext } from 'react';
+import { PrivyIdentityContext } from './privyContext.js';
 import { registerTokenProvider } from '../../api/index.js';
 import { claimReferral, fetchMe, saveWallet } from '../../api/me.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
 import { fetchWithAuthRetry, isTransientAuthError } from './authRecovery.js';
-
-const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
 
 function toAppUser(me, session) {
   return {
@@ -24,6 +22,7 @@ function toAppUser(me, session) {
     telegramDmOk: me.telegram_dm_ok ?? false,
     settings: me.settings ?? {},
     isAdmin: me.is_admin === true,
+    location: me.location ?? null,
     referredBy: me.referred_by ?? null,
     createdAt: me.created_at ?? null,
     source: session.source,
@@ -47,8 +46,8 @@ function useTelegramSession() {
   return { ready: true, authenticated: false };
 }
 
-function usePrivyAuth() {
-  const { ready, authenticated, user: privyUser, login, logout, getAccessToken } = usePrivy();
+function usePrivyAuth(privy) {
+  const { ready, authenticated, user: privyUser, login, logout, getAccessToken } = privy;
   const tg = useTelegramSession();
 
   useEffect(() => {
@@ -84,7 +83,12 @@ function useTelegramOnlyAuth() {
   };
 }
 
-const useIdentity = PRIVY_ENABLED ? usePrivyAuth : useTelegramOnlyAuth;
+function useIdentity() {
+  const privy = useContext(PrivyIdentityContext);
+  const privyIdentity = usePrivyAuth(privy ?? { ready: false, authenticated: false });
+  const telegramIdentity = useTelegramOnlyAuth();
+  return privy ? privyIdentity : telegramIdentity;
+}
 
 export function useAuth() {
   const identity = useIdentity();

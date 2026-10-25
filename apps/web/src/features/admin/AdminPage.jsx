@@ -4,6 +4,7 @@ import { fetchAdminMetrics } from '../../api/admin.js';
 import { StatTile, BarList, MonthBars, Donut, Panel } from './charts.jsx';
 import LineChart from './LineChart.jsx';
 import AdminTables from './AdminTables.jsx';
+import ClearingPanel from './ClearingPanel.jsx';
 
 // Fixed categorical hue order for every chart on this page.
 const C = ['var(--accent-cyan)', 'var(--accent-lime)', 'var(--accent-indigo)', 'var(--accent-amber)'];
@@ -58,12 +59,14 @@ export default function AdminPage({ onBack }) {
         Live platform metrics. Numbers refresh on every visit.
       </p>
 
+      <ClearingPanel />
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 12 }}>
         <StatTile label="Members" value={t.users ?? 0} sub={`+${t.users_new_30d ?? 0} in 30d`} color={C[1]} />
         <StatTile label="Active 7d" value={t.users_active_7d ?? 0} sub={`${t.users_active_30d ?? 0} in 30d`} />
         <StatTile label="Intents" value={t.intents ?? 0} sub={`${t.intents_active ?? 0} active`} />
         <StatTile label="Interest marks" value={t.interest_marks ?? 0} sub={`${t.intents_fulfilled ?? 0} intents fulfilled`} color={C[2]} />
-        <StatTile label="Trade cycles" value={t.cycles ?? 0} sub={`${t.cycles_completed ?? 0} completed`} color={C[2]} />
+        <StatTile label="Trade loops" value={t.cycles ?? 0} sub={`${t.cycles_completed ?? 0} completed`} color={C[2]} />
         <StatTile label="Payments" value={t.payments_confirmed ?? 0} sub={`${usd(t.volume_fiat_confirmed ?? 0)} settled`} color={C[1]} />
         <StatTile label="Telegram reach" value={t.users_telegram ?? 0} sub={`${t.notifications_telegram ?? 0} DMs delivered`} />
         <StatTile label="AI actions 30d" value={t.ai_actions_30d ?? 0} sub={`${t.users_wallet ?? 0} wallets linked`} color={C[3]} />
@@ -101,7 +104,7 @@ export default function AdminPage({ onBack }) {
         <Panel title="Top categories">
           <BarList color={C[2]} items={(metrics.top_categories ?? []).map((c) => ({ label: c.category, value: c.count }))} />
         </Panel>
-        <Panel title="Cycles by status">
+        <Panel title="Loops by status">
           <BarList items={toItems(metrics.cycles_by_status)} />
         </Panel>
         <Panel title="Intents by source">

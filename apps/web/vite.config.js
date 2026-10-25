@@ -29,8 +29,9 @@ export default defineConfig({
         // Prevent viem from being split into multiple async chunks
         // which causes circular initialization issues
         manualChunks: (id) => {
+          if (/preload-helper|node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react';
+          if (/vite-plugin-node-polyfills|node_modules\/(buffer|process|ieee754|base64-js)\//.test(id)) return 'polyfills';
           if (id.includes('node_modules/viem')) return 'viem';
-          if (id.includes('node_modules/@privy-io')) return 'privy';
         },
       },
     },

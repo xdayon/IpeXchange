@@ -24,7 +24,7 @@ describe('notification presentation', () => {
   });
 
   it('links every cycle update with a cycle id to cycle detail', () => {
-    for (const type of ['cycle_suggested', 'cycle_accepted', 'cycle_cancelled', 'cycle_completed']) {
+    for (const type of ['cycle_suggested', 'cycle_accepted', 'cycle_cancelled', 'cycle_completed', 'cycle_superseded']) {
       expect(notificationContent({ type, payload: { cycle_id: 'cycle-1' } }).destination)
         .toEqual(['cycle-detail', { cycleId: 'cycle-1' }]);
     }

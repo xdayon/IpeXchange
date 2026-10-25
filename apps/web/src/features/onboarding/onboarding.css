@@ -121,3 +121,5 @@
   .onboarding__examples { grid-template-columns: 1fr; }
   .onboarding__examples div { flex-direction: row; justify-content: center; }
 }
+
+#onboarding-title:focus, #onboarding-title:focus-visible { outline: none; }

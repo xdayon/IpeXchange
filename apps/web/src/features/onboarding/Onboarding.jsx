@@ -32,12 +32,12 @@ const steps = [
   {
     eyebrow: 'Flexible ways to trade',
     title: 'Buy, exchange, or connect a group',
-    body: 'Buy eligible Offers directly with crypto, propose a direct exchange, or let IpeXchange find a group trade where everyone gets something they want.',
+    body: 'Buy eligible Offers directly with crypto, propose a direct exchange, or let IpeXchange find a trade loop where everyone gets something they want.',
     icon: ArrowLeftRight,
     examples: [
       { icon: CircleDollarSign, label: 'Direct purchase' },
       { icon: ArrowLeftRight, label: 'Direct exchange' },
-      { icon: Users, label: 'Group trade' },
+      { icon: Users, label: 'Trade loop' },
     ],
   },
   {

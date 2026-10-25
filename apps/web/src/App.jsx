@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import './styles/globals.css';
 
 import Navbar from './shared/layout/Navbar.jsx';
+import Loader from './shared/ui/Loader.jsx';
 import SplashIntro from './shared/ui/SplashIntro.jsx';
 import BottomNav from './shared/layout/BottomNav.jsx';
 import { useAuth } from './features/auth/useAuth.js';
@@ -15,7 +16,7 @@ import { useAppHistory } from './shared/hooks/useAppHistory.js';
 import Onboarding, { ONBOARDING_VERSION } from './features/onboarding/Onboarding.jsx';
 
 const HomePage = lazy(() => import('./features/home/HomePage.jsx'));
-const MarketFeed = lazy(() => import('./features/marketplace/MarketFeed.jsx'));
+const DiscoverHub = lazy(() => import('./features/discover/DiscoverHub.jsx'));
 const IntentDetail = lazy(() => import('./features/intent/IntentDetail.jsx'));
 const CreateIntentWizard = lazy(() => import('./features/intent/CreateIntentWizard.jsx'));
 const ProfilePage = lazy(() => import('./features/profile/ProfilePage.jsx'));
@@ -26,13 +27,6 @@ const CycleDetail = lazy(() => import('./features/cycles/CycleDetail.jsx'));
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage.jsx'));
 const AdminPage = lazy(() => import('./features/admin/AdminPage.jsx'));
 const NotificationPage = lazy(() => import('./features/notifications/NotificationPage.jsx'));
-
-const Loader = () => (
-  <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)' }}>
-    <div style={{ width: 36, height: 36, border: '2px solid rgba(56,189,248,0.2)',
-      borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-  </div>
-);
 
 // Deep link used by the Mini App's openLink checkout handoff:
 // /?intent=<id> lands straight on the intent detail page.
@@ -81,12 +75,6 @@ export default function App() {
     }
     return () => tg.BackButton.offClick(pop);
   }, [isTMA, canBack, pop]);
-
-  useEffect(() => {
-    const tg = window?.Telegram?.WebApp;
-    tg?.setHeaderColor?.('#080C14');
-    tg?.setBackgroundColor?.('#080C14');
-  }, []);
 
   // Inside the Mini App, ask once for DM permission so the bot can notify.
   useEffect(() => {
@@ -149,7 +137,16 @@ export default function App() {
             <HomePage user={user} isAuthenticated={isAuthenticated} login={login} onNavigate={navigate} />
           )}
           {page === 'discover' && (
-            <MarketFeed onSelectIntent={openIntent} onNavigate={navigate} isTMA={isTMA} />
+            <DiscoverHub
+              user={user}
+              isAuthenticated={isAuthenticated}
+              login={login}
+              refresh={refresh}
+              initialMode={routeData.mode}
+              onSelectIntent={openIntent}
+              onNavigate={navigate}
+              isTMA={isTMA}
+            />
           )}
           {page === 'intent-detail' && selectedIntent && (
             <IntentDetail
@@ -194,6 +191,7 @@ export default function App() {
               isAuthenticated={isAuthenticated}
               login={login}
               onSelectCycle={(cycle) => navigate('cycle-detail', { cycleId: cycle.id })}
+              onNavigate={navigate}
             />
           )}
           {page === 'cycle-detail' && selectedCycleId && (
@@ -229,7 +227,7 @@ export default function App() {
           isAuthenticated={isAuthenticated}
           login={login}
           onMarket={() => replace('discover')}
-          visible={page !== 'nexum'}
+          visible={page !== 'nexum' && page !== 'home'}
           aboveBottomNav={showBottomNav}
         />
       </Suspense>

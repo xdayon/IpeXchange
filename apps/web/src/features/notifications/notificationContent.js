@@ -22,11 +22,12 @@ export function notificationContent(notification) {
   }
   if (notification.type?.startsWith('cycle_')) {
     const copy = {
-      cycle_suggested: ['New trade cycle', 'Nexum found a trade cycle for you to review.'],
-      cycle_accepted: ['Trade cycle accepted', 'Everyone accepted. Open the cycle to coordinate delivery.'],
-      cycle_cancelled: ['Trade cycle cancelled', 'A participant declined. Nexum will keep looking for matches.'],
-      cycle_completed: ['Trade cycle completed', 'Everyone confirmed delivery and receipt.'],
-    }[notification.type] ?? ['Trade cycle update', 'Your trade cycle has an update.'];
+      cycle_suggested: ['New trade loop', 'Nexum found a trade loop for you to review.'],
+      cycle_accepted: ['Trade loop accepted', 'Everyone accepted. Open the loop to coordinate delivery.'],
+      cycle_cancelled: ['Trade loop cancelled', 'A participant declined. Nexum will keep looking for matches.'],
+      cycle_completed: ['Trade loop completed', 'Everyone confirmed delivery and receipt.'],
+      cycle_superseded: ['Trade loop no longer available', 'Someone completed another loop with one of these items.'],
+    }[notification.type] ?? ['Trade loop update', 'Your trade loop has an update.'];
     return {
       kind: 'cycle', title: copy[0], body: copy[1],
       destination: payload.cycle_id ? ['cycle-detail', { cycleId: payload.cycle_id }] : null,
