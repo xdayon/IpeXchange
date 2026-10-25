@@ -102,7 +102,7 @@ app.post('/:id/publish', requireAuth, rateLimit(10, 'copilot-publish'), async (c
   }
 
   const cycles = await findCycles(c.env, user.id);
-  c.executionCtx.waitUntil(matchAndNotify(c.env, user.id, cycles));
+  c.executionCtx.waitUntil(matchAndNotify(c.env, user.id));
   const best = cycles[0] ?? null;
   return c.json({
     intents,

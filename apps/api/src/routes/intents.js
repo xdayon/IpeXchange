@@ -14,6 +14,16 @@ import {
 
 const app = new Hono();
 
+async function inAcceptedLoop(db, intentId) {
+  const { data } = await db
+    .from('trade_cycle_participants')
+    .select('id, trade_cycles!inner ( status )')
+    .or(`gives_intent_id.eq.${intentId},want_intent_id.eq.${intentId}`)
+    .eq('trade_cycles.status', 'accepted')
+    .limit(1);
+  return Boolean(data?.length);
+}
+
 // Changing any of these can open new trade loops for the owner.
 const MATCH_FIELDS = [
   'embedding', 'kind', 'status', 'exchange_modes', 'constraints', 'location_text',
@@ -126,6 +136,13 @@ app.patch('/intents/:id', requireAuth, rateLimit(30, 'intent-edit'), async (c) =
     .maybeSingle();
   if (!existing) return c.json({ error: 'Not found' }, 404);
   if (existing.user_id !== user.id) return c.json({ error: 'Forbidden' }, 403);
+  // A reserved intent belongs to an accepted loop or a checkout until it ends.
+  if (existing.status === 'in_cycle' && ('status' in patch || 'is_continuous' in patch)) {
+    return c.json({ error: 'This item is reserved by a trade loop or a checkout' }, 409);
+  }
+  if ('is_continuous' in patch && await inAcceptedLoop(db, existing.id)) {
+    return c.json({ error: 'This item is part of an accepted trade loop' }, 409);
+  }
 
   const effective = { ...existing, ...patch };
   const transactionError = validateTransactionFields(effective);
