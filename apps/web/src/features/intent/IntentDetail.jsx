@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { ArrowLeft, Handshake, Check, Loader2, Wallet, Repeat, CheckCircle2, Pencil } from 'lucide-react';
 import { fetchIntent, markInterest } from '../../api/intents.js';
 import { directionInfo, kindInfo, formatPrice, kindFieldChips } from './constants.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
 import IntentCover from '../../shared/ui/IntentCover.jsx';
-import PayOnChain from './PayOnChain.jsx';
 import ShareButton from '../../shared/ui/ShareButton.jsx';
 
+const PayOnChain = lazy(() => import('./PayOnChain.jsx'));
 const PRIVY_ENABLED = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
 
 const btnBase = {
@@ -16,7 +16,7 @@ const btnBase = {
 };
 
 export default function IntentDetail({ intent: initial, user, isAuthenticated, login, onBack, onEdit }) {
-  const { isTMA, openLink } = useTelegram();
+  const { isTMA, openLink, notify } = useTelegram();
   const [intent, setIntent] = useState(initial);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -47,7 +47,7 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
     try {
       await markInterest(intent.id, message.trim() || null);
       setSent(true);
-      window?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
+      notify('success');
     } catch (e) {
       setError(e.message || 'Could not send your interest. Try again.');
     } finally {
@@ -186,7 +186,9 @@ export default function IntentDetail({ intent: initial, user, isAuthenticated, l
                 <Wallet size={20} /> Pay with crypto in your browser
               </button>
             ) : (
-              <PayOnChain intent={intent} isAuthenticated={isAuthenticated} login={login} btnStyle={btnBase} />
+              <Suspense fallback={<Loader2 size={20} className="spin" />}>
+                <PayOnChain intent={intent} isAuthenticated={isAuthenticated} login={login} btnStyle={btnBase} />
+              </Suspense>
             )}
           </div>
         )}

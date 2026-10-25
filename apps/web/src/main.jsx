@@ -1,30 +1,5 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { PrivyProvider } from '@privy-io/react-auth';
-import { base } from 'viem/chains';
-import App from './App.jsx';
+import Root from './Root.jsx';
 
-const PRIVY_APP_ID = import.meta.env.VITE_PRIVY_APP_ID;
-const PRIVY_CLIENT_ID = import.meta.env.VITE_PRIVY_CLIENT_ID;
-
-const privyConfig = {
-  loginMethods: ['email', 'wallet', 'telegram'],
-  appearance: {
-    theme: 'dark',
-    accentColor: '#B4F44A',
-    logo: '/logo.png',
-  },
-  embeddedWallets: { createOnLogin: 'users-without-wallets' },
-  defaultChain: base,
-  supportedChains: [base],
-};
-
-const app = PRIVY_APP_ID ? (
-  <PrivyProvider appId={PRIVY_APP_ID} clientId={PRIVY_CLIENT_ID} config={privyConfig}>
-    <App />
-  </PrivyProvider>
-) : (
-  <App />
-);
-
-createRoot(document.getElementById('root')).render(<StrictMode>{app}</StrictMode>);
+createRoot(document.getElementById('root')).render(<StrictMode><Root /></StrictMode>);
