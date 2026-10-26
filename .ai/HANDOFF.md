@@ -5,52 +5,53 @@ conversation transcript.
 
 ## Objective
 
-- 2026-10-24: full audit, database recovery, and a roadmap toward the IslandDAO v5
-  demo day (Solana builder residency in Florianopolis, 2026-10-19 to 2026-11-11).
+- 2026-10-25: audit follow-up. Engine, Mini App and legacy demo upgraded for the
+  IslandDAO v5 demo day (Solana residency, Florianopolis, ends 2026-11-11).
+- Both versions run on Cloudflare Workers + Supabase; Render is retired.
 - Do not touch `demo` or recreate `pre-reset-mvp`.
 
-## Current State
+## Current State (local commits, nothing pushed or deployed)
 
-- Branch `main-mvp` at `838892f` (pushed). Production Worker is live, but the
-  Supabase project `mzjdataxrqtlqufnvpmh` is paused by the Free plan: its host no
-  longer resolves, the pooler answers "tenant/user not found", and `/api/market`
-  returns 500. The legacy demo project `xzecgbkwrhozoxigfzqn` is paused as well.
-- Restoring requires the owner to open the Supabase dashboard (GitHub-login
-  account for the MVP, email account for the demo) and click Restore. If the
-  restore window has passed, download the backup and restore it into a new project.
-- Legacy demo is still served: frontend `ipexchange.onrender.com`, backend
-  `ipe-api-x0q3.onrender.com` (Render Free, ~20 s cold start, in-memory mock
-  fallback when its DB is down). Its map is broken: CARTO basemaps now return an
-  "API KEY REQUIRED" tile. `ipexchange.pages.dev` serves an old MVP build.
+- `main-mvp`: keepalive cron + `/api/health/db` (22b7787); matching engine v2,
+  migration 0023 (9ada99c); review hardening (cdceabe); loop receipts with
+  Solana anchoring, migration 0024 (merge f44e62c).
+- `feat/tma-experience` (worktree in the session scratchpad): Mini App overhaul
+  (Privy only on web, swipe deck, Discover hub, MapLibre map, loop radar,
+  clearing panel, celebrations). Merge into `main-mvp` after its final pass.
+- `showcase` (from `demo`): legacy demo ported to Worker `ipexchange-demo` on
+  `demo.ipexchange.xyz`, Esri tiles, seed endpoint guarded by ADMIN_SEED_TOKEN.
+- Production Supabase `mzjdataxrqtlqufnvpmh` and demo `xzecgbkwrhozoxigfzqn`
+  are paused by the Free plan; production `/api/market` returns 500 until restored.
 
-## Uncommitted Changes (this session)
+## Engine Facts
 
-- `apps/api/src/lib/keepalive.js`, `scheduled` handler in `src/index.js`, and a
-  `17 */6 * * *` cron in `wrangler.jsonc`: pings Supabase through REST (retries
-  off) and optional `KEEPALIVE_URLS` (comma list, e.g. the demo backend).
-- `GET /api/health/db` returns 503 when the database is unreachable.
-- CSP (`_headers` and `SPA_SECURITY_HEADERS`) now allows the Cloudflare Web
-  Analytics beacon; the CSP-blocked inline polyfill script was removed from
-  `apps/web/index.html` (it never ran in production).
-- Verified: `npm run check` passes (116 tests); `wrangler dev --test-scheduled`
-  runs the cron and logs the ping; local build renders at 390 px and desktop with
-  no horizontal scroll and no CSP inline-script error.
+- Loop edges need cosine similarity >= 0.70 (real Gemini pairs 0.77-0.88,
+  look-alikes up to 0.69); swipes and interest marks are explicit edges.
+- Beam search, loops of 2-7; benchmark (400 dense members): find 76 ms,
+  clearing 4 s. Temp tables must be TRUNCATEd (DELETE bloats them).
+- `intent_swipes` uses a surrogate key: a composite (user_id, offer_id) PK makes
+  PostgREST see a users<->intents junction and breaks `users(...)` embeds.
+- One `match_and_persist` RPC per trigger and `notifyMany` keep a 7-person loop
+  inside the 50-subrequest Workers Free budget.
+- Public Solana devnet RPC blocks Workers traffic and its faucet returned 429;
+  the memo transaction was validated with `simulateTransaction` (sigVerify):
+  AccountNotFound for the real tx, SignatureFailure for a tampered one.
 
-## Audit Findings Not Yet Fixed
+## Verification
 
-- `find_intent_cycles` wrappers (0013, 0014) filter kind/expiry/exchange-mode
-  guards after the inner `LIMIT 10`, so valid cycles can be dropped.
-- `transaction_mode = 'buy_now'` offers can enter barter cycles.
-- `persist_intent_cycle` reserves intents and sets `in_cycle` at suggestion time,
-  hiding them from the market for up to 7 days.
-- Released intents (decline or expiry) never trigger a new match.
-- Edge discovery is a full want x offer scan; `trade_cycles.hops` is limited to 2-3.
-- Privy (3.1 MB) is preloaded on every Mini App open even though TMA auth uses initData.
+- `npm run check`: 130 tests pass (+24 DB tests skipped without a database).
+- `npm run test:db` (PostgreSQL 17 + pgvector): 24 pass; clean apply of
+  0001-0024 verified; CI job `matching-db` added.
+- End-to-end through the local Worker + PostgREST: publish, deck, swipe,
+  loop found, accept, decline, supersede, cancel, clearing, map, receipts.
 
-## External Follow-up
+## Owner Follow-up
 
-- Deploy the keepalive only after the database is restored and the owner approves.
-- Production still lacks `PRIVY_APP_SECRET`; payout-wallet verification fails closed.
-- Native ETH checkout from ERC-4337 accounts needs a trace-capable `BASE_RPC_URL`.
-- Ask GitHub Support to purge cached views of `list_output.txt` (third-party PII);
-  earliest affected unreachable commit `443bb094b4243da2ef9b00859f269581d1420ef7`.
+- Restore both Supabase projects; then `npm run db:apply` (0022-0024).
+- Deploy: `npm run deploy` (main), `npm run deploy` in the `showcase` checkout.
+- Secrets: PRIVY_APP_SECRET (still missing), ADMIN_TELEGRAM_IDS; demo needs
+  GEMINI_API_KEY + SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY; optional
+  SOLANA_ANCHOR_SECRET + provider SOLANA_RPC_URL (Helius/QuickNode).
+- Privy allowed origins: add demo.ipexchange.xyz.
+- Ask GitHub Support to purge cached views of `list_output.txt` (PII); earliest
+  affected commit `443bb094b4243da2ef9b00859f269581d1420ef7`.

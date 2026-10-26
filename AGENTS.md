@@ -4,7 +4,7 @@
 
 IpeXchange is the intent marketplace for Ipe City in Florianopolis, Brazil.
 Users publish **Interests** (what they seek) and **Offers** (what they bring).
-The product suggests direct matches and 2-3 person trade cycles. Web, Telegram
+The product suggests direct swaps and trade loops of up to 7 people. Web, Telegram
 Mini App, and Telegram Bot are supported. Crypto payments on Base are launch 2.
 
 ## Non-Negotiables

@@ -21,3 +21,8 @@ export async function confirmCycleStep(id, step) {
     body: JSON.stringify({ step }),
   });
 }
+
+// Public, verifiable receipt of a completed loop (404 when none exists).
+export async function fetchLoopReceipt(id) {
+  return apiFetch(`/receipts/${id}`);
+}

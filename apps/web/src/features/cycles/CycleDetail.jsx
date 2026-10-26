@@ -7,6 +7,7 @@ import { formatPrice } from '../intent/constants.js';
 import { useTelegram } from '../../shared/hooks/useTelegram.js';
 import CycleRing from './CycleRing.jsx';
 import LoopCelebration from './LoopCelebration.jsx';
+import LoopReceipt from './LoopReceipt.jsx';
 import './cycles.css';
 
 function TradeSide({ label, intent, tone }) {
@@ -132,6 +133,7 @@ export default function CycleDetail({ cycleId, user, onBack }) {
           <button className="btn btn--ghost" onClick={share}><Share2 size={16} /> {shareNote || 'Share'}</button>
         </div>
       )}
+      <LoopReceipt cycleId={cycle.id} completed={cycle.status === 'completed'} />
       {cycle.status === 'cancelled' && (
         <p className="loop-note loop-note--inline">This loop was cancelled. Nexum keeps searching for new matches.</p>
       )}
