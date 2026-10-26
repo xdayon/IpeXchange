@@ -19,7 +19,6 @@
   },
   "vars": {
     "BASE_RPC_URL": "https://mainnet.base.org",
-    "SOLANA_RPC_URL": "https://api.devnet.solana.com",
     "SOLANA_CLUSTER": "devnet"
   },
   "routes": [
@@ -34,7 +33,9 @@
   // Optional: SOLANA_ANCHOR_SECRET signs loop receipts and anchors their Merkle
   // root in a Solana Memo transaction (base58 64-byte key or CLI JSON array; the
   // keypair must hold a little SOL). Without it receipts stay unsigned and
-  // nothing is anchored. SOLANA_RPC_URL / SOLANA_CLUSTER (devnet, mainnet-beta)
-  // are vars above; switch both together for mainnet.
+  // nothing is anchored. SOLANA_RPC_URL is a secret because provider URLs
+  // (Helius, QuickNode) embed an API key; the public devnet RPC is the default
+  // but blocks Workers traffic. SOLANA_CLUSTER (devnet, mainnet-beta) is a var
+  // above; switch it together with the RPC for mainnet.
   // Optional: ADMIN_EMAILS / ADMIN_TELEGRAM_IDS (comma lists that bootstrap admins)
 }
